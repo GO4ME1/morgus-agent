@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { supabase, Task, TaskStep, Artifact } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
+import type { Task, TaskStep, Artifact } from '../lib/supabase';
 
 export default function TaskDetail() {
   const { id } = useParams<{ id: string }>();
@@ -171,7 +172,7 @@ export default function TaskDetail() {
       <div className="timeline-section">
         <h3>Execution Timeline</h3>
         <div className="timeline">
-          {steps.map((step, index) => (
+          {steps.map((step) => (
             <div key={step.id} className={`timeline-item ${step.type.toLowerCase()}`}>
               <div className="timeline-marker">
                 <span className="timeline-icon">{getStepIcon(step.type)}</span>

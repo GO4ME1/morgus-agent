@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase, Task } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
+import type { Task } from '../lib/supabase';
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
