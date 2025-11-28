@@ -10,9 +10,9 @@ import uvicorn
 import os
 from dotenv import load_dotenv
 
-from database import SupabaseClient
+from database import DatabaseClient
 from sandbox_e2b import E2BSandboxManager
-from llm import LLMClient
+from llm import ModelRouter as LLMClient
 
 # Load environment variables
 load_dotenv()
@@ -29,7 +29,7 @@ app.add_middleware(
 )
 
 # Initialize clients
-db = SupabaseClient()
+db = DatabaseClient()
 sandbox_manager = E2BSandboxManager()
 llm = LLMClient()
 
@@ -61,8 +61,7 @@ async def create_task(task: TaskCreate):
     try:
         task_data = db.create_task(
             title=task.title,
-            description=task.description,
-            user_id=task.user_id
+            description=task.description
         )
         return task_data
     except Exception as e:

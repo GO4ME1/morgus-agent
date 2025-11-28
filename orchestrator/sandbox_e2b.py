@@ -4,7 +4,7 @@ Manages code execution in E2B sandboxes
 """
 import os
 from typing import Dict, Any, Optional
-from e2b_code_interpreter import CodeInterpreter
+from e2b_code_interpreter.code_interpreter_sync import Sandbox as CodeInterpreter
 
 class E2BSandboxManager:
     """Manages E2B sandbox instances for code execution"""
