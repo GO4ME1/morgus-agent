@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { AutonomousAgent } from './agent';
+import { handleThoughtsAPI } from './thoughts-api';
 
 interface Env {
   SUPABASE_URL: string;
@@ -43,6 +44,11 @@ export default {
         return new Response(JSON.stringify({ status: 'healthy', timestamp: new Date().toISOString() }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+      }
+
+      // Thoughts API routing
+      if (path.startsWith('/api/thoughts')) {
+        return handleThoughtsAPI(request, env);
       }
 
       // Debug endpoint

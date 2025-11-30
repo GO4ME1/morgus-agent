@@ -62,6 +62,22 @@ function App() {
     }
   };
 
+  const deleteTask = async (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent task selection when clicking delete
+    
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', taskId);
+
+    if (!error) {
+      setTasks(prev => prev.filter(t => t.id !== taskId));
+      if (currentTaskId === taskId) {
+        setCurrentTaskId(null);
+      }
+    }
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setUploadedFiles(prev => [...prev, ...files]);
@@ -249,8 +265,17 @@ function App() {
               className={`task-item ${currentTaskId === task.id ? 'active' : ''}`}
               onClick={() => setCurrentTaskId(task.id)}
             >
-              <div className="task-title">{task.description.substring(0, 50)}...</div>
-              <div className="task-status">{task.status}</div>
+              <div className="task-info">
+                <div className="task-title">{task.description.substring(0, 50)}...</div>
+                <div className="task-status">{task.status}</div>
+              </div>
+              <button 
+                className="delete-task-button"
+                onClick={(e) => deleteTask(task.id, e)}
+                title="Delete task"
+              >
+                🗑️
+              </button>
             </div>
           ))}
         </div>
