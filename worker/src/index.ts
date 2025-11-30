@@ -184,20 +184,7 @@ export default {
           });
         }
 
-        // Add assistant response to conversation history
-        conversationHistory.push({
-          role: 'assistant',
-          content: finalResponse.trim()
-        });
-
-        // Save updated conversation history
-        await supabase
-          .from('conversations')
-          .upsert({
-            id: conversationId,
-            messages: conversationHistory,
-            updated_at: new Date().toISOString(),
-          });
+        // No need to save conversation - frontend maintains history
 
         // Update task status
         await supabase
@@ -207,7 +194,6 @@ export default {
 
         return new Response(JSON.stringify({
           task_id: taskId,
-          conversation_id: conversationId,
           message: finalResponse.trim(),
           status: 'completed',
         }), {
