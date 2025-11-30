@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_KEY: string;
-  GEMINI_API_KEY: string;
+  OPENAI_API_KEY: string;
   E2B_API_KEY: string;
 }
 
@@ -95,7 +95,7 @@ export default {
           taskId = task.id;
         }
 
-        // Call Gemini API to process the message
+        // Call OpenAI API to process the message
         const systemPrompt = `You are Morgus, an autonomous AI agent that helps users accomplish tasks. 
 You can:
 - Research information
@@ -106,33 +106,33 @@ You can:
 
 Respond conversationally and break down complex tasks into steps.`;
 
-        const geminiResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_API_KEY}`,
+        const openaiResponse = await fetch(
+          'https://api.openai.com/v1/chat/completions',
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
             },
             body: JSON.stringify({
-              contents: [{
-                parts: [{
-                  text: systemPrompt + '\n\nUser: ' + body.message
-                }]
-              }],
-              generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 2048,
-              }
+              model: 'gpt-3.5-turbo',
+              messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: body.message }
+              ],
+              temperature: 0.7,
+              max_tokens: 2048,
             }),
           }
         );
 
-        if (!geminiResponse.ok) {
-          throw new Error(`Gemini API error: ${geminiResponse.statusText}`);
+        if (!openaiResponse.ok) {
+          const errorData = await openaiResponse.json() as any;
+          throw new Error(`OpenAI API error: ${errorData.error?.message || openaiResponse.statusText}`);
         }
 
-        const data = await geminiResponse.json() as any;
-        const response = data.candidates?.[0]?.content?.parts?.[0]?.text || 
+        const data = await openaiResponse.json() as any;
+        const response = data.choices?.[0]?.message?.content || 
           'I apologize, but I encountered an error processing your request.';
 
         // Save step
