@@ -8,6 +8,7 @@ interface Message {
   content: string;
   timestamp: Date;
   isStreaming?: boolean;
+  attachments?: string[];
 }
 
 interface Task {
@@ -33,7 +34,9 @@ function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showSidebar, setShowSidebar] = useState(true);
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -59,19 +62,46 @@ function App() {
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setUploadedFiles(prev => [...prev, ...files]);
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    // Could add a toast notification here
+  };
+
+  const downloadAsText = (text: string, filename: string) => {
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+    if ((!input.trim() && uploadedFiles.length === 0) || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: input,
+      content: input || '[Files attached]',
       timestamp: new Date(),
+      attachments: uploadedFiles.map(f => f.name),
     };
 
     setMessages((prev) => [...prev, userMessage]);
     const userInput = input;
+    const files = uploadedFiles;
     setInput('');
+    setUploadedFiles([]);
     setIsLoading(true);
 
     // Add a placeholder for agent status updates
@@ -86,6 +116,23 @@ function App() {
     setMessages((prev) => [...prev, statusMessage]);
 
     try {
+      // Upload files if any
+      let fileUrls: string[] = [];
+      if (files.length > 0) {
+        const formData = new FormData();
+        files.forEach(file => formData.append('files', file));
+        
+        const uploadResponse = await fetch(`${API_URL}/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          fileUrls = uploadData.urls || [];
+        }
+      }
+
       const response = await fetch(`${API_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -93,6 +140,8 @@ function App() {
           message: userInput,
           task_id: currentTaskId,
           stream: true,
+          history: messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
+          files: fileUrls,
         }),
       });
 
@@ -100,61 +149,61 @@ function App() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const reader = response.body?.getReader();
+      if (!response.body) {
+        throw new Error('No response body');
+      }
+
+      const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
-      let statusUpdates: string[] = [];
-      let finalResponse = '';
 
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\\n\\n');
-          buffer = lines.pop() || '';
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\\n\\n');
+        buffer = lines.pop() || '';
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                
-                if (data.type === 'status' || data.type === 'tool_call' || data.type === 'tool_result') {
-                  statusUpdates.push(data.content);
-                  setMessages((prev) => prev.map(msg => 
-                    msg.id === statusMessageId 
-                      ? { ...msg, content: statusUpdates.join('\\n') }
-                      : msg
-                  ));
-                } else if (data.type === 'response') {
-                  finalResponse = data.content;
-                } else if (data.type === 'complete') {
-                  if (finalResponse) {
-                    setMessages((prev) => prev.map(msg => 
-                      msg.id === statusMessageId 
-                        ? { ...msg, content: finalResponse, isStreaming: false }
-                        : msg
-                    ));
-                  }
-                }
-              } catch (e) {
-                console.error('Error parsing SSE data:', e);
-              }
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              // Update the status message
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === statusMessageId
+                    ? {
+                        ...msg,
+                        content: data.content || msg.content,
+                        isStreaming: data.type !== 'complete',
+                      }
+                    : msg
+                )
+              );
+            } catch (e) {
+              console.error('Failed to parse SSE data:', e);
             }
           }
         }
       }
 
+      setIsLoading(false);
       loadTasks();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error:', error);
-      setMessages((prev) => prev.map(msg => 
-        msg.id === statusMessageId 
-          ? { ...msg, content: `❌ Error: ${error.message}`, isStreaming: false }
-          : msg
-      ));
-    } finally {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === statusMessageId
+            ? {
+                ...msg,
+                content: `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                isStreaming: false,
+              }
+            : msg
+        )
+      );
       setIsLoading(false);
     }
   };
@@ -167,35 +216,30 @@ function App() {
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
     <div className="app">
       {/* Sidebar */}
-      <div className={`sidebar ${showSidebar ? 'open' : ''}`}>
+      <div className={`sidebar ${showSidebar ? 'show' : 'hide'}`}>
         <div className="sidebar-header">
           <div className="logo">
             <div className="logo-icon">M</div>
-            <h1 className="logo-text">Morgus</h1>
+            <h1>Morgus</h1>
           </div>
-          <div className="status-indicator">
-            <span className="status-dot"></span>
-            <span>Online</span>
-          </div>
+          <button className="new-chat-button" onClick={() => {
+            setMessages([{
+              id: '1',
+              role: 'assistant',
+              content: '👋 Hello! I\'m **Morgus**, your autonomous AI agent. What would you like to accomplish today?',
+              timestamp: new Date(),
+            }]);
+            setCurrentTaskId(null);
+          }}>
+            + New Chat
+          </button>
         </div>
-
-        <button className="new-chat-btn" onClick={() => {
-          setMessages([{
-            id: '1',
-            role: 'assistant',
-            content: '👋 Hello! I\'m **Morgus**, your autonomous AI agent. I can help you with:\n\n• Research and information gathering\n• Planning complex projects\n• Writing and executing code\n• Deploying applications\n• And much more!\n\nWhat would you like to accomplish today?',
-            timestamp: new Date(),
-          }]);
-          setCurrentTaskId(null);
-        }}>
-          + New Chat
-        </button>
 
         <div className="task-list">
           <h3>Recent Tasks</h3>
@@ -219,6 +263,10 @@ function App() {
             ☰
           </button>
           <h2>Morgus AI Agent</h2>
+          <div className="status-indicator">
+            <span className="status-dot online"></span>
+            Online
+          </div>
         </div>
 
         <div className="messages-container">
@@ -232,8 +280,35 @@ function App() {
                   {message.content.split('\\n').map((line, i) => (
                     <p key={i}>{line}</p>
                   ))}
+                  {message.attachments && message.attachments.length > 0 && (
+                    <div className="attachments">
+                      {message.attachments.map((file, i) => (
+                        <div key={i} className="attachment-chip">📎 {file}</div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="message-time">{formatTime(message.timestamp)}</div>
+                <div className="message-actions">
+                  <div className="message-time">{formatTime(message.timestamp)}</div>
+                  {message.role === 'assistant' && !message.isStreaming && (
+                    <div className="action-buttons">
+                      <button 
+                        className="icon-button" 
+                        onClick={() => copyToClipboard(message.content)}
+                        title="Copy to clipboard"
+                      >
+                        📋
+                      </button>
+                      <button 
+                        className="icon-button" 
+                        onClick={() => downloadAsText(message.content, `morgus-response-${message.id}.txt`)}
+                        title="Download as text"
+                      >
+                        💾
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -253,7 +328,32 @@ function App() {
         </div>
 
         <div className="input-container">
+          {uploadedFiles.length > 0 && (
+            <div className="uploaded-files">
+              {uploadedFiles.map((file, index) => (
+                <div key={index} className="file-chip">
+                  📎 {file.name}
+                  <button onClick={() => removeFile(index)}>×</button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="input-wrapper">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              multiple
+              style={{ display: 'none' }}
+            />
+            <button
+              className="attach-button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading}
+              title="Attach files"
+            >
+              📎
+            </button>
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -265,7 +365,7 @@ function App() {
             <button
               className="send-button"
               onClick={handleSend}
-              disabled={isLoading || !input.trim()}
+              disabled={isLoading || (!input.trim() && uploadedFiles.length === 0)}
             >
               ➤
             </button>

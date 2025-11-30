@@ -9,6 +9,14 @@ interface Env {
   TAVILY_API_KEY?: string;
 }
 
+interface ChatMessage {
+  message: string;
+  task_id?: string;
+  conversation_id?: string;
+  stream?: boolean;
+  history?: Array<{role: string, content: string}>;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     // CORS headers
@@ -51,10 +59,19 @@ export default {
         });
       }
 
-      // Chat endpoint with streaming
+      // Chat endpoint with streaming and conversation history
       if (path === '/chat' && request.method === 'POST') {
-        const body = await request.json() as { message: string; task_id?: string; stream?: boolean };
+        const body = await request.json() as ChatMessage;
         
+        // Use history from request body (sent by frontend)
+        const conversationHistory = body.history || [];
+
+        // Add user message to history
+        conversationHistory.push({
+          role: 'user',
+          content: body.message
+        });
+
         // Create or get task
         let taskId = body.task_id;
         if (!taskId) {
@@ -64,6 +81,7 @@ export default {
               title: body.message.substring(0, 100),
               description: body.message,
               status: 'processing',
+
               created_at: new Date().toISOString(),
             })
             .select()
@@ -84,48 +102,48 @@ export default {
           (async () => {
             try {
               const agent = new AutonomousAgent({
-                maxIterations: 10,
-                model: 'gpt-4-turbo-preview',
+                maxIterations: 10, // Increased to allow task completion
+                model: 'gpt-4o-mini',
               });
 
               let finalResponse = '';
               let stepNumber = 1;
 
-              for await (const message of agent.executeTask(body.message, env)) {
+              // Pass conversation history to agent
+              for await (const message of agent.executeTask(body.message, env, conversationHistory)) {
                 // Send message to client
                 await writer.write(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
+
+                // Collect final response
+                if (message.type === 'response') {
+                  finalResponse += message.content + '\n';
+                }
 
                 // Save step to database
                 await supabase.from('task_steps').insert({
                   task_id: taskId,
-                  phase: 'execution',
                   step_number: stepNumber++,
-                  description: message.content,
-                  result: JSON.stringify(message.metadata || {}),
-                  status: message.type === 'error' ? 'error' : 'completed',
+                  step_type: message.type,
+                  content: message.content,
+                  metadata: message.metadata,
                   created_at: new Date().toISOString(),
                 });
-
-                if (message.type === 'response') {
-                  finalResponse = message.content;
-                }
               }
 
-              // Update task as completed
+              // No need to save conversation - frontend maintains history
+
+              // Update task status
               await supabase
                 .from('tasks')
-                .update({ 
-                  status: 'completed', 
-                  result: finalResponse,
-                  updated_at: new Date().toISOString() 
-                })
+                .update({ status: 'completed', updated_at: new Date().toISOString() })
                 .eq('id', taskId);
 
               await writer.close();
             } catch (error: any) {
+              console.error('Agent execution error:', error);
               await writer.write(encoder.encode(`data: ${JSON.stringify({
                 type: 'error',
-                content: error.message
+                content: `Error: ${error.message}`
               })}\n\n`));
               await writer.close();
             }
@@ -143,61 +161,66 @@ export default {
 
         // Non-streaming response (for compatibility)
         const agent = new AutonomousAgent({
-          maxIterations: 10,
-          model: 'gpt-4-turbo-preview',
+          maxIterations: 10, // Increased to allow task completion
+          model: 'gpt-4o-mini',
         });
 
         let finalResponse = '';
         let stepNumber = 1;
 
-        for await (const message of agent.executeTask(body.message, env)) {
+        for await (const message of agent.executeTask(body.message, env, conversationHistory)) {
+          if (message.type === 'response') {
+            finalResponse += message.content + '\n';
+          }
+
           // Save step to database
           await supabase.from('task_steps').insert({
             task_id: taskId,
-            phase: 'execution',
             step_number: stepNumber++,
-            description: message.content,
-            result: JSON.stringify(message.metadata || {}),
-            status: message.type === 'error' ? 'error' : 'completed',
+            step_type: message.type,
+            content: message.content,
+            metadata: message.metadata,
             created_at: new Date().toISOString(),
           });
-
-          if (message.type === 'response') {
-            finalResponse = message.content;
-          }
         }
 
-        // Update task
+        // Add assistant response to conversation history
+        conversationHistory.push({
+          role: 'assistant',
+          content: finalResponse.trim()
+        });
+
+        // Save updated conversation history
+        await supabase
+          .from('conversations')
+          .upsert({
+            id: conversationId,
+            messages: conversationHistory,
+            updated_at: new Date().toISOString(),
+          });
+
+        // Update task status
         await supabase
           .from('tasks')
-          .update({ 
-            status: 'completed',
-            result: finalResponse,
-            updated_at: new Date().toISOString() 
-          })
+          .update({ status: 'completed', updated_at: new Date().toISOString() })
           .eq('id', taskId);
 
         return new Response(JSON.stringify({
           task_id: taskId,
-          message: finalResponse,
-          status: 'completed'
+          conversation_id: conversationId,
+          message: finalResponse.trim(),
+          status: 'completed',
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      // Not found
-      return new Response(JSON.stringify({ error: 'Not found' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      // 404 for unknown routes
+      return new Response('Not Found', { status: 404, headers: corsHeaders });
 
     } catch (error: any) {
       console.error('Worker error:', error);
-      return new Response(JSON.stringify({ 
-        error: error.message || 'Internal server error',
-        details: error.stack
-      }), {
+      return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

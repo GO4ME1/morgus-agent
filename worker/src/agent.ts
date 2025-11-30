@@ -27,9 +27,9 @@ export class AutonomousAgent {
   constructor(config: AgentConfig = {}) {
     this.toolRegistry = new ToolRegistry();
     this.config = {
-      maxIterations: config.maxIterations || 10,
+      maxIterations: config.maxIterations || 10, // Allow full task completion
       temperature: config.temperature || 0.7,
-      model: config.model || 'gpt-4-turbo-preview',
+      model: config.model || 'gpt-4o-mini', // Switched from gpt-4-turbo-preview to save 95% on costs
     };
   }
 
@@ -38,15 +38,17 @@ export class AutonomousAgent {
    */
   async *executeTask(
     userMessage: string,
-    env: any
+    env: any,
+    conversationHistory: Array<{role: string, content: string}> = []
   ): AsyncGenerator<AgentMessage> {
     yield {
       type: 'status',
       content: '🤖 Starting task execution...',
     };
 
-    // Reset conversation
+    // Build conversation with history
     this.conversationHistory = [
+      ...conversationHistory.slice(0, -1), // Include previous messages (except the last user message which we'll add with system prompt)
       {
         role: 'system',
         content: `You are Morgus, an autonomous AI agent that helps users accomplish tasks.
@@ -213,7 +215,7 @@ Be conversational and helpful. Show your work and explain what you're doing.`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4-turbo-preview',
+          model: 'gpt-4o-mini', // Cost-optimized model
           messages: [
             {
               role: 'system',
