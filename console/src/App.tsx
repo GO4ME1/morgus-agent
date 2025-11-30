@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from './lib/supabase';
 import { ThoughtsPanel } from './components/ThoughtsPanel';
+import { VoiceInput, speakText } from './components/VoiceInput';
 import './App.css';
 
 interface Message {
@@ -37,6 +38,8 @@ function App() {
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const [currentThoughtId, setCurrentThoughtId] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isListening, setIsListening] = useState(false);
+  const [autoSpeak, setAutoSpeak] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -51,6 +54,46 @@ function App() {
   useEffect(() => {
     loadTasks();
   }, []);
+
+  // Load messages when thought changes
+  useEffect(() => {
+    if (currentThoughtId) {
+      loadThoughtMessages(currentThoughtId);
+    }
+  }, [currentThoughtId]);
+
+  const loadThoughtMessages = async (thoughtId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('thought_messages')
+        .select('*')
+        .eq('thought_id', thoughtId)
+        .order('created_at', { ascending: true });
+
+      if (!error && data) {
+        const loadedMessages: Message[] = data.map((msg: any) => ({
+          id: msg.id,
+          role: msg.role,
+          content: msg.content,
+          timestamp: new Date(msg.created_at),
+        }));
+        
+        // Keep the welcome message if no messages exist
+        if (loadedMessages.length === 0) {
+          setMessages([{
+            id: '1',
+            role: 'assistant',
+            content: '👋 Hello! I\'m **Morgus**, your autonomous AI agent. I can help you with:\n\n• Research and information gathering\n• Planning complex projects\n• Writing and executing code\n• Deploying applications\n• And much more!\n\nWhat would you like to accomplish today?',
+            timestamp: new Date(),
+          }]);
+        } else {
+          setMessages(loadedMessages);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load thought messages:', error);
+    }
+  };
 
   const loadTasks = async () => {
     const { data, error } = await supabase
@@ -102,6 +145,31 @@ function App() {
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const saveMessageToThought = async (message: Message) => {
+    if (!currentThoughtId) {
+      alert('Please select a thought first!');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('thought_messages')
+        .insert({
+          thought_id: currentThoughtId,
+          role: message.role,
+          content: message.content,
+          created_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+      
+      alert('✅ Message saved to thought!');
+    } catch (error) {
+      console.error('Failed to save message:', error);
+      alert('❌ Failed to save message');
+    }
   };
 
   const handleSend = async () => {
@@ -181,7 +249,7 @@ function App() {
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\\n\\n');
+        const lines = buffer.split('\n\n');
         buffer = lines.pop() || '';
 
         for (const line of lines) {
@@ -201,6 +269,11 @@ function App() {
                     : msg
                 )
               );
+              
+              // Auto-speak if enabled and response is complete
+              if (autoSpeak && data.type === 'response' && data.content) {
+                speakText(data.content);
+              }
             } catch (e) {
               console.error('Failed to parse SSE data:', e);
             }
@@ -342,6 +415,13 @@ function App() {
                       >
                         💾
                       </button>
+                      <button 
+                        className="icon-button" 
+                        onClick={() => saveMessageToThought(message)}
+                        title="Save to thought"
+                      >
+                        💭
+                      </button>
                     </div>
                   )}
                 </div>
@@ -389,6 +469,18 @@ function App() {
               title="Attach files"
             >
               📎
+            </button>
+            <VoiceInput
+              onTranscript={(text) => setInput(text)}
+              isListening={isListening}
+              onListeningChange={setIsListening}
+            />
+            <button
+              className="speaker-button"
+              onClick={() => setAutoSpeak(!autoSpeak)}
+              title={autoSpeak ? 'Disable auto-speak' : 'Enable auto-speak'}
+            >
+              {autoSpeak ? '🔊' : '🔇'}
             </button>
             <textarea
               value={input}
