@@ -1,10 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
 
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_KEY: string;
-  OPENAI_API_KEY: string;
+  GEMINI_API_KEY: string;
   E2B_API_KEY: string;
 }
 
@@ -28,10 +27,6 @@ export default {
     try {
       // Initialize clients
       const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_KEY);
-      const openai = new OpenAI({ 
-        apiKey: env.OPENAI_API_KEY,
-        baseURL: 'https://api.manus.im/v1'
-      });
 
       // Health check
       if (path === '/health' && request.method === 'GET') {
@@ -100,13 +95,8 @@ export default {
           taskId = task.id;
         }
 
-        // Call OpenAI to process the message
-        const completion = await openai.chat.completions.create({
-          model: 'gpt-4.1-mini',
-          messages: [
-            {
-              role: 'system',
-              content: `You are Morgus, an autonomous AI agent that helps users accomplish tasks. 
+        // Call Gemini API to process the message
+        const systemPrompt = `You are Morgus, an autonomous AI agent that helps users accomplish tasks. 
 You can:
 - Research information
 - Plan complex projects
@@ -114,17 +104,36 @@ You can:
 - Execute commands
 - Deploy applications
 
-Respond conversationally and break down complex tasks into steps.`
-            },
-            {
-              role: 'user',
-              content: body.message
-            }
-          ],
-          stream: false,
-        });
+Respond conversationally and break down complex tasks into steps.`;
 
-        const response = completion.choices[0].message.content;
+        const geminiResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_API_KEY}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{
+                  text: systemPrompt + '\n\nUser: ' + body.message
+                }]
+              }],
+              generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 2048,
+              }
+            }),
+          }
+        );
+
+        if (!geminiResponse.ok) {
+          throw new Error(`Gemini API error: ${geminiResponse.statusText}`);
+        }
+
+        const data = await geminiResponse.json() as any;
+        const response = data.candidates?.[0]?.content?.parts?.[0]?.text || 
+          'I apologize, but I encountered an error processing your request.';
 
         // Save step
         await supabase.from('task_steps').insert({
