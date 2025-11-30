@@ -59,6 +59,36 @@ export default {
         });
       }
 
+      // Feedback endpoint for self-improvement
+      if (path === '/feedback' && request.method === 'POST') {
+        const body = await request.json();
+        const { message_id, feedback_type, input, output, task_id } = body;
+
+        // Calculate score based on feedback type
+        const score = feedback_type === 'positive' ? 1.0 : feedback_type === 'negative' ? 0.0 : 0.0;
+
+        // Store feedback in database (will create table later)
+        try {
+          await supabase.from('agent_evaluations').insert({
+            task_id: task_id || null,
+            agent_version: 'v1.0.0', // Will be dynamic later
+            input_text: input,
+            output_text: output,
+            score: score,
+            feedback_type: feedback_type === 'glitch' ? 'human_glitch' : 'human',
+            feedback_text: feedback_type === 'glitch' ? 'User reported a glitch/bug' : null,
+            metadata: { message_id },
+            created_at: new Date().toISOString(),
+          });
+        } catch (error) {
+          console.error('Failed to store feedback (table may not exist yet):', error);
+        }
+
+        return new Response(JSON.stringify({ success: true, message: 'Feedback recorded' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       // Chat endpoint with streaming and conversation history
       if (path === '/chat' && request.method === 'POST') {
         const body = await request.json() as ChatMessage;
