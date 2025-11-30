@@ -35,6 +35,19 @@ export default {
         });
       }
 
+      // Debug endpoint
+      if (path === '/debug' && request.method === 'GET') {
+        const keyPrefix = env.OPENAI_API_KEY ? env.OPENAI_API_KEY.substring(0, 10) : 'missing';
+        return new Response(JSON.stringify({ 
+          hasOpenAI: !!env.OPENAI_API_KEY,
+          hasSupabase: !!env.SUPABASE_URL && !!env.SUPABASE_KEY,
+          hasE2B: !!env.E2B_API_KEY,
+          openaiKeyPrefix: keyPrefix
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       // Create task
       if (path === '/tasks' && request.method === 'POST') {
         const body = await request.json() as { description: string };
@@ -84,6 +97,7 @@ export default {
           const { data: task, error } = await supabase
             .from('tasks')
             .insert({
+              title: body.message.substring(0, 100),
               description: body.message,
               status: 'processing',
               created_at: new Date().toISOString(),
@@ -106,6 +120,9 @@ You can:
 
 Respond conversationally and break down complex tasks into steps.`;
 
+        console.log('Making OpenAI API call...');
+        console.log('API Key prefix:', env.OPENAI_API_KEY ? env.OPENAI_API_KEY.substring(0, 15) : 'missing');
+        
         const openaiResponse = await fetch(
           'https://api.openai.com/v1/chat/completions',
           {
@@ -128,6 +145,8 @@ Respond conversationally and break down complex tasks into steps.`;
 
         if (!openaiResponse.ok) {
           const errorData = await openaiResponse.json() as any;
+          console.error('OpenAI API Error:', errorData);
+          console.error('Status:', openaiResponse.status);
           throw new Error(`OpenAI API error: ${errorData.error?.message || openaiResponse.statusText}`);
         }
 
