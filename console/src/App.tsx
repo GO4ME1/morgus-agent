@@ -7,6 +7,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  isStreaming?: boolean;
 }
 
 interface Task {
@@ -69,43 +70,90 @@ function App() {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const userInput = input;
     setInput('');
     setIsLoading(true);
+
+    // Add a placeholder for agent status updates
+    const statusMessageId = (Date.now() + 1).toString();
+    const statusMessage: Message = {
+      id: statusMessageId,
+      role: 'assistant',
+      content: '🤖 Starting...',
+      timestamp: new Date(),
+      isStreaming: true,
+    };
+    setMessages((prev) => [...prev, statusMessage]);
 
     try {
       const response = await fetch(`${API_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: input,
+          message: userInput,
           task_id: currentTaskId,
+          stream: true,
         }),
       });
 
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.message || 'I received your message and I\'m working on it!',
-        timestamp: new Date(),
-      };
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let statusUpdates: string[] = [];
+      let finalResponse = '';
 
-      setMessages((prev) => [...prev, assistantMessage]);
-      setCurrentTaskId(data.task_id);
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\\n\\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                
+                if (data.type === 'status' || data.type === 'tool_call' || data.type === 'tool_result') {
+                  statusUpdates.push(data.content);
+                  setMessages((prev) => prev.map(msg => 
+                    msg.id === statusMessageId 
+                      ? { ...msg, content: statusUpdates.join('\\n') }
+                      : msg
+                  ));
+                } else if (data.type === 'response') {
+                  finalResponse = data.content;
+                } else if (data.type === 'complete') {
+                  if (finalResponse) {
+                    setMessages((prev) => prev.map(msg => 
+                      msg.id === statusMessageId 
+                        ? { ...msg, content: finalResponse, isStreaming: false }
+                        : msg
+                    ));
+                  }
+                }
+              } catch (e) {
+                console.error('Error parsing SSE data:', e);
+              }
+            }
+          }
+        }
+      }
+
       loadTasks();
     } catch (error: any) {
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: `⚠️ I encountered an error: ${error.message}\n\nPlease make sure the OpenAI API key is configured. You can add it by running:\n\`\`\`bash\ncd worker && npx wrangler secret put OPENAI_API_KEY\n\`\`\``,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      console.error('Error:', error);
+      setMessages((prev) => prev.map(msg => 
+        msg.id === statusMessageId 
+          ? { ...msg, content: `❌ Error: ${error.message}`, isStreaming: false }
+          : msg
+      ));
     } finally {
       setIsLoading(false);
     }
@@ -118,59 +166,36 @@ function App() {
     }
   };
 
-  const loadTask = async (taskId: string) => {
-    setCurrentTaskId(taskId);
-    const { data, error } = await supabase
-      .from('task_steps')
-      .select('*')
-      .eq('task_id', taskId)
-      .order('created_at', { ascending: true});
-
-    if (!error && data) {
-      const taskMessages: Message[] = data.flatMap((step: any) => [
-        {
-          id: `${step.id}-user`,
-          role: 'user' as const,
-          content: step.description,
-          timestamp: new Date(step.created_at),
-        },
-        {
-          id: `${step.id}-assistant`,
-          role: 'assistant' as const,
-          content: step.result || 'Processing...',
-          timestamp: new Date(step.created_at),
-        },
-      ]);
-      setMessages(taskMessages);
-    }
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   };
 
   return (
     <div className="app">
       {/* Sidebar */}
-      <div className={`sidebar ${showSidebar ? 'open' : 'closed'}`}>
+      <div className={`sidebar ${showSidebar ? 'open' : ''}`}>
         <div className="sidebar-header">
           <div className="logo">
             <div className="logo-icon">M</div>
-            <h1>Morgus</h1>
+            <h1 className="logo-text">Morgus</h1>
           </div>
-          <button
-            className="new-chat-btn"
-            onClick={() => {
-              setMessages([
-                {
-                  id: '1',
-                  role: 'assistant',
-                  content: '👋 Hello! I\'m **Morgus**, your autonomous AI agent. What would you like to accomplish today?',
-                  timestamp: new Date(),
-                },
-              ]);
-              setCurrentTaskId(null);
-            }}
-          >
-            <span>+</span> New Chat
-          </button>
+          <div className="status-indicator">
+            <span className="status-dot"></span>
+            <span>Online</span>
+          </div>
         </div>
+
+        <button className="new-chat-btn" onClick={() => {
+          setMessages([{
+            id: '1',
+            role: 'assistant',
+            content: '👋 Hello! I\'m **Morgus**, your autonomous AI agent. I can help you with:\n\n• Research and information gathering\n• Planning complex projects\n• Writing and executing code\n• Deploying applications\n• And much more!\n\nWhat would you like to accomplish today?',
+            timestamp: new Date(),
+          }]);
+          setCurrentTaskId(null);
+        }}>
+          + New Chat
+        </button>
 
         <div className="task-list">
           <h3>Recent Tasks</h3>
@@ -178,7 +203,7 @@ function App() {
             <div
               key={task.id}
               className={`task-item ${currentTaskId === task.id ? 'active' : ''}`}
-              onClick={() => loadTask(task.id)}
+              onClick={() => setCurrentTaskId(task.id)}
             >
               <div className="task-title">{task.description.substring(0, 50)}...</div>
               <div className="task-status">{task.status}</div>
@@ -187,60 +212,41 @@ function App() {
         </div>
       </div>
 
-      {/* Main Chat Area */}
+      {/* Main Content */}
       <div className="main-content">
         <div className="chat-header">
           <button className="sidebar-toggle" onClick={() => setShowSidebar(!showSidebar)}>
             ☰
           </button>
           <h2>Morgus AI Agent</h2>
-          <div className="status-indicator">
-            <span className="status-dot"></span>
-            Online
-          </div>
         </div>
 
         <div className="messages-container">
           {messages.map((message) => (
             <div key={message.id} className={`message ${message.role}`}>
               <div className="message-avatar">
-                {message.role === 'user' ? '👤' : '🤖'}
+                {message.role === 'assistant' ? '🤖' : '👤'}
               </div>
               <div className="message-content">
                 <div className="message-text">
-                  {message.content.split('\n').map((line, i) => {
-                    // Handle bold text
-                    const parts = line.split(/\*\*(.*?)\*\*/g);
-                    return (
-                      <p key={i}>
-                        {parts.map((part, j) =>
-                          j % 2 === 1 ? <strong key={j}>{part}</strong> : part
-                        )}
-                      </p>
-                    );
-                  })}
+                  {message.content.split('\\n').map((line, i) => (
+                    <p key={i}>{line}</p>
+                  ))}
                 </div>
-                <div className="message-time">
-                  {message.timestamp.toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </div>
+                <div className="message-time">{formatTime(message.timestamp)}</div>
               </div>
             </div>
           ))}
           {isLoading && (
-            <div className="thinking-light-show">
-              <div className="light-show-container">
-                <div className="light-show-bg"></div>
-                <div className="light-orb"></div>
-                <div className="light-orb"></div>
-                <div className="light-orb"></div>
-                <div className="light-orb"></div>
-                <div className="light-orb"></div>
+            <div className="message assistant">
+              <div className="message-avatar">🤖</div>
+              <div className="message-content">
+                <div className="typing-indicator">
+                  <span className="typing-dot"></span>
+                  <span className="typing-dot"></span>
+                  <span className="typing-dot"></span>
+                </div>
               </div>
-              <div className="thinking-text">✨ Morgus is thinking...</div>
-              <div className="rainbow-wave"></div>
             </div>
           )}
           <div ref={messagesEndRef} />
@@ -257,13 +263,11 @@ function App() {
               disabled={isLoading}
             />
             <button
-              onClick={handleSend}
-              disabled={!input.trim() || isLoading}
               className="send-button"
+              onClick={handleSend}
+              disabled={isLoading || !input.trim()}
             >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M2 10L18 2L10 18L8 11L2 10Z" />
-              </svg>
+              ➤
             </button>
           </div>
         </div>

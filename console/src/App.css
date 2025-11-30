@@ -19,13 +19,13 @@ body {
   width: 100vw;
   display: flex;
   background: linear-gradient(135deg, 
-    #ffffff 0%,
-    #ffff00 15%,
-    #00ff00 30%,
-    #ff8800 50%,
-    #ff0080 70%,
-    #ff00ff 85%,
-    #00ffff 100%
+    #fef3c7 0%,
+    #fde68a 15%,
+    #d9f99d 30%,
+    #fed7aa 50%,
+    #fbcfe8 70%,
+    #e9d5ff 85%,
+    #bfdbfe 100%
   );
   background-size: 400% 400%;
   animation: gradientShift 12s ease infinite;
@@ -326,12 +326,12 @@ body {
 }
 
 .message.user .message-text {
-  background: linear-gradient(135deg, #ff0080 0%, #ff8800 50%, #ffff00 100%);
+  background: linear-gradient(135deg, #e879f9 0%, #f97316 50%, #fbbf24 100%);
   color: white;
   border: none;
-  box-shadow: 0 6px 24px rgba(255, 0, 128, 0.4), 0 0 40px rgba(255, 136, 0, 0.2);
+  box-shadow: 0 4px 16px rgba(232, 121, 249, 0.25);
   font-weight: 500;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .message-text p {

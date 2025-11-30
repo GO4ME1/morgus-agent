@@ -1,10 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
+import { AutonomousAgent } from './agent';
 
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_KEY: string;
   OPENAI_API_KEY: string;
   E2B_API_KEY: string;
+  TAVILY_API_KEY?: string;
 }
 
 export default {
@@ -42,54 +44,16 @@ export default {
           hasOpenAI: !!env.OPENAI_API_KEY,
           hasSupabase: !!env.SUPABASE_URL && !!env.SUPABASE_KEY,
           hasE2B: !!env.E2B_API_KEY,
+          hasTavily: !!env.TAVILY_API_KEY,
           openaiKeyPrefix: keyPrefix
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      // Create task
-      if (path === '/tasks' && request.method === 'POST') {
-        const body = await request.json() as { description: string };
-        
-        const { data: task, error } = await supabase
-          .from('tasks')
-          .insert({
-            description: body.description,
-            status: 'pending',
-            created_at: new Date().toISOString(),
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        return new Response(JSON.stringify(task), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 201,
-        });
-      }
-
-      // Get task
-      if (path.startsWith('/tasks/') && request.method === 'GET') {
-        const taskId = path.split('/')[2];
-        
-        const { data: task, error } = await supabase
-          .from('tasks')
-          .select('*, task_steps(*)')
-          .eq('id', taskId)
-          .single();
-
-        if (error) throw error;
-
-        return new Response(JSON.stringify(task), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      // Execute task (chat-based)
+      // Chat endpoint with streaming
       if (path === '/chat' && request.method === 'POST') {
-        const body = await request.json() as { message: string; task_id?: string };
+        const body = await request.json() as { message: string; task_id?: string; stream?: boolean };
         
         // Create or get task
         let taskId = body.task_id;
@@ -109,88 +73,133 @@ export default {
           taskId = task.id;
         }
 
-        // Call OpenAI API to process the message
-        const systemPrompt = `You are Morgus, an autonomous AI agent that helps users accomplish tasks. 
-You can:
-- Research information
-- Plan complex projects
-- Write code
-- Execute commands
-- Deploy applications
+        // Check if streaming is requested
+        if (body.stream) {
+          // Return streaming response
+          const { readable, writable } = new TransformStream();
+          const writer = writable.getWriter();
+          const encoder = new TextEncoder();
 
-Respond conversationally and break down complex tasks into steps.`;
+          // Start agent execution in background
+          (async () => {
+            try {
+              const agent = new AutonomousAgent({
+                maxIterations: 10,
+                model: 'gpt-4-turbo-preview',
+              });
 
-        console.log('Making OpenAI API call...');
-        console.log('API Key prefix:', env.OPENAI_API_KEY ? env.OPENAI_API_KEY.substring(0, 15) : 'missing');
-        
-        const openaiResponse = await fetch(
-          'https://api.openai.com/v1/chat/completions',
-          {
-            method: 'POST',
+              let finalResponse = '';
+              let stepNumber = 1;
+
+              for await (const message of agent.executeTask(body.message, env)) {
+                // Send message to client
+                await writer.write(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
+
+                // Save step to database
+                await supabase.from('task_steps').insert({
+                  task_id: taskId,
+                  phase: 'execution',
+                  step_number: stepNumber++,
+                  description: message.content,
+                  result: JSON.stringify(message.metadata || {}),
+                  status: message.type === 'error' ? 'error' : 'completed',
+                  created_at: new Date().toISOString(),
+                });
+
+                if (message.type === 'response') {
+                  finalResponse = message.content;
+                }
+              }
+
+              // Update task as completed
+              await supabase
+                .from('tasks')
+                .update({ 
+                  status: 'completed', 
+                  result: finalResponse,
+                  updated_at: new Date().toISOString() 
+                })
+                .eq('id', taskId);
+
+              await writer.close();
+            } catch (error: any) {
+              await writer.write(encoder.encode(`data: ${JSON.stringify({
+                type: 'error',
+                content: error.message
+              })}\n\n`));
+              await writer.close();
+            }
+          })();
+
+          return new Response(readable, {
             headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
+              ...corsHeaders,
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              'Connection': 'keep-alive',
             },
-            body: JSON.stringify({
-              model: 'gpt-3.5-turbo',
-              messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: body.message }
-              ],
-              temperature: 0.7,
-              max_tokens: 2048,
-            }),
-          }
-        );
-
-        if (!openaiResponse.ok) {
-          const errorData = await openaiResponse.json() as any;
-          console.error('OpenAI API Error:', errorData);
-          console.error('Status:', openaiResponse.status);
-          throw new Error(`OpenAI API error: ${errorData.error?.message || openaiResponse.statusText}`);
+          });
         }
 
-        const data = await openaiResponse.json() as any;
-        const response = data.choices?.[0]?.message?.content || 
-          'I apologize, but I encountered an error processing your request.';
-
-        // Save step
-        await supabase.from('task_steps').insert({
-          task_id: taskId,
-          phase: 'chat',
-          step_number: 1,
-          description: body.message,
-          result: response,
-          status: 'completed',
-          created_at: new Date().toISOString(),
+        // Non-streaming response (for compatibility)
+        const agent = new AutonomousAgent({
+          maxIterations: 10,
+          model: 'gpt-4-turbo-preview',
         });
+
+        let finalResponse = '';
+        let stepNumber = 1;
+
+        for await (const message of agent.executeTask(body.message, env)) {
+          // Save step to database
+          await supabase.from('task_steps').insert({
+            task_id: taskId,
+            phase: 'execution',
+            step_number: stepNumber++,
+            description: message.content,
+            result: JSON.stringify(message.metadata || {}),
+            status: message.type === 'error' ? 'error' : 'completed',
+            created_at: new Date().toISOString(),
+          });
+
+          if (message.type === 'response') {
+            finalResponse = message.content;
+          }
+        }
 
         // Update task
         await supabase
           .from('tasks')
-          .update({ status: 'completed', updated_at: new Date().toISOString() })
+          .update({ 
+            status: 'completed',
+            result: finalResponse,
+            updated_at: new Date().toISOString() 
+          })
           .eq('id', taskId);
 
         return new Response(JSON.stringify({
           task_id: taskId,
-          message: response,
+          message: finalResponse,
           status: 'completed'
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      // 404
+      // Not found
       return new Response(JSON.stringify({ error: 'Not found' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
 
     } catch (error: any) {
-      console.error('Error:', error);
-      return new Response(JSON.stringify({ error: error.message || 'Internal server error' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      console.error('Worker error:', error);
+      return new Response(JSON.stringify({ 
+        error: error.message || 'Internal server error',
+        details: error.stack
+      }), {
         status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
   },
