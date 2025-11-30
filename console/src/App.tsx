@@ -230,15 +230,17 @@ function App() {
             </div>
           ))}
           {isLoading && (
-            <div className="message assistant">
-              <div className="message-avatar">🤖</div>
-              <div className="message-content">
-                <div className="typing-indicator">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
+            <div className="thinking-light-show">
+              <div className="light-show-container">
+                <div className="light-show-bg"></div>
+                <div className="light-orb"></div>
+                <div className="light-orb"></div>
+                <div className="light-orb"></div>
+                <div className="light-orb"></div>
+                <div className="light-orb"></div>
               </div>
+              <div className="thinking-text">✨ Morgus is thinking...</div>
+              <div className="rainbow-wave"></div>
             </div>
           )}
           <div ref={messagesEndRef} />
