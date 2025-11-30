@@ -46,7 +46,7 @@ export async function handleThoughtsAPI(request: Request, env: any): Promise<Res
 
       if (error) throw error;
 
-      return new Response(JSON.stringify(data), {
+      return new Response(JSON.stringify({ thoughts: data }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

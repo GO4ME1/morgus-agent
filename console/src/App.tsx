@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from './lib/supabase';
+import { ThoughtsPanel } from './components/ThoughtsPanel';
 import './App.css';
 
 interface Message {
@@ -34,6 +35,7 @@ function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showSidebar, setShowSidebar] = useState(true);
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
+  const [currentThoughtId, setCurrentThoughtId] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -155,6 +157,7 @@ function App() {
         body: JSON.stringify({
           message: userInput,
           task_id: currentTaskId,
+          thought_id: currentThoughtId,
           stream: true,
           history: messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
           files: fileUrls,
@@ -256,6 +259,14 @@ function App() {
             + New Chat
           </button>
         </div>
+
+        <ThoughtsPanel
+          currentThoughtId={currentThoughtId}
+          onThoughtChange={setCurrentThoughtId}
+          onThoughtCreate={() => {
+            // Will be handled by ThoughtsPanel internally
+          }}
+        />
 
         <div className="task-list">
           <h3>Recent Tasks</h3>

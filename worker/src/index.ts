@@ -13,6 +13,7 @@ interface Env {
 interface ChatMessage {
   message: string;
   task_id?: string;
+  thought_id?: string;
   conversation_id?: string;
   stream?: boolean;
   history?: Array<{role: string, content: string}>;
@@ -102,6 +103,20 @@ export default {
         // Use history from request body (sent by frontend)
         const conversationHistory = body.history || [];
 
+        // If thought_id is provided, save message to thought
+        if (body.thought_id) {
+          try {
+            await supabase.from('thought_messages').insert({
+              thought_id: body.thought_id,
+              role: 'user',
+              content: body.message,
+              created_at: new Date().toISOString(),
+            });
+          } catch (error) {
+            console.error('Failed to save user message to thought:', error);
+          }
+        }
+
         // Add user message to history
         conversationHistory.push({
           role: 'user',
@@ -166,7 +181,19 @@ export default {
                 });
               }
 
-              // No need to save conversation - frontend maintains history
+              // Save assistant response to thought if thought_id is provided
+              if (body.thought_id && finalResponse) {
+                try {
+                  await supabase.from('thought_messages').insert({
+                    thought_id: body.thought_id,
+                    role: 'assistant',
+                    content: finalResponse.trim(),
+                    created_at: new Date().toISOString(),
+                  });
+                } catch (error) {
+                  console.error('Failed to save assistant response to thought:', error);
+                }
+              }
 
               // Update task status
               await supabase

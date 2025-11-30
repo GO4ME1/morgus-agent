@@ -1,0 +1,167 @@
+.thoughts-panel {
+  padding: 16px;
+  border-bottom: 1px solid #333;
+}
+
+.thoughts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.thoughts-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.create-thought-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #2a2a2a;
+  color: #e0e0e0;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.create-thought-btn:hover {
+  background: #3a3a3a;
+  border-color: #555;
+}
+
+.thought-creator {
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.thought-creator input,
+.thought-creator textarea {
+  width: 100%;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 8px;
+  color: #e0e0e0;
+  font-size: 14px;
+  margin-bottom: 8px;
+  font-family: inherit;
+}
+
+.thought-creator input:focus,
+.thought-creator textarea:focus {
+  outline: none;
+  border-color: #555;
+}
+
+.thought-creator textarea {
+  resize: vertical;
+  min-height: 50px;
+}
+
+.creator-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.creator-actions button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #3a3a3a;
+  color: #e0e0e0;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.creator-actions button:hover {
+  background: #4a4a4a;
+}
+
+.creator-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.thoughts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.thought-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.thought-item:hover {
+  background: #3a3a3a;
+  border-color: #444;
+}
+
+.thought-item.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+}
+
+.thought-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.thought-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #e0e0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.thought-description {
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.thought-item.active .thought-title,
+.thought-item.active .thought-description {
+  color: #fff;
+}
+
+.delete-thought-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  padding: 4px;
+  margin-left: 8px;
+}
+
+.delete-thought-btn:hover {
+  opacity: 1;
+}
