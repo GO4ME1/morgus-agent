@@ -156,7 +156,6 @@ function App() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
-      let accumulatedContent = '';
 
       while (true) {
         const { done, value } = await reader.read();
@@ -171,18 +170,13 @@ function App() {
             try {
               const data = JSON.parse(line.slice(6));
               
-              // Accumulate content instead of replacing
-              if (data.content) {
-                accumulatedContent = data.content;
-              }
-              
               // Update the status message
               setMessages((prev) =>
                 prev.map((msg) =>
                   msg.id === statusMessageId
                     ? {
                         ...msg,
-                        content: accumulatedContent || msg.content,
+                        content: data.content || msg.content,
                         isStreaming: data.type !== 'complete',
                       }
                     : msg
@@ -218,55 +212,6 @@ function App() {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
-    }
-  };
-
-  const handleFeedback = async (messageId: string, feedbackType: 'positive' | 'negative' | 'glitch') => {
-    try {
-      const message = messages.find(m => m.id === messageId);
-      if (!message) return;
-
-      // Find the corresponding user message (the one before this assistant message)
-      const messageIndex = messages.findIndex(m => m.id === messageId);
-      const userMessage = messageIndex > 0 ? messages[messageIndex - 1] : null;
-
-      await fetch(`${API_URL}/feedback`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message_id: messageId,
-          feedback_type: feedbackType,
-          input: userMessage?.content || '',
-          output: message.content,
-          task_id: currentTaskId,
-        }),
-      });
-
-      // Visual feedback
-      const emoji = feedbackType === 'positive' ? '✅' : feedbackType === 'negative' ? '❌' : '🍅';
-      alert(`${emoji} Feedback recorded! This will help improve Morgus.`);
-    } catch (error) {
-      console.error('Failed to submit feedback:', error);
-    }
-  };
-
-  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    const pastedText = e.clipboardData.getData('text');
-    
-    // If pasted content is large (>500 chars) or multi-line (>10 lines), create attachment
-    const lineCount = pastedText.split('\n').length;
-    const charCount = pastedText.length;
-    
-    if (charCount > 500 || lineCount > 10) {
-      e.preventDefault();
-      
-      // Create a file from the pasted content
-      const blob = new Blob([pastedText], { type: 'text/plain' });
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const file = new File([blob], `pasted_content_${timestamp}.txt`, { type: 'text/plain' });
-      
-      setUploadedFiles(prev => [...prev, file]);
-      setInput(prev => prev + (prev ? '\n' : '') + '[Content attached as file]');
     }
   };
 
@@ -348,27 +293,6 @@ function App() {
                   {message.role === 'assistant' && !message.isStreaming && (
                     <div className="action-buttons">
                       <button 
-                        className="icon-button feedback-button" 
-                        onClick={() => handleFeedback(message.id, 'positive')}
-                        title="Good response"
-                      >
-                        👍
-                      </button>
-                      <button 
-                        className="icon-button feedback-button" 
-                        onClick={() => handleFeedback(message.id, 'negative')}
-                        title="Bad response"
-                      >
-                        👎
-                      </button>
-                      <button 
-                        className="icon-button feedback-button" 
-                        onClick={() => handleFeedback(message.id, 'glitch')}
-                        title="Report glitch/bug"
-                      >
-                        🍅
-                      </button>
-                      <button 
                         className="icon-button" 
                         onClick={() => copyToClipboard(message.content)}
                         title="Copy to clipboard"
@@ -434,7 +358,6 @@ function App() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              onPaste={handlePaste}
               placeholder="Message Morgus..."
               rows={1}
               disabled={isLoading}
