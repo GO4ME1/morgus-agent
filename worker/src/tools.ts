@@ -261,17 +261,15 @@ export const searchImagesTool: Tool = {
         pexels_url: photo.url
       }));
       
-      // Return formatted markdown with images
-      let result = `Found ${images.length} images for "${args.query}". Here they are:\n\n`;
-      result += `---\n\n`;
-      result += `### 📸 Images\n\n`;
+      // Return ONLY the markdown images, nothing else
+      // The agent will wrap them in the proper format
+      let result = '';
       
       images.forEach((img: any, index: number) => {
-        result += `![${img.alt}](${img.medium})\n`;
-        result += `*Photo by [${img.photographer}](${img.photographer_url}) on [Pexels](${img.pexels_url})*\n\n`;
+        result += `![${img.alt}](${img.medium}) `;
       });
       
-      return result;
+      return result.trim();
     } catch (error: any) {
       return `Error searching images: ${error.message}`;
     }

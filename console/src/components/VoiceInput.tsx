@@ -79,17 +79,31 @@ export function VoiceInput({ onTranscript, isListening, onListeningChange }: Voi
 
 // Track which messages have been spoken to prevent duplicates
 const spokenMessages = new Set<string>();
+let isCurrentlySpeaking = false;
+let currentSpeakingText = '';
 
 // Text-to-Speech function using ElevenLabs API
 export async function speakText(text: string) {
   // Create a hash of the text to track if we've already spoken it
   const textHash = text.substring(0, 100); // Use first 100 chars as identifier
   
+  // AGGRESSIVE duplicate prevention
   if (spokenMessages.has(textHash)) {
     console.log('[TTS] Already spoken this message, skipping');
     return;
   }
   
+  // Prevent concurrent calls with the same text
+  if (isCurrentlySpeaking && currentSpeakingText === textHash) {
+    console.log('[TTS] Already speaking this exact message, skipping');
+    return;
+  }
+  
+  // Stop any ongoing speech before starting new one
+  stopSpeaking();
+  
+  isCurrentlySpeaking = true;
+  currentSpeakingText = textHash;
   spokenMessages.add(textHash);
   
   // Clean up old entries to prevent memory leak (keep last 10)
@@ -157,12 +171,23 @@ export async function speakText(text: string) {
     audio.onended = () => {
       URL.revokeObjectURL(audioUrl);
       (window as any).__currentAudio = null;
+      isCurrentlySpeaking = false;
+      currentSpeakingText = '';
+    };
+    
+    audio.onerror = () => {
+      URL.revokeObjectURL(audioUrl);
+      (window as any).__currentAudio = null;
+      isCurrentlySpeaking = false;
+      currentSpeakingText = '';
     };
   } catch (error) {
     console.error('[TTS] ElevenLabs TTS failed:', error);
     console.error('[TTS] Error details:', JSON.stringify(error, null, 2));
     // Don't fallback to browser TTS - just log the error
     console.log('[TTS] Skipping TTS due to error (no fallback to browser TTS)');
+    isCurrentlySpeaking = false;
+    currentSpeakingText = '';
   }
 }
 
@@ -174,6 +199,11 @@ export function getVoices(): SpeechSynthesisVoice[] {
 export function stopSpeaking() {
   // Clear spoken messages when manually stopping
   spokenMessages.clear();
+  
+  // Reset speaking flags
+  isCurrentlySpeaking = false;
+  currentSpeakingText = '';
+  
   // Stop ElevenLabs audio if playing
   const currentAudio = (window as any).__currentAudio;
   if (currentAudio) {
@@ -182,7 +212,7 @@ export function stopSpeaking() {
     (window as any).__currentAudio = null;
   }
   
-  // Also stop browser TTS
+  // Also stop browser TTS just in case
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
   }
