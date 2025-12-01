@@ -84,8 +84,8 @@ export function speakText(text: string, voiceName?: string) {
     window.speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.9; // Slightly slower for Morgan Freeman effect
-    utterance.pitch = 0.8; // Lower pitch for deeper voice
+    utterance.rate = 0.75; // Much slower, more deliberate speech
+    utterance.pitch = 0.5; // Very low pitch for deep Morgan Freeman voice
     utterance.volume = 1.0;
     
     // Try to find a deep male voice
