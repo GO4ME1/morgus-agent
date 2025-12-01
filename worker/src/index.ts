@@ -165,9 +165,9 @@ export default {
                 // Send message to client
                 await writer.write(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
 
-                // Collect final response
+                // Collect final response (only keep the LAST one)
                 if (message.type === 'response') {
-                  finalResponse += message.content + '\n';
+                  finalResponse = message.content;
                 }
 
                 // Save step to database
@@ -233,7 +233,8 @@ export default {
 
         for await (const message of agent.executeTask(body.message, env, conversationHistory)) {
           if (message.type === 'response') {
-            finalResponse += message.content + '\n';
+            // Only keep the LAST response, don't accumulate
+            finalResponse = message.content;
           }
 
           // Save step to database

@@ -344,32 +344,29 @@ body {
 
 /* Neon/retro styling for bold text in assistant messages */
 .message.assistant .message-text strong {
-  background: linear-gradient(135deg, #ff0080 0%, #ff8c00 50%, #ffff00 100%);
+  /* Softer gradient for better readability */
+  background: linear-gradient(135deg, #ff4d94 0%, #ff9933 50%, #ffcc00 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-size: 1.15em;
   font-weight: 800;
-  text-shadow: 0 0 20px rgba(255, 0, 128, 0.5);
-  filter: drop-shadow(0 0 10px rgba(255, 140, 0, 0.6));
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
+  /* Remove glow effects for better readability */
 }
 
-/* Extra emphasis for all-caps bold */
+/* When copying, use normal text color */
+.message.assistant .message-text strong::selection {
+  -webkit-text-fill-color: #1f2937;
+  background: #fbbf24;
+}
+
+/* Extra emphasis for first bold text (answer) */
 .message.assistant .message-text strong:first-child {
-  font-size: 1.3em;
+  font-size: 1.4em;
   display: block;
-  margin-bottom: 12px;
-  animation: neonPulse 2s ease-in-out infinite;
-}
-
-@keyframes neonPulse {
-  0%, 100% {
-    filter: drop-shadow(0 0 10px rgba(255, 0, 128, 0.6)) drop-shadow(0 0 20px rgba(255, 140, 0, 0.4));
-  }
-  50% {
-    filter: drop-shadow(0 0 20px rgba(255, 0, 128, 0.8)) drop-shadow(0 0 30px rgba(255, 140, 0, 0.6));
-  }
+  margin-bottom: 16px;
+  /* No animation for better readability */
 }
 
 .message-time {
