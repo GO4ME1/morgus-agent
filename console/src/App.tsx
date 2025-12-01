@@ -179,6 +179,29 @@ function App() {
     }
   };
 
+  const rateMessage = async (messageId: string, rating: 'good' | 'bad' | 'glitch') => {
+    try {
+      // Save rating to database
+      const { error } = await supabase
+        .from('message_ratings')
+        .insert({
+          message_id: messageId,
+          rating: rating,
+          created_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+
+      // Show feedback
+      const emoji = rating === 'good' ? '👍' : rating === 'bad' ? '👎' : '🍅';
+      const text = rating === 'good' ? 'Thanks for the feedback!' : rating === 'bad' ? 'Sorry! I\'ll try to improve.' : 'Glitch reported!';
+      alert(`${emoji} ${text}`);
+    } catch (error) {
+      console.error('Failed to save rating:', error);
+      // Don't show error to user for ratings
+    }
+  };
+
   const handleSend = async () => {
     if ((!input.trim() && uploadedFiles.length === 0) || isLoading) return;
 
@@ -426,6 +449,27 @@ function App() {
                         title="Save to thought"
                       >
                         💭
+                      </button>
+                      <button 
+                        className="icon-button" 
+                        onClick={() => rateMessage(message.id, 'good')}
+                        title="Good response"
+                      >
+                        👍
+                      </button>
+                      <button 
+                        className="icon-button" 
+                        onClick={() => rateMessage(message.id, 'bad')}
+                        title="Bad response"
+                      >
+                        👎
+                      </button>
+                      <button 
+                        className="icon-button" 
+                        onClick={() => rateMessage(message.id, 'glitch')}
+                        title="Report glitch"
+                      >
+                        🍅
                       </button>
                     </div>
                   )}
