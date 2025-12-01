@@ -66,12 +66,12 @@ export class MOEEndpoint {
           tokens: result.winner.tokens.total,
           cost: result.winner.cost,
         },
-        allModels: result.allResponses.map((r, i) => ({
+        allModels: result.allResponses.map((r) => ({
           model: r.model,
           latency: r.latency,
           tokens: r.tokens.total,
           cost: r.cost,
-          score: result.nashResult.scores[i]?.score || 0,
+          score: result.nashResult.scores.get(r.model) || 0,
         })),
         nashExplanation: result.nashResult.explanation,
         totalLatency: result.metadata.totalLatency,
@@ -98,11 +98,11 @@ export class MOEEndpoint {
 
     allResponses.forEach((r) => {
       const isWinner = r.model === winner.model;
-      const scoreData = nashResult.scores.find((s) => s.model === r.model);
-      const score = scoreData ? `${(scoreData.score * 100).toFixed(1)}%` : 'N/A';
+      const scoreValue = nashResult.scores.get(r.model);
+      const score = scoreValue !== undefined ? `${(scoreValue * 100).toFixed(1)}%` : 'N/A';
       const icon = isWinner ? '🏆 ' : '';
 
-      response += `| ${icon}${this.getModelName(r.model)} | ${r.latency}ms | ${r.tokens.total} | ${score} |\\n`;
+      response += `| ${icon}${this.getModelName(r.model)} | ${r.latency}ms | ${r.tokens.total} | ${score} |\n`;
     });
 
     response += '\\n';
