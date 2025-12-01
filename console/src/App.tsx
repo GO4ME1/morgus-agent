@@ -47,6 +47,7 @@ function App() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isListening, setIsListening] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -60,6 +61,15 @@ function App() {
 
   useEffect(() => {
     loadTasks();
+  }, []);
+
+  // Poll audio playing state
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const playing = (window as any).__isAudioPlaying || false;
+      setIsAudioPlaying(playing);
+    }, 100);
+    return () => clearInterval(interval);
   }, []);
 
   // Load messages when thought changes
@@ -562,40 +572,29 @@ function App() {
               onListeningChange={setIsListening}
             />
             <button
-              className="voice-button"
+              className={isAudioPlaying ? "stop-audio-button" : "voice-button"}
               onClick={() => {
-                const newAutoSpeak = !autoSpeak;
-                setAutoSpeak(newAutoSpeak);
-                if (!newAutoSpeak) {
+                if (isAudioPlaying) {
+                  // Stop audio if playing
                   stopSpeaking();
                 } else {
-                  // Read the last assistant message when enabling
-                  const lastAssistantMessage = messages.filter(m => m.role === 'assistant').pop();
-                  if (lastAssistantMessage?.content) {
-                    speakText(lastAssistantMessage.content);
+                  // Toggle auto-speak
+                  const newAutoSpeak = !autoSpeak;
+                  setAutoSpeak(newAutoSpeak);
+                  if (!newAutoSpeak) {
+                    stopSpeaking();
+                  } else {
+                    // Read the last assistant message when enabling
+                    const lastAssistantMessage = messages.filter(m => m.role === 'assistant').pop();
+                    if (lastAssistantMessage?.content) {
+                      speakText(lastAssistantMessage.content);
+                    }
                   }
                 }
               }}
-              title={autoSpeak ? 'Disable auto-speak' : 'Enable auto-speak'}
+              title={isAudioPlaying ? 'Stop audio' : (autoSpeak ? 'Disable auto-speak' : 'Enable auto-speak')}
             >
-              {autoSpeak ? '🔊' : '🔇'}
-            </button>
-            <button
-              className="stop-audio-button"
-              onClick={() => {
-                // Emergency stop all audio
-                stopSpeaking();
-                // Also force stop any lingering audio
-                window.speechSynthesis.cancel();
-                const audioElements = document.querySelectorAll('audio');
-                audioElements.forEach(audio => {
-                  audio.pause();
-                  audio.currentTime = 0;
-                });
-              }}
-              title="STOP all audio immediately"
-            >
-              ⏹️
+              {isAudioPlaying ? '⏹️' : (autoSpeak ? '🔊' : '🔇')}
             </button>
             {isLoading ? (
               <button

@@ -162,6 +162,7 @@ export async function speakText(text: string) {
     
     // Store current audio for stopping
     (window as any).__currentAudio = audio;
+    (window as any).__isAudioPlaying = true;
     
     console.log('[TTS] Playing audio...');
     await audio.play();
@@ -171,6 +172,7 @@ export async function speakText(text: string) {
     audio.onended = () => {
       URL.revokeObjectURL(audioUrl);
       (window as any).__currentAudio = null;
+      (window as any).__isAudioPlaying = false;
       isCurrentlySpeaking = false;
       currentSpeakingText = '';
     };
@@ -178,6 +180,7 @@ export async function speakText(text: string) {
     audio.onerror = () => {
       URL.revokeObjectURL(audioUrl);
       (window as any).__currentAudio = null;
+      (window as any).__isAudioPlaying = false;
       isCurrentlySpeaking = false;
       currentSpeakingText = '';
     };
@@ -203,6 +206,7 @@ export function stopSpeaking() {
   // Reset speaking flags
   isCurrentlySpeaking = false;
   currentSpeakingText = '';
+  (window as any).__isAudioPlaying = false;
   
   // Stop ElevenLabs audio if playing
   const currentAudio = (window as any).__currentAudio;
