@@ -342,6 +342,36 @@ body {
   margin-bottom: 0;
 }
 
+/* Neon/retro styling for bold text in assistant messages */
+.message.assistant .message-text strong {
+  background: linear-gradient(135deg, #ff0080 0%, #ff8c00 50%, #ffff00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 1.15em;
+  font-weight: 800;
+  text-shadow: 0 0 20px rgba(255, 0, 128, 0.5);
+  filter: drop-shadow(0 0 10px rgba(255, 140, 0, 0.6));
+  letter-spacing: 0.5px;
+}
+
+/* Extra emphasis for all-caps bold */
+.message.assistant .message-text strong:first-child {
+  font-size: 1.3em;
+  display: block;
+  margin-bottom: 12px;
+  animation: neonPulse 2s ease-in-out infinite;
+}
+
+@keyframes neonPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 10px rgba(255, 0, 128, 0.6)) drop-shadow(0 0 20px rgba(255, 140, 0, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(255, 0, 128, 0.8)) drop-shadow(0 0 30px rgba(255, 140, 0, 0.6));
+  }
+}
+
 .message-time {
   font-size: 13px;
   color: #ff8800;
@@ -801,6 +831,22 @@ body {
 
 .speaker-button:hover {
   transform: scale(1.1);
+}
+
+.stop-button {
+  background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(245, 87, 108, 0.3);
+}
+
+.stop-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.5);
 }
 
 .attachments {

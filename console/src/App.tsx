@@ -1,8 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
+import { marked } from 'marked';
 import { supabase } from './lib/supabase';
 import { ThoughtsPanel } from './components/ThoughtsPanel';
 import { VoiceInput, speakText } from './components/VoiceInput';
 import './App.css';
+
+// Configure marked for inline rendering
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+});
 
 interface Message {
   id: string;
@@ -386,9 +393,7 @@ function App() {
               </div>
               <div className="message-content">
                 <div className="message-text">
-                  {message.content.split('\\n').map((line, i) => (
-                    <p key={i}>{line}</p>
-                  ))}
+                  <div dangerouslySetInnerHTML={{ __html: marked.parse(message.content) }} />
                   {message.attachments && message.attachments.length > 0 && (
                     <div className="attachments">
                       {message.attachments.map((file, i) => (
@@ -470,6 +475,14 @@ function App() {
             >
               📎
             </button>
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Message Morgus..."
+              rows={1}
+              disabled={isLoading}
+            />
             <VoiceInput
               onTranscript={(text) => setInput(text)}
               isListening={isListening}
@@ -482,21 +495,23 @@ function App() {
             >
               {autoSpeak ? '🔊' : '🔇'}
             </button>
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Message Morgus..."
-              rows={1}
-              disabled={isLoading}
-            />
-            <button
-              className="send-button"
-              onClick={handleSend}
-              disabled={isLoading || (!input.trim() && uploadedFiles.length === 0)}
-            >
-              ➤
-            </button>
+            {isLoading ? (
+              <button
+                className="stop-button"
+                onClick={() => window.location.reload()}
+                title="Stop generation"
+              >
+                ⏹️
+              </button>
+            ) : (
+              <button
+                className="send-button"
+                onClick={handleSend}
+                disabled={!input.trim() && uploadedFiles.length === 0}
+              >
+                ➤
+              </button>
+            )}
           </div>
         </div>
       </div>
