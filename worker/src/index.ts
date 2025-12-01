@@ -196,10 +196,16 @@ export default {
               }
 
               // Update task status
-              await supabase
+              const { error: updateError } = await supabase
                 .from('tasks')
                 .update({ status: 'completed', updated_at: new Date().toISOString() })
                 .eq('id', taskId);
+              
+              if (updateError) {
+                console.error('Failed to update task status:', updateError);
+              } else {
+                console.log('Task status updated to completed:', taskId);
+              }
 
               await writer.close();
             } catch (error: any) {
@@ -251,10 +257,16 @@ export default {
         // No need to save conversation - frontend maintains history
 
         // Update task status
-        await supabase
+        const { error: updateError } = await supabase
           .from('tasks')
           .update({ status: 'completed', updated_at: new Date().toISOString() })
           .eq('id', taskId);
+        
+        if (updateError) {
+          console.error('Failed to update task status:', updateError);
+        } else {
+          console.log('Task status updated to completed:', taskId);
+        }
 
         return new Response(JSON.stringify({
           task_id: taskId,
