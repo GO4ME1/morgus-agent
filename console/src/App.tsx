@@ -263,7 +263,7 @@ function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: userInput,
+          message: userInput || (fileUrls.length > 0 ? 'Please analyze these files' : ''),
           task_id: currentTaskId,
           thought_id: currentThoughtId,
           stream: true,
