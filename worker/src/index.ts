@@ -8,6 +8,10 @@ interface Env {
   OPENAI_API_KEY: string;
   E2B_API_KEY: string;
   TAVILY_API_KEY?: string;
+  PEXELS_API_KEY?: string;
+  GEMINI_API_KEY?: string;
+  ELEVENLABS_API_KEY?: string;
+  ELEVENLABS_VOICE_ID?: string;
 }
 
 interface ChatMessage {
@@ -50,6 +54,106 @@ export default {
       // Thoughts API routing
       if (path.startsWith('/api/thoughts')) {
         return handleThoughtsAPI(request, env);
+      }
+
+      // File upload endpoint
+      if (path === '/upload' && request.method === 'POST') {
+        try {
+          const formData = await request.formData();
+          const files = formData.getAll('files');
+          
+          if (files.length === 0) {
+            return new Response(JSON.stringify({ error: 'No files provided' }), {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+
+          // Convert files to base64 data URLs for the agent to process
+          const fileData = await Promise.all(
+            files.map(async (file: any) => {
+              const buffer = await file.arrayBuffer();
+              const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+              return {
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                data: `data:${file.type};base64,${base64}`,
+              };
+            })
+          );
+
+          return new Response(JSON.stringify({ 
+            success: true,
+            files: fileData,
+            urls: fileData.map(f => f.data) // Return data URLs
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } catch (error: any) {
+          return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+
+      // Text-to-Speech endpoint
+      if (path === '/api/tts' && request.method === 'POST') {
+        const body = await request.json();
+        const { text } = body;
+
+        if (!text) {
+          return new Response(JSON.stringify({ error: 'Text is required' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        if (!env.ELEVENLABS_API_KEY || !env.ELEVENLABS_VOICE_ID) {
+          return new Response(JSON.stringify({ error: 'ElevenLabs not configured' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        try {
+          const response = await fetch(
+            `https://api.elevenlabs.io/v1/text-to-speech/${env.ELEVENLABS_VOICE_ID}`,
+            {
+              method: 'POST',
+              headers: {
+                'xi-api-key': env.ELEVENLABS_API_KEY,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                text: text,
+                model_id: 'eleven_multilingual_v2',
+              }),
+            }
+          );
+
+          if (!response.ok) {
+            const error = await response.text();
+            return new Response(JSON.stringify({ error: `ElevenLabs API error: ${error}` }), {
+              status: response.status,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+
+          const audioData = await response.arrayBuffer();
+          return new Response(audioData, {
+            headers: {
+              ...corsHeaders,
+              'Content-Type': 'audio/mpeg',
+            },
+          });
+        } catch (error: any) {
+          return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
       }
 
       // Debug endpoint
@@ -117,10 +221,19 @@ export default {
           }
         }
 
-        // Add user message to history
+        // Add user message to history with files if provided
+        let userMessage = body.message;
+        if (body.files && body.files.length > 0) {
+          userMessage += '\n\n**Attached Files:**\n';
+          body.files.forEach((fileUrl: string, index: number) => {
+            // Include the actual data URL so the agent can process it
+            userMessage += `\n${index + 1}. [File ${index + 1}](${fileUrl})`;
+          });
+        }
+        
         conversationHistory.push({
           role: 'user',
-          content: body.message
+          content: userMessage
         });
 
         // Create or get task

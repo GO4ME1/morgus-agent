@@ -204,6 +204,81 @@ export const executeCodeTool: Tool = {
 };
 
 /**
+ * Pexels image search tool
+ */
+export const searchImagesTool: Tool = {
+  name: 'search_images',
+  description: 'Search for free stock images using Pexels. Use this to find relevant images to enhance your responses with visual content.',
+  parameters: {
+    type: 'object',
+    properties: {
+      query: {
+        type: 'string',
+        description: 'The search query for images (e.g., "nature", "technology", "business")'
+      },
+      per_page: {
+        type: 'number',
+        description: 'Number of images to return (default: 3, max: 10)',
+        default: 3
+      }
+    },
+    required: ['query']
+  },
+  execute: async (args: { query: string; per_page?: number }, env: any) => {
+    try {
+      const apiKey = env.PEXELS_API_KEY;
+      if (!apiKey) {
+        return 'Error: Pexels API key not configured';
+      }
+
+      const perPage = Math.min(args.per_page || 3, 10);
+      const response = await fetch(
+        `https://api.pexels.com/v1/search?query=${encodeURIComponent(args.query)}&per_page=${perPage}`,
+        {
+          headers: {
+            'Authorization': apiKey,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Pexels API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.photos || data.photos.length === 0) {
+        return `No images found for "${args.query}"`;
+      }
+
+      // Return structured data that the agent can format
+      const images = data.photos.slice(0, 3).map((photo: any) => ({
+        url: photo.src.large,
+        medium: photo.src.medium,
+        alt: photo.alt || 'Image',
+        photographer: photo.photographer,
+        photographer_url: photo.photographer_url,
+        pexels_url: photo.url
+      }));
+      
+      // Return formatted markdown with images
+      let result = `Found ${images.length} images for "${args.query}". Here they are:\n\n`;
+      result += `---\n\n`;
+      result += `### 📸 Images\n\n`;
+      
+      images.forEach((img: any, index: number) => {
+        result += `![${img.alt}](${img.medium})\n`;
+        result += `*Photo by [${img.photographer}](${img.photographer_url}) on [Pexels](${img.pexels_url})*\n\n`;
+      });
+      
+      return result;
+    } catch (error: any) {
+      return `Error searching images: ${error.message}`;
+    }
+  },
+};
+
+/**
  * Think/Plan tool - allows the agent to reason and plan
  */
 export const thinkTool: Tool = {
@@ -235,6 +310,7 @@ export class ToolRegistry {
     this.register(searchWebTool);
     this.register(fetchUrlTool);
     this.register(executeCodeTool);
+    this.register(searchImagesTool);
     this.register(thinkTool);
   }
 

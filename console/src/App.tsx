@@ -305,8 +305,19 @@ function App() {
               );
               
               // Auto-speak if enabled and response is complete
-              if (autoSpeak && data.type === 'response' && data.content) {
-                speakText(data.content);
+              if (autoSpeak && data.type === 'complete') {
+                // Use setTimeout to ensure state has updated
+                setTimeout(() => {
+                  setMessages((currentMessages) => {
+                    const finalMessage = currentMessages.find(m => m.id === statusMessageId);
+                    if (finalMessage && finalMessage.content && !finalMessage.isStreaming) {
+                      console.log('[AUTO-SPEAK] Response complete, triggering TTS');
+                      console.log('[AUTO-SPEAK] Message content:', finalMessage.content.substring(0, 100));
+                      speakText(finalMessage.content);
+                    }
+                    return currentMessages; // Don't modify state
+                  });
+                }, 100);
               }
             } catch (e) {
               console.error('Failed to parse SSE data:', e);
@@ -553,10 +564,17 @@ function App() {
             <button
               className="speaker-button"
               onClick={() => {
-                const newValue = !autoSpeak;
-                setAutoSpeak(newValue);
-                if (!newValue) {
-                  stopSpeaking(); // Stop any ongoing speech when disabling
+                const newAutoSpeak = !autoSpeak;
+                setAutoSpeak(newAutoSpeak);
+                if (newAutoSpeak) {
+                  // When enabling, read the last assistant message
+                  const lastAssistantMessage = messages.filter(m => m.role === 'assistant' && !m.isStreaming).pop();
+                  if (lastAssistantMessage) {
+                    speakText(lastAssistantMessage.content);
+                  }
+                } else {
+                  // When disabling, stop any ongoing speech
+                  stopSpeaking();
                 }
               }}
               title={autoSpeak ? 'Disable auto-speak' : 'Enable auto-speak'}
@@ -583,6 +601,19 @@ function App() {
           </div>
         </div>
       </div>
+      {/* Floating scroll-to-bottom button */}
+      <button
+        className="scroll-to-bottom-floating"
+        onClick={() => {
+          const chatMessages = document.querySelector('.chat-messages');
+          if (chatMessages) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+          }
+        }}
+        title="Scroll to bottom"
+      >
+        ⬇️
+      </button>
     </div>
   );
 }

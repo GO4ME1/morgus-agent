@@ -77,11 +77,34 @@ export function VoiceInput({ onTranscript, isListening, onListeningChange }: Voi
   );
 }
 
-// Text-to-Speech function (can be called from anywhere)
-export function speakText(text: string, voiceName?: string) {
-  if ('speechSynthesis' in window) {
+// Track which messages have been spoken to prevent duplicates
+const spokenMessages = new Set<string>();
+
+// Text-to-Speech function using ElevenLabs API
+export async function speakText(text: string) {
+  // Create a hash of the text to track if we've already spoken it
+  const textHash = text.substring(0, 100); // Use first 100 chars as identifier
+  
+  if (spokenMessages.has(textHash)) {
+    console.log('[TTS] Already spoken this message, skipping');
+    return;
+  }
+  
+  spokenMessages.add(textHash);
+  
+  // Clean up old entries to prevent memory leak (keep last 10)
+  if (spokenMessages.size > 10) {
+    const firstKey = spokenMessages.values().next().value;
+    if (firstKey) {
+      spokenMessages.delete(firstKey);
+    }
+  }
+  
+  try {
+    console.log('[TTS] Starting ElevenLabs TTS for text:', text.substring(0, 50) + '...');
+    
     // Cancel any ongoing speech
-    window.speechSynthesis.cancel();
+    stopSpeaking();
 
     // Strip markdown formatting before speaking
     const cleanText = text
@@ -94,58 +117,72 @@ export function speakText(text: string, voiceName?: string) {
       .replace(/🎯|✅|📊|💡|🔗|📋|💾|💭|➕|👍|👎|🍅/g, '') // Remove emojis
       .trim();
 
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.rate = 0.75; // Much slower, more deliberate speech
-    utterance.pitch = 0.5; // Very low pitch for deep Morgan Freeman voice
-    utterance.volume = 1.0;
+    console.log('[TTS] Cleaned text:', cleanText.substring(0, 50) + '...');
     
-    // Ensure voices are loaded
-    let voices = window.speechSynthesis.getVoices();
-    if (voices.length === 0) {
-      // Voices not loaded yet, wait for them
-      window.speechSynthesis.onvoiceschanged = () => {
-        voices = window.speechSynthesis.getVoices();
-        selectVoiceAndSpeak();
-      };
+    // Call ElevenLabs TTS API via our backend
+    console.log('[TTS] Calling ElevenLabs API...');
+    const response = await fetch('https://morgus-orchestrator.morgan-426.workers.dev/api/tts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text: cleanText }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[TTS] API error:', response.status, response.statusText, errorText);
+      console.error('[TTS] API URL:', response.url);
+      // Don't fallback - just log the error
+      console.log('[TTS] Skipping TTS due to API error (no fallback)');
       return;
     }
     
-    selectVoiceAndSpeak();
+    console.log('[TTS] API response OK, creating audio...');
+
+    const audioBlob = await response.blob();
+    console.log('[TTS] Audio blob size:', audioBlob.size, 'bytes');
     
-    function selectVoiceAndSpeak() {
-    if (voiceName) {
-      const selectedVoice = voices.find(v => v.name === voiceName);
-      if (selectedVoice) {
-        utterance.voice = selectedVoice;
-      }
-    } else {
-      // Auto-select best deep voice
-      const deepVoice = voices.find(v => 
-        v.name.toLowerCase().includes('deep') ||
-        v.name.toLowerCase().includes('bass') ||
-        v.name.toLowerCase().includes('male') ||
-        v.name.toLowerCase().includes('daniel') || // macOS deep voice
-        v.name.toLowerCase().includes('fred') // Windows deep voice
-      );
-      if (deepVoice) {
-        utterance.voice = deepVoice;
-      }
-    }
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const audio = new Audio(audioUrl);
     
-    window.speechSynthesis.speak(utterance);
-    }
+    // Store current audio for stopping
+    (window as any).__currentAudio = audio;
+    
+    console.log('[TTS] Playing audio...');
+    await audio.play();
+    console.log('[TTS] Audio playing successfully!');
+    
+    // Clean up blob URL after playing
+    audio.onended = () => {
+      URL.revokeObjectURL(audioUrl);
+      (window as any).__currentAudio = null;
+    };
+  } catch (error) {
+    console.error('[TTS] ElevenLabs TTS failed:', error);
+    console.error('[TTS] Error details:', JSON.stringify(error, null, 2));
+    // Don't fallback to browser TTS - just log the error
+    console.log('[TTS] Skipping TTS due to error (no fallback to browser TTS)');
   }
 }
 
-// Get available voices
+// Get available voices (kept for compatibility, but not used)
 export function getVoices(): SpeechSynthesisVoice[] {
-  if ('speechSynthesis' in window) {
-    return window.speechSynthesis.getVoices();
-  }
   return [];
 }
 
 export function stopSpeaking() {
+  // Clear spoken messages when manually stopping
+  spokenMessages.clear();
+  // Stop ElevenLabs audio if playing
+  const currentAudio = (window as any).__currentAudio;
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    (window as any).__currentAudio = null;
+  }
+  
+  // Also stop browser TTS
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
   }

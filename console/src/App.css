@@ -1097,3 +1097,60 @@ body {
   transform: translateX(0);
   transition: transform 0.3s ease;
 }
+
+/* Image gallery styling for horizontal display */
+.message-text img {
+  display: inline-block;
+  width: calc(33.333% - 12px);
+  max-width: 300px;
+  min-width: 150px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin: 4px 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+  vertical-align: top;
+}
+
+.message-text img:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Force paragraphs with images to display inline */
+.message-text p:has(img) {
+  display: inline;
+  margin: 0;
+  padding: 0;
+}
+
+/* Floating scroll to bottom button */
+.scroll-to-bottom-floating {
+  position: fixed;
+  bottom: 100px;
+  right: 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  z-index: 1000;
+}
+
+.scroll-to-bottom-floating:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.5);
+}
+
+.scroll-to-bottom-floating:active {
+  transform: scale(0.95);
+}

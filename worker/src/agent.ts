@@ -3,6 +3,7 @@
  */
 
 import { ToolRegistry } from './tools';
+import { callGemini } from './gemini';
 
 export interface AgentConfig {
   maxIterations?: number;
@@ -57,6 +58,7 @@ You have access to tools that allow you to:
 - Search the web for current information
 - Fetch content from URLs
 - Execute Python or JavaScript code
+- Search for relevant images using Pexels
 - Think through problems step by step
 
 When given a task:
@@ -80,8 +82,13 @@ Always use tools when you need current information or need to perform actions. D
      - Example: "According to [NASA](https://www.nasa.gov), the moon is 238,855 miles away"
      - Example: "[Wikipedia](https://en.wikipedia.org/wiki/Bolivia) states that La Paz is the capital"
 5. **Make ALL store names, websites, and URLs clickable** using markdown links: [text](url)
-6. **Add images when relevant** - Use search_web tool to find relevant images, graphs, or diagrams
-7. **Make it visual** - If discussing something visual, always try to include an image
+6. **ALWAYS ADD 3 IMAGES AT THE TOP** - Use search_images tool for EVERY response
+   - Call search_images with a relevant query based on the topic
+   - The tool will automatically return exactly 3 images formatted nicely
+   - Place the images section at the VERY BEGINNING of your response, before any text
+   - Example: For "What is the capital of France?", search for "paris france eiffel tower"
+   - Example: For "How to code in Python?", search for "python programming code"
+7. **Make it visual** - Every response should START with the 3-image section from search_images
 
 Example format:
 🎯 **THE ANSWER: 4** 🎯
@@ -114,29 +121,52 @@ Be conversational and helpful. Show your work and explain what you're doing.`,
       };
 
       try {
-        // Call OpenAI with tool support
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: this.config.model,
-            messages: this.conversationHistory,
-            tools: this.toolRegistry.getSchemas(),
-            tool_choice: 'auto',
-            temperature: this.config.temperature,
-          }),
-        });
+        let message: any;
+        
+        // MoE (Mixture of Experts) routing: Choose model based on task type
+        const useGemini = this.config.model?.startsWith('gemini');
+        
+        if (useGemini) {
+          // Use Gemini for this request
+          const systemPrompt = this.conversationHistory.find(m => m.role === 'system')?.content || '';
+          const messages = this.conversationHistory.filter(m => m.role !== 'system' && m.role !== 'tool');
+          
+          const geminiResponse = await callGemini(
+            env.GEMINI_API_KEY,
+            this.config.model || 'gemini-2.0-flash-exp',
+            messages,
+            systemPrompt
+          );
+          
+          message = {
+            role: 'assistant',
+            content: geminiResponse,
+          };
+        } else {
+          // Use OpenAI with tool support
+          const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: this.config.model,
+              messages: this.conversationHistory,
+              tools: this.toolRegistry.getSchemas(),
+              tool_choice: 'auto',
+              temperature: this.config.temperature,
+            }),
+          });
 
-        if (!response.ok) {
-          const error = await response.text();
-          throw new Error(`OpenAI API error: ${response.status} - ${error}`);
+          if (!response.ok) {
+            const error = await response.text();
+            throw new Error(`OpenAI API error: ${response.status} - ${error}`);
+          }
+
+          const data = await response.json();
+          message = data.choices[0].message;
         }
-
-        const data = await response.json();
-        const message = data.choices[0].message;
 
         // Add assistant message to history
         this.conversationHistory.push(message);
