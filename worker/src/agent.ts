@@ -71,8 +71,11 @@ Always use tools when you need current information or need to perform actions. D
 1. **START WITH THE ANSWER IN BOLD** - Put the main answer at the very top in bold with emojis
 2. **Use neon/retro style** - Add emojis like 🎯, ✨, 🚀, 💡, 🔥
 3. **Break up text** - Use **bold** for key points, bullet points, and short paragraphs
-4. **Add images when relevant** - Use search_web tool to find relevant images, graphs, or diagrams
-5. **Make it visual** - If discussing something visual, always try to include an image
+4. **Add CLICKABLE LINKS** - Always make store names, websites, and URLs clickable using markdown links: [text](url)
+   - Example: "$2.59 at [Save A Lot](https://www.savealot.com)" instead of "$2.59 at Save A Lot"
+   - Example: "Check [Costco.com](https://www.costco.com)" instead of "Check Costco.com"
+5. **Add images when relevant** - Use search_web tool to find relevant images, graphs, or diagrams
+6. **Make it visual** - If discussing something visual, always try to include an image
 
 Example format:
 🎯 **THE ANSWER: 4** 🎯
@@ -176,6 +179,9 @@ Be conversational and helpful. Show your work and explain what you're doing.`,
 
           // Check if task seems complete
           const contentLower = message.content.toLowerCase();
+          // Smart completion detection:
+          // 1. If response is substantial (>100 chars) AND no tool calls, likely complete
+          // 2. If response contains completion indicators, definitely complete
           const completionIndicators = [
             'here is',
             'here are',
@@ -183,9 +189,17 @@ Be conversational and helpful. Show your work and explain what you're doing.`,
             'i found',
             'according to',
             'based on',
+            'if you have any',
+            'feel free to ask',
+            'let me know',
           ];
 
-          if (completionIndicators.some(indicator => contentLower.includes(indicator))) {
+          const hasCompletionIndicator = completionIndicators.some(indicator => contentLower.includes(indicator));
+          const isSubstantialResponse = message.content.length > 100;
+          const hasNoToolCalls = !message.tool_calls || message.tool_calls.length === 0;
+
+          // Complete if: substantial response with no tool calls, OR has completion indicator
+          if ((isSubstantialResponse && hasNoToolCalls) || hasCompletionIndicator) {
             taskComplete = true;
           }
         }

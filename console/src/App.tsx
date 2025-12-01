@@ -456,6 +456,20 @@ function App() {
                       </button>
                       <button 
                         className="icon-button" 
+                        onClick={() => {
+                          // Quick add to current thought
+                          if (currentThoughtId) {
+                            saveMessageToThought(message);
+                          } else {
+                            alert('Please select a thought first!');
+                          }
+                        }}
+                        title="Quick add to current thought"
+                      >
+                        ➕
+                      </button>
+                      <button 
+                        className="icon-button" 
                         onClick={() => rateMessage(message.id, 'good')}
                         title="Good response"
                       >
