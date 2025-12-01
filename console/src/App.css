@@ -321,7 +321,7 @@ body {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   border: 2px solid rgba(255, 136, 0, 0.2);
   font-size: 16px;
-  line-height: 1.7;
+  line-height: 1.4; /* Reduced from 1.7 for tighter spacing */
   color: #1f2937;
 }
 
@@ -335,10 +335,25 @@ body {
 }
 
 .message-text p {
-  margin-bottom: 10px;
+  margin-bottom: 6px; /* Reduced from 10px */
 }
 
 .message-text p:last-child {
+  margin-bottom: 0;
+}
+
+/* Tighter list spacing */
+.message-text ul,
+.message-text ol {
+  margin: 6px 0; /* Reduced from default */
+  padding-left: 20px;
+}
+
+.message-text li {
+  margin-bottom: 4px; /* Tighter list items */
+}
+
+.message-text li:last-child {
   margin-bottom: 0;
 }
 
@@ -363,9 +378,9 @@ body {
 
 /* Extra emphasis for first bold text (answer) */
 .message.assistant .message-text strong:first-child {
-  font-size: 1.4em;
+  font-size: 1.3em; /* Slightly smaller */
   display: block;
-  margin-bottom: 16px;
+  margin-bottom: 10px; /* Reduced from 16px */
   /* No animation for better readability */
 }
 
