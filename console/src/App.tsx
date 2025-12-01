@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { marked } from 'marked';
 import { supabase } from './lib/supabase';
 import { ThoughtsPanel } from './components/ThoughtsPanel';
-import { VoiceInput, speakText } from './components/VoiceInput';
+import { VoiceInput, speakText, stopSpeaking } from './components/VoiceInput';
 import './App.css';
 
 // Configure marked for inline rendering
@@ -293,7 +293,11 @@ function App() {
                   msg.id === statusMessageId
                     ? {
                         ...msg,
-                        content: data.content || msg.content,
+                        content: data.type === 'response' 
+                          ? data.content // Response content replaces everything
+                          : data.type === 'complete'
+                          ? msg.content // Keep existing content on complete
+                          : data.content || msg.content, // For status/tool messages, update normally
                         isStreaming: data.type !== 'complete',
                       }
                     : msg
@@ -534,7 +538,13 @@ function App() {
             />
             <button
               className="speaker-button"
-              onClick={() => setAutoSpeak(!autoSpeak)}
+              onClick={() => {
+                const newValue = !autoSpeak;
+                setAutoSpeak(newValue);
+                if (!newValue) {
+                  stopSpeaking(); // Stop any ongoing speech when disabling
+                }
+              }}
               title={autoSpeak ? 'Disable auto-speak' : 'Enable auto-speak'}
             >
               {autoSpeak ? '🔊' : '🔇'}

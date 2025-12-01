@@ -78,18 +78,47 @@ export function VoiceInput({ onTranscript, isListening, onListeningChange }: Voi
 }
 
 // Text-to-Speech function (can be called from anywhere)
-export function speakText(text: string) {
+export function speakText(text: string, voiceName?: string) {
   if ('speechSynthesis' in window) {
     // Cancel any ongoing speech
     window.speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+    utterance.rate = 0.9; // Slightly slower for Morgan Freeman effect
+    utterance.pitch = 0.8; // Lower pitch for deeper voice
     utterance.volume = 1.0;
+    
+    // Try to find a deep male voice
+    const voices = window.speechSynthesis.getVoices();
+    if (voiceName) {
+      const selectedVoice = voices.find(v => v.name === voiceName);
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+    } else {
+      // Auto-select best deep voice
+      const deepVoice = voices.find(v => 
+        v.name.toLowerCase().includes('deep') ||
+        v.name.toLowerCase().includes('bass') ||
+        v.name.toLowerCase().includes('male') ||
+        v.name.toLowerCase().includes('daniel') || // macOS deep voice
+        v.name.toLowerCase().includes('fred') // Windows deep voice
+      );
+      if (deepVoice) {
+        utterance.voice = deepVoice;
+      }
+    }
     
     window.speechSynthesis.speak(utterance);
   }
+}
+
+// Get available voices
+export function getVoices(): SpeechSynthesisVoice[] {
+  if ('speechSynthesis' in window) {
+    return window.speechSynthesis.getVoices();
+  }
+  return [];
 }
 
 export function stopSpeaking() {
