@@ -35,6 +35,20 @@ export class AutonomousAgent {
   }
 
   /**
+   * Detect if a query likely needs tool use
+   */
+  private detectToolNeed(message: string): boolean {
+    const toolKeywords = [
+      'search', 'find', 'look up', 'image', 'picture', 'photo',
+      'calculate', 'compute', 'solve', 'what is', 'how many',
+      'show me', 'get me', 'fetch', 'retrieve'
+    ];
+    
+    const messageLower = message.toLowerCase();
+    return toolKeywords.some(keyword => messageLower.includes(keyword));
+  }
+
+  /**
    * Execute a task with streaming updates
    */
   async *executeTask(
@@ -52,7 +66,7 @@ export class AutonomousAgent {
       ...conversationHistory.slice(0, -1), // Include previous messages (except the last user message which we'll add with system prompt)
       {
         role: 'system',
-        content: `You are Morgus, an autonomous AI agent that helps users accomplish tasks.
+        content: `You are Morgus, an autonomous AI agent that provides comprehensive, detailed, and helpful responses.
 
 You have access to tools that allow you to:
 - Search the web for current information
@@ -65,9 +79,16 @@ When given a task:
 1. First, think about what information or actions you need
 2. Use tools to gather information or execute actions
 3. Reason through the results
-4. Provide a clear, helpful response to the user
+4. Provide a COMPREHENSIVE, DETAILED response with:
+   - Complete explanations, not just brief summaries
+   - Multiple paragraphs with depth and context
+   - Specific examples and details
+   - Background information when relevant
+   - Step-by-step breakdowns for complex topics
 
 Always use tools when you need current information or need to perform actions. Don't just say you'll do something - actually do it using the available tools.
+
+**RESPONSE LENGTH:** Aim for substantial, information-rich responses (300-500+ words for most queries). Don't be brief unless the question is extremely simple.
 
 **RESPONSE FORMATTING RULES:**
 1. **START WITH THE ANSWER IN BOLD** - Put the main answer at the very top in bold with emojis
@@ -84,11 +105,12 @@ Always use tools when you need current information or need to perform actions. D
 5. **Make ALL store names, websites, and URLs clickable** using markdown links: [text](url)
 6. **ALWAYS ADD 3 IMAGES AT THE TOP** - Use search_images tool for EVERY response
    - Call search_images with a relevant query based on the topic
-   - The tool will automatically return exactly 3 images formatted nicely
-   - Place the images section at the VERY BEGINNING of your response, before any text
+   - The tool returns 3 images in markdown format
+   - Wrap the images in a gallery div: <div class="image-gallery">...images...</div>
+   - Place the gallery at the VERY BEGINNING of your response, before any text
    - Example: For "What is the capital of France?", search for "paris france eiffel tower"
    - Example: For "How to code in Python?", search for "python programming code"
-7. **Make it visual** - Every response should START with the 3-image section from search_images
+7. **Make it visual** - Every response should START with the image gallery from search_images
 
 Example format:
 🎯 **THE ANSWER: 4** 🎯
@@ -123,8 +145,13 @@ Be conversational and helpful. Show your work and explain what you're doing.`,
       try {
         let message: any;
         
-        // MoE (Mixture of Experts) routing: Choose model based on task type
-        const useGemini = this.config.model?.startsWith('gemini');
+        // MoE (Mixture of Experts) routing: Intelligent model selection
+        // Analyze the user message to determine if tools are likely needed
+        const lastUserMessage = this.conversationHistory[this.conversationHistory.length - 1]?.content || '';
+        const needsTools = this.detectToolNeed(lastUserMessage);
+        
+        // Use Gemini for simple queries, OpenAI when tools are needed
+        const useGemini = !needsTools && this.config.model?.startsWith('gemini');
         
         if (useGemini) {
           // Use Gemini for this request
@@ -142,6 +169,9 @@ Be conversational and helpful. Show your work and explain what you're doing.`,
             role: 'assistant',
             content: geminiResponse,
           };
+          
+          // Gemini doesn't support tools, so complete after first response
+          taskComplete = true;
         } else {
           // Use OpenAI with tool support
           const response = await fetch('https://api.openai.com/v1/chat/completions', {

@@ -562,24 +562,40 @@ function App() {
               onListeningChange={setIsListening}
             />
             <button
-              className="speaker-button"
+              className="voice-button"
               onClick={() => {
                 const newAutoSpeak = !autoSpeak;
                 setAutoSpeak(newAutoSpeak);
-                if (newAutoSpeak) {
-                  // When enabling, read the last assistant message
-                  const lastAssistantMessage = messages.filter(m => m.role === 'assistant' && !m.isStreaming).pop();
-                  if (lastAssistantMessage) {
+                if (!newAutoSpeak) {
+                  stopSpeaking();
+                } else {
+                  // Read the last assistant message when enabling
+                  const lastAssistantMessage = messages.filter(m => m.role === 'assistant').pop();
+                  if (lastAssistantMessage?.content) {
                     speakText(lastAssistantMessage.content);
                   }
-                } else {
-                  // When disabling, stop any ongoing speech
-                  stopSpeaking();
                 }
               }}
               title={autoSpeak ? 'Disable auto-speak' : 'Enable auto-speak'}
             >
               {autoSpeak ? '🔊' : '🔇'}
+            </button>
+            <button
+              className="stop-audio-button"
+              onClick={() => {
+                // Emergency stop all audio
+                stopSpeaking();
+                // Also force stop any lingering audio
+                window.speechSynthesis.cancel();
+                const audioElements = document.querySelectorAll('audio');
+                audioElements.forEach(audio => {
+                  audio.pause();
+                  audio.currentTime = 0;
+                });
+              }}
+              title="STOP all audio immediately"
+            >
+              ⏹️
             </button>
             {isLoading ? (
               <button
@@ -605,9 +621,12 @@ function App() {
       <button
         className="scroll-to-bottom-floating"
         onClick={() => {
-          const chatMessages = document.querySelector('.chat-messages');
+          const chatMessages = document.querySelector('.chat-messages, .messages-container');
           if (chatMessages) {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            chatMessages.scrollTo({
+              top: chatMessages.scrollHeight,
+              behavior: 'smooth'
+            });
           }
         }}
         title="Scroll to bottom"

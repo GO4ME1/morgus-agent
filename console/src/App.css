@@ -1154,3 +1154,62 @@ body {
 .scroll-to-bottom-floating:active {
   transform: scale(0.95);
 }
+
+
+/* Emergency stop audio button */
+.stop-audio-button {
+  background: #ff4444;
+  border: 2px solid #cc0000;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 20px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(255, 68, 68, 0.3);
+}
+
+.stop-audio-button:hover {
+  background: #cc0000;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.5);
+}
+
+.stop-audio-button:active {
+  transform: scale(0.95);
+}
+
+/* Image gallery - horizontal layout */
+.image-gallery {
+  display: flex;
+  gap: 12px;
+  margin: 16px 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+.image-gallery img {
+  width: 200px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s;
+}
+
+.image-gallery img:hover {
+  transform: scale(1.05);
+}
+
+/* Force images in markdown to display horizontally */
+.message-text p:has(img) {
+  display: inline-block;
+  margin-right: 12px;
+}
+
+.message-text img {
+  max-width: 200px;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
