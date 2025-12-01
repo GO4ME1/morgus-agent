@@ -83,13 +83,36 @@ export function speakText(text: string, voiceName?: string) {
     // Cancel any ongoing speech
     window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
+    // Strip markdown formatting before speaking
+    const cleanText = text
+      .replace(/\*\*/g, '') // Remove bold **
+      .replace(/\*/g, '') // Remove italic *
+      .replace(/^[•\-]\s+/gm, '') // Remove bullets and list markers
+      .replace(/^#+\s+/gm, '') // Remove headings #
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Convert links to just text
+      .replace(/`/g, '') // Remove code backticks
+      .replace(/🎯|✅|📊|💡|🔗|📋|💾|💭|➕|👍|👎|🍅/g, '') // Remove emojis
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.rate = 0.75; // Much slower, more deliberate speech
     utterance.pitch = 0.5; // Very low pitch for deep Morgan Freeman voice
     utterance.volume = 1.0;
     
-    // Try to find a deep male voice
-    const voices = window.speechSynthesis.getVoices();
+    // Ensure voices are loaded
+    let voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) {
+      // Voices not loaded yet, wait for them
+      window.speechSynthesis.onvoiceschanged = () => {
+        voices = window.speechSynthesis.getVoices();
+        selectVoiceAndSpeak();
+      };
+      return;
+    }
+    
+    selectVoiceAndSpeak();
+    
+    function selectVoiceAndSpeak() {
     if (voiceName) {
       const selectedVoice = voices.find(v => v.name === voiceName);
       if (selectedVoice) {
@@ -110,6 +133,7 @@ export function speakText(text: string, voiceName?: string) {
     }
     
     window.speechSynthesis.speak(utterance);
+    }
   }
 }
 
