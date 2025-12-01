@@ -188,6 +188,44 @@ export const executeCodeTool: Tool = {
 
       const result = await execResponse.json();
 
+      // Check if there are any image files created (for charts/visualizations)
+      let imageData = '';
+      try {
+        // List files in the sandbox
+        const filesResponse = await fetch(`https://api.e2b.dev/v1/sandboxes/${sandboxId}/files`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+          },
+        });
+        
+        if (filesResponse.ok) {
+          const files = await filesResponse.json();
+          // Look for image files (png, jpg, jpeg, svg)
+          const imageFile = files.find((f: any) => 
+            f.name.match(/\.(png|jpg|jpeg|svg)$/i)
+          );
+          
+          if (imageFile) {
+            // Download the image file
+            const imageResponse = await fetch(`https://api.e2b.dev/v1/sandboxes/${sandboxId}/files/${imageFile.name}`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${apiKey}`,
+              },
+            });
+            
+            if (imageResponse.ok) {
+              const imageBuffer = await imageResponse.arrayBuffer();
+              const base64 = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
+              imageData = `\n\n![Generated Chart](data:image/png;base64,${base64})`;
+            }
+          }
+        }
+      } catch (e) {
+        // Ignore file listing errors
+      }
+
       // Clean up sandbox
       await fetch(`https://api.e2b.dev/v1/sandboxes/${sandboxId}`, {
         method: 'DELETE',
@@ -196,7 +234,7 @@ export const executeCodeTool: Tool = {
         },
       });
 
-      return `Output:\n${result.stdout || ''}\n${result.stderr || ''}`;
+      return `Output:\n${result.stdout || ''}\n${result.stderr || ''}${imageData}`;
     } catch (error: any) {
       return `Error executing code: ${error.message}`;
     }
