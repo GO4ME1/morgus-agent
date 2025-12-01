@@ -18,6 +18,24 @@ interface Message {
   timestamp: Date;
   isStreaming?: boolean;
   attachments?: string[];
+  moeMetadata?: {
+    winner: {
+      model: string;
+      latency: number;
+      tokens: number;
+      cost: number;
+    };
+    allModels: Array<{
+      model: string;
+      latency: number;
+      tokens: number;
+      cost: number;
+      score: number;
+    }>;
+    nashExplanation: string;
+    totalLatency: number;
+    totalCost: number;
+  };
 }
 
 interface Task {
@@ -259,14 +277,14 @@ function App() {
         }
       }
 
-      const response = await fetch(`${API_URL}/chat`, {
+      // Use MOE endpoint for model competition
+      const response = await fetch(`${API_URL}/moe-chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userInput || (fileUrls.length > 0 ? 'Please analyze these files' : ''),
           task_id: currentTaskId,
           thought_id: currentThoughtId,
-          stream: true,
           history: messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
           files: fileUrls,
         }),
@@ -276,64 +294,28 @@ function App() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      if (!response.body) {
-        throw new Error('No response body');
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              
-              // Update the status message
-              setMessages((prev) =>
-                prev.map((msg) =>
-                  msg.id === statusMessageId
-                    ? {
-                        ...msg,
-                        content: data.type === 'response' 
-                          ? data.content // Response content replaces everything
-                          : data.type === 'complete'
-                          ? msg.content // Keep existing content on complete
-                          : data.content || msg.content, // For status/tool messages, update normally
-                        isStreaming: data.type !== 'complete',
-                      }
-                    : msg
-                )
-              );
-              
-              // Auto-speak if enabled and response is complete
-              if (autoSpeak && data.type === 'complete') {
-                // Use setTimeout to ensure state has updated
-                setTimeout(() => {
-                  setMessages((currentMessages) => {
-                    const finalMessage = currentMessages.find(m => m.id === statusMessageId);
-                    if (finalMessage && finalMessage.content && !finalMessage.isStreaming) {
-                      console.log('[AUTO-SPEAK] Response complete, triggering TTS');
-                      console.log('[AUTO-SPEAK] Message content:', finalMessage.content.substring(0, 100));
-                      speakText(finalMessage.content);
-                    }
-                    return currentMessages; // Don't modify state
-                  });
-                }, 100);
+      // MOE returns JSON response with competition results
+      const data = await response.json();
+      
+      // Update message with MOE response
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === statusMessageId
+            ? {
+                ...msg,
+                content: data.message,
+                moeMetadata: data.moeMetadata, // Store MOE competition data
+                isStreaming: false,
               }
-            } catch (e) {
-              console.error('Failed to parse SSE data:', e);
-            }
-          }
-        }
+            : msg
+        )
+      );
+      
+      // Auto-speak if enabled
+      if (autoSpeak && data.message) {
+        setTimeout(() => {
+          speakText(data.message);
+        }, 100);
       }
 
       setIsLoading(false);

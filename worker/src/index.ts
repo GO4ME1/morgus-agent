@@ -1,12 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 import { AutonomousAgent } from './agent';
 import { handleThoughtsAPI } from './thoughts-api';
+import { MOEEndpoint } from './moe/endpoint';
 
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_KEY: string;
   OPENAI_API_KEY: string;
   E2B_API_KEY: string;
+  OPENROUTER_API_KEY: string;
   TAVILY_API_KEY?: string;
   PEXELS_API_KEY?: string;
   GEMINI_API_KEY?: string;
@@ -198,6 +200,38 @@ export default {
         return new Response(JSON.stringify({ success: true, message: 'Feedback recorded' }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+      }
+
+      // MOE Chat endpoint - Model competition with Nash Equilibrium
+      if (path === '/moe-chat' && request.method === 'POST') {
+        const body = await request.json() as ChatMessage;
+        
+        try {
+          const moe = new MOEEndpoint(env.OPENROUTER_API_KEY);
+          
+          // Convert conversation history to MOE format
+          const messages = (body.history || []).concat([{
+            role: 'user',
+            content: body.message
+          }]);
+          
+          // Query MOE system
+          const result = await moe.chat({ messages });
+          
+          return new Response(JSON.stringify({
+            message: result.content,
+            moeMetadata: result.moeMetadata,
+            status: 'completed'
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } catch (error: any) {
+          console.error('MOE error:', error);
+          return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
       }
 
       // Chat endpoint with streaming and conversation history
