@@ -548,6 +548,7 @@ function App() {
               ref={fileInputRef}
               onChange={handleFileSelect}
               multiple
+              accept=".pdf,.doc,.docx,.txt,.md,.csv,.png,.jpg,.jpeg,.gif,.mp4,.mov,.avi,.webm,.mkv"
               style={{ display: 'none' }}
             />
             <button
