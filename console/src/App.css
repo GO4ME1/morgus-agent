@@ -1156,17 +1156,22 @@ body {
 }
 
 
-/* Emergency stop audio button */
+/* Emergency stop audio button - small and compact */
 .stop-audio-button {
   background: #ff4444;
   border: 2px solid #cc0000;
   color: white;
-  padding: 10px 15px;
+  padding: 6px 8px;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 20px;
+  font-size: 14px;
   transition: all 0.2s;
   box-shadow: 0 2px 8px rgba(255, 68, 68, 0.3);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .stop-audio-button:hover {
