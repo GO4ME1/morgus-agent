@@ -1,0 +1,152 @@
+.moe-header {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #333;
+  animation: moe-fade-in 0.5s ease;
+}
+
+@keyframes moe-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.moe-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.moe-models {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 768px) {
+  .moe-models {
+    grid-template-columns: 1fr;
+  }
+}
+
+.moe-model-card {
+  background: #252525;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.moe-model-card.winner {
+  border-color: #FFD700;
+  background: linear-gradient(135deg, #2a2200 0%, #252525 100%);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+  animation: moe-winner-pulse 2s ease-in-out infinite;
+}
+
+@keyframes moe-winner-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+  }
+}
+
+.moe-model-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #aaa;
+  margin-bottom: 8px;
+}
+
+.moe-model-card.winner .moe-model-name {
+  color: #FFD700;
+}
+
+.moe-model-score {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.moe-model-card.winner .moe-model-score {
+  color: #FFD700;
+}
+
+.moe-model-stats {
+  font-size: 11px;
+  color: #666;
+}
+
+.moe-model-stats div {
+  margin-bottom: 2px;
+}
+
+.moe-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #666;
+  padding-top: 8px;
+  border-top: 1px solid #333;
+}
+
+.moe-expand-btn {
+  background: #333;
+  border: none;
+  color: #aaa;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.moe-expand-btn:hover {
+  background: #444;
+  color: #fff;
+}
+
+.moe-expand-btn:active {
+  transform: scale(0.95);
+}
+
+.moe-explanation {
+  margin-top: 12px;
+  padding: 12px;
+  background: #1a1a1a;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #aaa;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  animation: moe-slide-down 0.3s ease;
+}
+
+@keyframes moe-slide-down {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}

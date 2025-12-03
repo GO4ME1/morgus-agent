@@ -33,10 +33,10 @@ export interface NashResult {
  * Default weights for evaluation criteria
  */
 export const DEFAULT_WEIGHTS: EvaluationWeights = {
-  quality: 0.4, // Quality is most important
-  speed: 0.2, // Speed matters for UX
-  cost: 0.2, // Cost efficiency
-  preference: 0.2, // Historical performance
+  quality: 0.7, // Quality is MUCH more important - prioritize smarter models
+  speed: 0.1, // Speed matters but less than quality
+  cost: 0.1, // Cost efficiency (all free models anyway)
+  preference: 0.1, // Historical performance
 };
 
 export class NashEquilibriumSelector {
@@ -78,11 +78,17 @@ export class NashEquilibriumSelector {
     // Calculate weighted scores
     const scores = new Map<string, number>();
     for (const [model, criteria] of evaluations) {
-      const score =
+      let score =
         criteria.quality * this.weights.quality +
         criteria.speed * this.weights.speed +
         criteria.cost * this.weights.cost +
         criteria.preference * this.weights.preference;
+
+      // Handle NaN or Infinity (fallback to 0)
+      if (!isFinite(score)) {
+        console.warn(`Invalid score for model ${model}: ${score}, using 0`);
+        score = 0;
+      }
 
       scores.set(model, score);
     }

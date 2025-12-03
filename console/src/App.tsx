@@ -3,6 +3,7 @@ import { marked } from 'marked';
 import { supabase } from './lib/supabase';
 import { ThoughtsPanel } from './components/ThoughtsPanel';
 import { VoiceInput, speakText, stopSpeaking } from './components/VoiceInput';
+import { MOEHeader } from './components/MOEHeader';
 import './App.css';
 
 // Configure marked for inline rendering
@@ -422,6 +423,10 @@ function App() {
                 {message.role === 'assistant' ? '🤖' : '👤'}
               </div>
               <div className="message-content">
+                {/* MOE Competition Header (if available) */}
+                {message.moeMetadata && (
+                  <MOEHeader metadata={message.moeMetadata} />
+                )}
                 <div className="message-text">
                   <div dangerouslySetInnerHTML={{ __html: marked.parse(message.content) }} />
                   {message.attachments && message.attachments.length > 0 && (

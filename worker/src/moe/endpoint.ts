@@ -84,42 +84,8 @@ export class MOEEndpoint {
    * Format winner response with MOE context
    */
   private formatWinnerResponse(result: MOEResponse): string {
-    const { winner, allResponses, nashResult, metadata } = result;
-
-    // Build response with MOE visualization
-    let response = '';
-
-    // MOE Competition Header
-    response += '🎯 **MOE Model Competition Results**\\n\\n';
-
-    // All models table
-    response += '| Model | Latency | Tokens | Score |\\n';
-    response += '|-------|---------|--------|-------|\\n';
-
-    allResponses.forEach((r) => {
-      const isWinner = r.model === winner.model;
-      const scoreValue = nashResult.scores.get(r.model);
-      const score = scoreValue !== undefined ? `${(scoreValue * 100).toFixed(1)}%` : 'N/A';
-      const icon = isWinner ? '🏆 ' : '';
-
-      response += `| ${icon}${this.getModelName(r.model)} | ${r.latency}ms | ${r.tokens.total} | ${score} |\n`;
-    });
-
-    response += '\\n';
-
-    // Winner announcement
-    response += `### 🏆 Winner: ${this.getModelName(winner.model)}\\n\\n`;
-    response += `**Why it won:** ${nashResult.explanation}\\n\\n`;
-
-    // Winner's response
-    response += '---\\n\\n';
-    response += winner.content;
-    response += '\\n\\n---\\n\\n';
-
-    // Metadata
-    response += `*Total latency: ${metadata.totalLatency}ms | Total cost: $${metadata.totalCost.toFixed(6)}*`;
-
-    return response;
+    // Return only the winner's content - MOE visualization handled by frontend
+    return result.winner.content;
   }
 
   /**
