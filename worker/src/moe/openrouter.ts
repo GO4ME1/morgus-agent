@@ -56,6 +56,12 @@ export const FREE_MODELS: ModelConfig[] = [
     provider: 'nvidia',
     free: true,
   },
+  {
+    id: 'google/gemma-3-27b:free',
+    name: 'Google: Gemma 3 27B',
+    provider: 'google',
+    free: true,
+  },
 ];
 
 /**
