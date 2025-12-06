@@ -92,14 +92,18 @@ export async function callGeminiWithVision(
   messages: Array<{ role: string; content: string }>,
   files: string[] // Base64 data URLs
 ): Promise<string> {
+  console.log('[GEMINI_VISION] Processing', files.length, 'files');
+  
   // Parse base64 data URLs and extract image data
-  const imageParts = files.map(fileUrl => {
+  const imageParts = files.map((fileUrl, index) => {
     // Extract mime type and base64 data from data URL
     const matches = fileUrl.match(/^data:([^;]+);base64,(.+)$/);
     if (!matches) {
+      console.error('[GEMINI_VISION] Invalid data URL format for file', index);
       throw new Error('Invalid data URL format');
     }
     const [, mimeType, base64Data] = matches;
+    console.log(`[GEMINI_VISION] File ${index}: ${mimeType}, size: ${base64Data.length} chars`);
     
     return {
       inlineData: {

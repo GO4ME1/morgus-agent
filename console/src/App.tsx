@@ -244,9 +244,9 @@ function App() {
 
     setMessages((prev) => [...prev, userMessage]);
     const userInput = input;
-    const files = uploadedFiles;
+    const filesToUpload = [...uploadedFiles]; // Create a copy before clearing
     setInput('');
-    setUploadedFiles([]);
+    setUploadedFiles([]); // Clear UI state
     setIsLoading(true);
 
     // Add a placeholder for agent status updates
@@ -263,9 +263,9 @@ function App() {
     try {
       // Upload files if any
       let fileUrls: string[] = [];
-      if (files.length > 0) {
+      if (filesToUpload.length > 0) {
         const formData = new FormData();
-        files.forEach(file => formData.append('files', file));
+        filesToUpload.forEach(file => formData.append('files', file));
         
         const uploadResponse = await fetch(`${API_URL}/upload`, {
           method: 'POST',
@@ -275,9 +275,14 @@ function App() {
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json();
           fileUrls = uploadData.urls || [];
+          console.log('[FRONTEND] Upload response:', { fileCount: fileUrls.length, urlLengths: fileUrls.map(u => u.length) });
+        } else {
+          console.error('[FRONTEND] Upload failed:', uploadResponse.status, await uploadResponse.text());
         }
       }
 
+      console.log('[FRONTEND] Sending to MOE with', fileUrls.length, 'files');
+      
       // Use MOE endpoint for model competition
       const response = await fetch(`${API_URL}/moe-chat`, {
         method: 'POST',

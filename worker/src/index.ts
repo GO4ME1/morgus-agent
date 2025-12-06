@@ -70,6 +70,7 @@ export default {
         try {
           const formData = await request.formData();
           const files = formData.getAll('files');
+          console.log('[UPLOAD] Received', files.length, 'files');
           
           if (files.length === 0) {
             return new Response(JSON.stringify({ error: 'No files provided' }), {
@@ -92,6 +93,8 @@ export default {
             })
           );
 
+          console.log('[UPLOAD] Converted files:', fileData.map(f => ({ name: f.name, type: f.type, size: f.size, dataLength: f.data.length })));
+          
           return new Response(JSON.stringify({ 
             success: true,
             files: fileData,
@@ -219,6 +222,7 @@ export default {
           
           // Enhance prompt when files are attached
           let userMessage = body.message;
+          console.log('[MOE-CHAT] Files received:', body.files?.length || 0);
           if (body.files && body.files.length > 0) {
             const fileCount = body.files.length;
             const fileTypes = body.files.map(f => {
@@ -226,8 +230,12 @@ export default {
               return match ? match[1] : 'unknown';
             });
             
+            console.log('[MOE-CHAT] File types:', fileTypes);
+            console.log('[MOE-CHAT] File sizes:', body.files.map(f => f.length));
+            
             // Add explicit instruction to analyze the documents
             userMessage = `${body.message}\n\n[${fileCount} file(s) attached: ${fileTypes.join(', ')}]\n\nPlease analyze the attached document(s) in detail and answer the user's question based on the content.`;
+            console.log('[MOE-CHAT] Enhanced message:', userMessage.substring(0, 200));
           }
           
           const messages = (body.history || []).concat([{
