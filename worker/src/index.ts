@@ -214,11 +214,12 @@ export default {
             content: body.message
           }]);
           
-          // Run MOE with OpenRouter models + Gemini + GPT-4o-mini
+          // Run MOE with OpenRouter models + Gemini + GPT-4o-mini + Claude
           const moeResult = await moe.chatWithMultipleAPIs({ 
             messages, 
             geminiApiKey: env.GEMINI_API_KEY,
-            openaiApiKey: env.OPENAI_API_KEY
+            openaiApiKey: env.OPENAI_API_KEY,
+            anthropicApiKey: env.ANTHROPIC_API_KEY
           });
           
           // Step 2: Pass MOE winner's answer to autonomous agent for tool execution

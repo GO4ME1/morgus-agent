@@ -109,16 +109,24 @@ export class MOEEndpoint {
       return null;
     });
     
-    // Wait for both
-    const [openrouterResult, geminiResponse] = await Promise.all([
+    // Wait for all
+    const [openrouterResult, geminiResponse, gptResponse, claudeResponse] = await Promise.all([
       openrouterPromise,
-      geminiPromise
+      geminiPromise,
+      gptPromise,
+      claudePromise
     ]);
     
     // Combine responses
     const allResponses = [...openrouterResult.allResponses];
     if (geminiResponse) {
       allResponses.push(geminiResponse);
+    }
+    if (gptResponse) {
+      allResponses.push(gptResponse);
+    }
+    if (claudeResponse) {
+      allResponses.push(claudeResponse);
     }
     
     // Re-run Nash Equilibrium with all 3 models
@@ -162,9 +170,9 @@ export class MOEEndpoint {
   }
 
   /**
-   * Process chat request through MOE with Gemini + GPT-4o-mini
+   * Process chat request through MOE with Gemini + GPT-4o-mini + Claude
    */
-  async chatWithMultipleAPIs(request: MOEChatRequest & { geminiApiKey: string; openaiApiKey: string }): Promise<MOEChatResponse> {
+  async chatWithMultipleAPIs(request: MOEChatRequest & { geminiApiKey: string; openaiApiKey: string; anthropicApiKey?: string }): Promise<MOEChatResponse> {
     // Convert to OpenRouter format
     const messages: OpenRouterMessage[] = request.messages.map((m) => ({
       role: m.role,
@@ -200,11 +208,32 @@ export class MOEEndpoint {
       return null;
     });
     
+    // Query Claude (if API key provided)
+    const { queryClaude } = await import('../claude-moe');
+    const claudePromise = request.anthropicApiKey
+      ? queryClaude(
+          request.messages[request.messages.length - 1].content,
+          request.anthropicApiKey
+        )
+          .then((response) => ({
+            model: 'claude-3-5-haiku-20241022',
+            content: response.content,
+            tokens: { prompt: 0, completion: response.tokens, total: response.tokens },
+            latency: response.latency,
+            cost: (response.tokens / 1000000) * 1.5, // Approximate cost
+          }))
+          .catch((error) => {
+            console.error('Claude query failed:', error);
+            return null;
+          })
+      : Promise.resolve(null);
+    
     // Wait for all
-    const [openrouterResult, geminiResponse, gptResponse] = await Promise.all([
+    const [openrouterResult, geminiResponse, gptResponse, claudeResponse] = await Promise.all([
       openrouterPromise,
       geminiPromise,
-      gptPromise
+      gptPromise,
+      claudePromise
     ]);
     
     // Combine responses
@@ -214,6 +243,9 @@ export class MOEEndpoint {
     }
     if (gptResponse) {
       allResponses.push(gptResponse);
+    }
+    if (claudeResponse) {
+      allResponses.push(claudeResponse);
     }
     
     // Re-run Nash Equilibrium with all models
