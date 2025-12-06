@@ -103,7 +103,8 @@ export class MOEEndpoint {
     const geminiPromise = queryGeminiForMOE(
       request.geminiApiKey,
       'gemini-2.0-flash-exp',
-      request.messages
+      request.messages,
+      request.files // Pass files for vision support
     ).catch((error) => {
       console.error('Gemini query failed:', error);
       return null;
@@ -172,7 +173,7 @@ export class MOEEndpoint {
   /**
    * Process chat request through MOE with Gemini + GPT-4o-mini + Claude
    */
-  async chatWithMultipleAPIs(request: MOEChatRequest & { geminiApiKey: string; openaiApiKey: string; anthropicApiKey?: string }): Promise<MOEChatResponse> {
+  async chatWithMultipleAPIs(request: MOEChatRequest & { geminiApiKey: string; openaiApiKey: string; anthropicApiKey?: string; files?: string[] }): Promise<MOEChatResponse> {
     // Convert to OpenRouter format
     const messages: OpenRouterMessage[] = request.messages.map((m) => ({
       role: m.role,
@@ -193,7 +194,8 @@ export class MOEEndpoint {
     const geminiPromise = queryGeminiForMOE(
       request.geminiApiKey,
       'gemini-2.0-flash-exp',
-      request.messages
+      request.messages,
+      request.files // Pass files for vision support
     ).catch((error) => {
       console.error('Gemini query failed:', error);
       return null;
@@ -213,7 +215,8 @@ export class MOEEndpoint {
     const claudePromise = request.anthropicApiKey
       ? queryClaude(
           request.messages[request.messages.length - 1].content,
-          request.anthropicApiKey
+          request.anthropicApiKey,
+          request.files // Pass files for vision support
         )
           .then((response) => ({
             model: 'claude-3-5-haiku-20241022',

@@ -84,12 +84,88 @@ export async function callGemini(
 }
 
 /**
+ * Call Gemini API with vision support (images/PDFs)
+ */
+export async function callGeminiWithVision(
+  apiKey: string,
+  model: string,
+  messages: Array<{ role: string; content: string }>,
+  files: string[] // Base64 data URLs
+): Promise<string> {
+  // Parse base64 data URLs and extract image data
+  const imageParts = files.map(fileUrl => {
+    // Extract mime type and base64 data from data URL
+    const matches = fileUrl.match(/^data:([^;]+);base64,(.+)$/);
+    if (!matches) {
+      throw new Error('Invalid data URL format');
+    }
+    const [, mimeType, base64Data] = matches;
+    
+    return {
+      inlineData: {
+        mimeType,
+        data: base64Data
+      }
+    };
+  });
+  
+  // Get the last user message
+  const lastMessage = messages[messages.length - 1];
+  const textPart = { text: lastMessage.content };
+  
+  // Combine text and images in the user message
+  const geminiMessages: GeminiMessage[] = [
+    {
+      role: 'user',
+      parts: [textPart, ...imageParts] as any
+    }
+  ];
+  
+  // Build request body
+  const requestBody: any = {
+    contents: geminiMessages,
+    generationConfig: {
+      temperature: 0.7,
+      topK: 40,
+      topP: 0.95,
+      maxOutputTokens: 8192,
+    },
+  };
+  
+  // Call Gemini API
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    }
+  );
+  
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Gemini Vision API error: ${response.status} - ${error}`);
+  }
+  
+  const data: GeminiResponse = await response.json();
+  
+  if (!data.candidates || data.candidates.length === 0) {
+    throw new Error('No response from Gemini Vision');
+  }
+  
+  return data.candidates[0].content.parts[0].text;
+}
+
+/**
  * Query Gemini for MOE competition (returns OpenRouter-compatible response)
  */
 export async function queryGeminiForMOE(
   apiKey: string,
   model: string,
-  messages: Array<{ role: string; content: string }>
+  messages: Array<{ role: string; content: string }>,
+  files?: string[] // Base64 data URLs for images/PDFs
 ): Promise<{
   model: string;
   content: string;
@@ -101,7 +177,13 @@ export async function queryGeminiForMOE(
   const startTime = Date.now();
   
   try {
-    const content = await callGemini(apiKey, model, messages);
+    // If files are provided, use vision-capable API call
+    let content: string;
+    if (files && files.length > 0) {
+      content = await callGeminiWithVision(apiKey, model, messages, files);
+    } else {
+      content = await callGemini(apiKey, model, messages);
+    }
     const latency = Date.now() - startTime;
     
     // Estimate tokens (rough approximation: 1 token ≈ 4 chars)

@@ -15,11 +15,48 @@ export interface ClaudeResponse {
 }
 
 /**
+ * Build Claude vision content with images
+ */
+function buildClaudeVisionContent(prompt: string, files: string[]): any[] {
+  const content: any[] = [];
+  
+  // Add text prompt first
+  content.push({
+    type: 'text',
+    text: prompt
+  });
+  
+  // Add images
+  for (const fileUrl of files) {
+    // Extract mime type and base64 data from data URL
+    const matches = fileUrl.match(/^data:([^;]+);base64,(.+)$/);
+    if (matches) {
+      const [, mimeType, base64Data] = matches;
+      
+      // Claude supports image/* mime types
+      if (mimeType.startsWith('image/') || mimeType === 'application/pdf') {
+        content.push({
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: mimeType.startsWith('image/') ? mimeType : 'image/png',
+            data: base64Data
+          }
+        });
+      }
+    }
+  }
+  
+  return content;
+}
+
+/**
  * Query Claude 3.5 Haiku with cost controls
  */
 export async function queryClaude(
   prompt: string,
-  apiKey: string
+  apiKey: string,
+  files?: string[] // Base64 data URLs for images/PDFs
 ): Promise<ClaudeResponse> {
   const startTime = Date.now();
 
@@ -38,7 +75,7 @@ export async function queryClaude(
         messages: [
           {
             role: 'user',
-            content: prompt,
+            content: files && files.length > 0 ? buildClaudeVisionContent(prompt, files) : prompt,
           },
         ],
       }),

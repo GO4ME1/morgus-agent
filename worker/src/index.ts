@@ -23,6 +23,7 @@ interface ChatMessage {
   conversation_id?: string;
   stream?: boolean;
   history?: Array<{role: string, content: string}>;
+  files?: string[]; // Base64 data URLs for images/PDFs
 }
 
 export default {
@@ -219,7 +220,8 @@ export default {
             messages, 
             geminiApiKey: env.GEMINI_API_KEY,
             openaiApiKey: env.OPENAI_API_KEY,
-            anthropicApiKey: env.ANTHROPIC_API_KEY
+            anthropicApiKey: env.ANTHROPIC_API_KEY,
+            files: body.files // Pass uploaded files for vision models
           });
           
           // Step 2: Pass MOE winner's answer to autonomous agent for tool execution
