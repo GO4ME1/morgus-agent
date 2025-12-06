@@ -63,7 +63,8 @@ export const generateImagePollinations: PollinationsToolSchema = {
 };
 
 /**
- * Generate image using Pollinations.ai (FREE)
+ * Generate image using Pollinations.ai (FREE) with enhanced quality
+ * Uses higher resolution and enhanced parameters for better quality
  */
 export async function executePollinationsGeneration(
   prompt: string,
@@ -73,15 +74,17 @@ export async function executePollinationsGeneration(
     model?: string;
   }
 ): Promise<{ imageUrl: string; prompt: string }> {
-  const width = options?.width || 1024;
-  const height = options?.height || 1024;
+  // Default to higher resolution for better quality (1536x1536 instead of 1024x1024)
+  const width = options?.width || 1536;
+  const height = options?.height || 1536;
   const model = options?.model || 'flux';
 
   try {
     // Pollinations.ai uses a simple URL-based API
     // The image is generated on-the-fly when you request the URL
+    // Using higher resolution + enhance=true for better quality
     const encodedPrompt = encodeURIComponent(prompt);
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&model=${model}&nologo=true&enhance=true`;
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&model=${model}&nologo=true&enhance=true&seed=-1`;
 
     // Verify the image is accessible
     const response = await fetch(imageUrl, { method: 'HEAD' });
@@ -89,6 +92,8 @@ export async function executePollinationsGeneration(
     if (!response.ok) {
       throw new Error(`Failed to generate image: ${response.status}`);
     }
+
+    console.log(`[IMAGE] Generated at ${width}x${height} with enhanced quality`);
 
     return {
       imageUrl,
@@ -103,10 +108,10 @@ export async function executePollinationsGeneration(
  * Format Pollinations result for display in chat
  */
 export function formatPollinationsResult(result: { imageUrl: string; prompt: string }): string {
-  let markdown = `### 🎨 Generated Image\n\n`;
+  let markdown = `### 🎨 Generated Image (High Quality)\n\n`;
   markdown += `**Prompt:** ${result.prompt}\n\n`;
   markdown += `![Generated Image](${result.imageUrl})\n\n`;
-  markdown += `*Generated with Pollinations.ai (FREE)*\n`;
+  markdown += `*Generated at 1536x1536 with Pollinations.ai (100% FREE) ✨*\n`;
 
   return markdown;
 }
