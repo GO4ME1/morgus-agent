@@ -297,3 +297,309 @@ Estimated credit usage:
 
 Leave buffer for debugging: ~1,000 credits
 **Total budget: 3,000 credits**
+
+
+---
+
+## Priority 6: Add Live Model Leaderboard to UI (30-45 min)
+
+### Concept
+Display real-time model performance stats on the front page to show users which models are winning the MOE competition.
+
+### Design Options
+
+#### Option 1: Compact Header Bar (Minimal)
+```
+🏆 Leader: Gemini 2.0 (43.3%) | 2nd: Claude (38.2%) | 3rd: Mistral (35.1%)
+```
+- Always visible at top
+- Updates after each query
+- Minimal space usage
+
+#### Option 2: Expandable Widget (Detailed)
+```
+📊 Model Leaderboard ▼
+┌──────────────────────────────────────┐
+│ 1. 🥇 Gemini 2.0 Flash  43.3% (150) │
+│    ⚡ 542ms  💰 $0.00  📊 82.1/100   │
+│ 2. 🥈 Claude Haiku      38.2% (150) │
+│    ⚡ 976ms  💰 $0.05  📊 75.3/100   │
+│ 3. 🥉 Mistral 7B        35.1% (150) │
+│    ⚡ 381ms  💰 $0.00  📊 71.2/100   │
+└──────────────────────────────────────┘
+```
+- Click to expand/collapse
+- Shows detailed stats
+- Positioned below header
+
+#### Option 3: Live Stats Ticker (Minimal + Dynamic)
+```
+⚡ 1,247 battles | 🏆 Gemini leading | 💰 $0.12 total | ⏱️ 2.3s avg
+```
+- Scrolling ticker style
+- Updates in real-time
+- Very compact
+
+#### Option 4: Dashboard Card (Prominent)
+```
+┌─────────────────────────────────────────┐
+│  🏆 Model Performance Leaderboard       │
+├─────────────────────────────────────────┤
+│  Rank  Model           Win Rate  Battles│
+│  🥇 1   Gemini 2.0      43.3%      150  │
+│  🥈 2   Claude Haiku    38.2%      150  │
+│  🥉 3   Mistral 7B      35.1%      150  │
+│  4      GPT-4o-mini     32.5%      150  │
+│  5      KAT-Coder       28.9%      150  │
+│  6      DeepSeek        25.0%      150  │
+│                                          │
+│  [View Detailed Stats →]                │
+└─────────────────────────────────────────┘
+```
+- Prominent placement on homepage
+- Full leaderboard visible
+- Link to detailed analytics
+
+### Recommended: Hybrid Approach
+1. **Compact ticker** at top (always visible)
+2. **Expandable widget** in sidebar
+3. **Full dashboard** on dedicated stats page
+
+### Implementation
+
+#### Step 1: Add Leaderboard Component
+File: `/home/ubuntu/morgus-agent/console/src/components/ModelLeaderboard.tsx`
+
+```typescript
+import { useEffect, useState } from 'react';
+
+interface ModelStats {
+  model_name: string;
+  win_rate: number;
+  total_competitions: number;
+  avg_score: number;
+  avg_latency: number;
+  rank: number;
+}
+
+export function ModelLeaderboard({ compact = false }) {
+  const [stats, setStats] = useState<ModelStats[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchLeaderboard();
+    const interval = setInterval(fetchLeaderboard, 30000); // Refresh every 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  async function fetchLeaderboard() {
+    try {
+      const response = await fetch(
+        'https://morgus-orchestrator.morgan-426.workers.dev/api/stats/leaderboard?limit=6'
+      );
+      const data = await response.json();
+      setStats(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to fetch leaderboard:', error);
+    }
+  }
+
+  if (loading) return <div>Loading stats...</div>;
+
+  if (compact) {
+    // Compact ticker view
+    const top3 = stats.slice(0, 3);
+    return (
+      <div className="leaderboard-ticker">
+        🏆 Leader: {top3[0]?.model_name.split('/')[1]} ({top3[0]?.win_rate}%) 
+        | 2nd: {top3[1]?.model_name.split('/')[1]} ({top3[1]?.win_rate}%)
+        | 3rd: {top3[2]?.model_name.split('/')[1]} ({top3[2]?.win_rate}%)
+      </div>
+    );
+  }
+
+  // Full leaderboard view
+  return (
+    <div className="leaderboard-card">
+      <h3>🏆 Model Performance Leaderboard</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Model</th>
+            <th>Win Rate</th>
+            <th>Battles</th>
+            <th>Avg Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          {stats.map((model, idx) => (
+            <tr key={model.model_name}>
+              <td>
+                {idx === 0 && '🥇'}
+                {idx === 1 && '🥈'}
+                {idx === 2 && '🥉'}
+                {idx > 2 && model.rank}
+              </td>
+              <td>{model.model_name.split('/')[1]}</td>
+              <td>{model.win_rate}%</td>
+              <td>{model.total_competitions}</td>
+              <td>{model.avg_score}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+```
+
+#### Step 2: Add to App.tsx
+```typescript
+import { ModelLeaderboard } from './components/ModelLeaderboard';
+
+// In the main layout:
+<div className="app-header">
+  <ModelLeaderboard compact={true} />
+</div>
+
+// In the sidebar or main content:
+<ModelLeaderboard compact={false} />
+```
+
+#### Step 3: Add Styling
+File: `/home/ubuntu/morgus-agent/console/src/index.css`
+
+```css
+.leaderboard-ticker {
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 8px 16px;
+  font-size: 14px;
+  text-align: center;
+  font-weight: 500;
+  animation: slideIn 0.5s ease-out;
+}
+
+.leaderboard-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  margin: 20px 0;
+}
+
+.leaderboard-card h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.leaderboard-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leaderboard-card th {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 2px solid #e5e7eb;
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.leaderboard-card td {
+  padding: 12px 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.leaderboard-card tr:hover {
+  background: #f9fafb;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+```
+
+### Features to Add
+
+1. **Real-time Updates** - Refresh every 30 seconds
+2. **Animations** - Smooth transitions when rankings change
+3. **Tooltips** - Hover for detailed stats
+4. **Click to Expand** - Show full stats for each model
+5. **Trend Indicators** - ↑ ↓ arrows showing if rank improved/declined
+6. **Time Filter** - Toggle between all-time, last 7 days, last 24 hours
+
+### Advanced Features (Optional)
+
+1. **Live Competition View**
+   - Show current query being processed
+   - Real-time scores as models respond
+   - Animated "winner announcement"
+
+2. **Model Comparison Tool**
+   - Click two models to see head-to-head stats
+   - Win rate when competing directly
+   - Strengths/weaknesses analysis
+
+3. **Performance Charts**
+   - Line graph showing win rate over time
+   - Bar chart comparing average scores
+   - Cost vs performance scatter plot
+
+4. **User Favorites**
+   - Let users "favorite" models
+   - Show how their favorites are performing
+   - Get notifications when favorite wins
+
+### Test Cases
+1. Load page → Leaderboard appears with current stats
+2. Wait 30s → Stats refresh automatically
+3. Run a query → Leaderboard updates after response
+4. Click model → Show detailed stats modal
+5. Hover over rank → Show tooltip with trends
+
+### Benefits
+- **Transparency** - Users see which models perform best
+- **Engagement** - Gamification keeps users interested
+- **Trust** - Real data builds confidence in the system
+- **Education** - Users learn about different AI models
+- **Marketing** - Unique feature that competitors don't have
+
+---
+
+## Updated Success Criteria
+
+By end of tomorrow's session:
+- ✅ Upload screenshot/PDF and get actual analysis
+- ✅ Ask "What time is it?" and get correct answer
+- ✅ Ask "Search the web for X" and get current information
+- ✅ Model stats tracking working (leaderboard shows data)
+- ✅ No invalid model ID errors in logs
+- ✅ **Live model leaderboard visible on front page** 🆕
+
+---
+
+## Updated Budget
+
+Estimated credit usage:
+- Vision/PDF fix: ~500 credits
+- Web browsing: ~1,000 credits
+- Stats migration: ~100 credits
+- Date/time tool: ~200 credits
+- **Leaderboard UI: ~500 credits** 🆕
+- Total: ~2,500 credits
+
+Leave buffer for debugging: ~1,000 credits
+**Total budget: 3,500 credits**
