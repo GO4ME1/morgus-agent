@@ -39,15 +39,21 @@ export const FREE_MODELS: ModelConfig[] = [
     free: true,
   },
   {
-    id: 'x-ai/grok-4.1-fast:free',
-    name: 'Grok 4.1 Fast',
-    provider: 'x-ai',
+    id: 'tngtech/deepseek-r1t2-chimera:free',
+    name: 'TNG: DeepSeek R1T2 Chimera',
+    provider: 'tngtech',
     free: true,
   },
   {
     id: 'kwaipilot/kat-coder-pro-v1:free',
     name: 'KAT-Coder-Pro V1',
     provider: 'kwaipilot',
+    free: true,
+  },
+  {
+    id: 'nvidia/nemotron-nano-12b-2-vl:free',
+    name: 'NVIDIA: Nemotron Nano 12B 2 VL',
+    provider: 'nvidia',
     free: true,
   },
 ];

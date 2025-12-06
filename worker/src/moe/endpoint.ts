@@ -81,11 +81,171 @@ export class MOEEndpoint {
   }
 
   /**
+   * Process chat request through MOE with Gemini as third model
+   */
+  async chatWithGemini(request: MOEChatRequest & { geminiApiKey: string }): Promise<MOEChatResponse> {
+    // Convert to OpenRouter format
+    const messages: OpenRouterMessage[] = request.messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    // Query OpenRouter models in parallel with Gemini
+    const startTime = Date.now();
+    
+    // Import Gemini helper
+    const { queryGeminiForMOE } = await import('../gemini');
+    
+    // Query OpenRouter models
+    const openrouterPromise = this.moe.query({ messages });
+    
+    // Query Gemini
+    const geminiPromise = queryGeminiForMOE(
+      request.geminiApiKey,
+      'gemini-2.0-flash-exp',
+      request.messages
+    ).catch((error) => {
+      console.error('Gemini query failed:', error);
+      return null;
+    });
+    
+    // Wait for both
+    const [openrouterResult, geminiResponse] = await Promise.all([
+      openrouterPromise,
+      geminiPromise
+    ]);
+    
+    // Combine responses
+    const allResponses = [...openrouterResult.allResponses];
+    if (geminiResponse) {
+      allResponses.push(geminiResponse);
+    }
+    
+    // Re-run Nash Equilibrium with all 3 models
+    const { NashEquilibriumSelector } = await import('./nash');
+    const nash = new NashEquilibriumSelector();
+    const nashResult = nash.select(allResponses);
+    
+    const totalLatency = Date.now() - startTime;
+    const totalCost = allResponses.reduce((sum, r) => sum + r.cost, 0);
+    
+    // Format response
+    return {
+      content: nashResult.winner.content,
+      moeMetadata: {
+        winner: {
+          model: nashResult.winner.model,
+          latency: nashResult.winner.latency,
+          tokens: nashResult.winner.tokens.total,
+          cost: nashResult.winner.cost,
+        },
+        allModels: allResponses.map((r) => ({
+          model: r.model,
+          latency: r.latency,
+          tokens: r.tokens.total,
+          cost: r.cost,
+          score: nashResult.scores.get(r.model) || 0,
+        })),
+        nashExplanation: nashResult.explanation,
+        totalLatency,
+        totalCost,
+      },
+    };
+  }
+
+  /**
    * Format winner response with MOE context
    */
   private formatWinnerResponse(result: MOEResponse): string {
     // Return only the winner's content - MOE visualization handled by frontend
     return result.winner.content;
+  }
+
+  /**
+   * Process chat request through MOE with Gemini + GPT-4o-mini
+   */
+  async chatWithMultipleAPIs(request: MOEChatRequest & { geminiApiKey: string; openaiApiKey: string }): Promise<MOEChatResponse> {
+    // Convert to OpenRouter format
+    const messages: OpenRouterMessage[] = request.messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    // Query all models in parallel
+    const startTime = Date.now();
+    
+    // Import helpers
+    const { queryGeminiForMOE } = await import('../gemini');
+    const { queryGPT4oMiniForMOE } = await import('../openai-moe');
+    
+    // Query OpenRouter models
+    const openrouterPromise = this.moe.query({ messages });
+    
+    // Query Gemini
+    const geminiPromise = queryGeminiForMOE(
+      request.geminiApiKey,
+      'gemini-2.0-flash-exp',
+      request.messages
+    ).catch((error) => {
+      console.error('Gemini query failed:', error);
+      return null;
+    });
+    
+    // Query GPT-4o-mini
+    const gptPromise = queryGPT4oMiniForMOE(
+      request.openaiApiKey,
+      request.messages.map((m) => ({ role: m.role, content: m.content }))
+    ).catch((error) => {
+      console.error('GPT-4o-mini query failed:', error);
+      return null;
+    });
+    
+    // Wait for all
+    const [openrouterResult, geminiResponse, gptResponse] = await Promise.all([
+      openrouterPromise,
+      geminiPromise,
+      gptPromise
+    ]);
+    
+    // Combine responses
+    const allResponses = [...openrouterResult.allResponses];
+    if (geminiResponse) {
+      allResponses.push(geminiResponse);
+    }
+    if (gptResponse) {
+      allResponses.push(gptResponse);
+    }
+    
+    // Re-run Nash Equilibrium with all models
+    const { NashEquilibriumSelector } = await import('./nash');
+    const nash = new NashEquilibriumSelector();
+    const nashResult = nash.select(allResponses);
+    
+    const totalLatency = Date.now() - startTime;
+    const totalCost = allResponses.reduce((sum, r) => sum + r.cost, 0);
+    
+    // Format response
+    return {
+      content: nashResult.winner.content,
+      moeMetadata: {
+        winner: {
+          model: nashResult.winner.model,
+          latency: nashResult.winner.latency,
+          tokens: nashResult.winner.tokens.total,
+          cost: nashResult.winner.cost,
+        },
+        allModels: allResponses.map((r) => ({
+          model: r.model,
+          latency: r.latency,
+          tokens: r.tokens.total,
+          cost: r.cost,
+          score: nashResult.scores.get(r.model) || 0,
+        })),
+        nashExplanation: nashResult.explanation,
+        totalLatency,
+        totalCost,
+      },
+    };
   }
 
   /**

@@ -213,15 +213,12 @@ Always use tools when you need current information or need to perform actions. D
      - Example: "According to [NASA](https://www.nasa.gov), the moon is 238,855 miles away"
      - Example: "[Wikipedia](https://en.wikipedia.org/wiki/Bolivia) states that La Paz is the capital"
 5. **Make ALL store names, websites, and URLs clickable** using markdown links: [text](url)
-6. **ALWAYS ADD 3 IMAGES AT THE TOP** - Use search_images tool for EVERY response
-   - Call search_images with a relevant query based on the topic
-   - The tool returns markdown images like: ![alt](url) ![alt](url) ![alt](url)
-   - Copy the EXACT markdown from the tool result and paste it at the TOP of your response
-   - DO NOT modify, escape, or wrap the images - just paste them directly
-   - Place the images at the VERY BEGINNING of your response, before any text
-   - Example: For "What is the capital of France?", search for "paris france eiffel tower"
-   - Example: For "How to code in Python?", search for "python programming code"
-7. **Make it visual** - Every response should START with the images from search_images
+6. **Use images ONLY when relevant** - Don't force images into every response
+   - Use search_images for queries like "show me", "pictures of", "what does X look like"
+   - Skip images for follow-up questions in conversations
+   - Skip images for text-based queries like "how to", "what is", "explain"
+   - When you DO use images, place them at the top of your response
+7. **Make it visual when appropriate** - Use charts, diagrams, or images to enhance understanding
 
 Example format:
 🎯 **THE ANSWER: 4** 🎯
@@ -261,8 +258,14 @@ Be conversational and helpful. Show your work and explain what you're doing.`,
         const lastUserMessage = this.conversationHistory[this.conversationHistory.length - 1]?.content || '';
         const needsTools = this.detectToolNeed(lastUserMessage);
         
+        console.log('[AGENT] Last user message:', lastUserMessage.substring(0, 100));
+        console.log('[AGENT] Needs tools:', needsTools);
+        console.log('[AGENT] Model:', this.config.model);
+        
         // Use Gemini for simple queries, OpenAI when tools are needed
         const useGemini = !needsTools && this.config.model?.startsWith('gemini');
+        
+        console.log('[AGENT] Using Gemini:', useGemini);
         
         if (useGemini) {
           // Use Gemini for this request
@@ -295,7 +298,8 @@ Be conversational and helpful. Show your work and explain what you're doing.`,
               model: this.config.model,
               messages: this.conversationHistory,
               tools: this.toolRegistry.getSchemas(),
-              tool_choice: 'auto',
+              // Force tool usage on first iteration if query needs image generation
+              tool_choice: iteration === 1 && (userMessage.toLowerCase().includes('create') || userMessage.toLowerCase().includes('generate') || userMessage.toLowerCase().includes('make') || userMessage.toLowerCase().includes('design') || userMessage.toLowerCase().includes('draw')) ? 'required' : 'auto',
               temperature: this.config.temperature,
             }),
           });
@@ -313,6 +317,11 @@ Be conversational and helpful. Show your work and explain what you're doing.`,
         this.conversationHistory.push(message);
 
         // Check if there are tool calls
+        console.log('[AGENT] Message has tool_calls:', !!message.tool_calls);
+        if (message.tool_calls) {
+          console.log('[AGENT] Number of tool calls:', message.tool_calls.length);
+        }
+        
         if (message.tool_calls && message.tool_calls.length > 0) {
           // Execute each tool call
           for (const toolCall of message.tool_calls) {
@@ -375,8 +384,16 @@ Be conversational and helpful. Show your work and explain what you're doing.`,
           const isSubstantialResponse = message.content.length > 100;
           const hasNoToolCalls = !message.tool_calls || message.tool_calls.length === 0;
 
-          // Complete if: substantial response with no tool calls, OR has completion indicator
-          if ((isSubstantialResponse && hasNoToolCalls) || hasCompletionIndicator) {
+          // Complete if: substantial response AND we've had at least one iteration with tool calls
+          // This prevents early exit before tools are called
+          const hasHadToolCalls = this.conversationHistory.some(msg => msg.role === 'tool');
+          
+          if (hasCompletionIndicator && hasHadToolCalls) {
+            // Definitely complete if we have completion indicator AND tools were used
+            taskComplete = true;
+          } else if (isSubstantialResponse && hasNoToolCalls && iteration > 1) {
+            // Only complete on substantial response if we're past first iteration
+            // This gives tools a chance to be called first
             taskComplete = true;
           }
         }

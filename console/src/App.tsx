@@ -436,6 +436,26 @@ function App() {
                       ))}
                     </div>
                   )}
+                  {/* Image download buttons */}
+                  {message.role === 'assistant' && message.content.includes('![') && (
+                    <div className="image-download-buttons">
+                      {(() => {
+                        const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+                        const matches = [...message.content.matchAll(imageRegex)];
+                        return matches.map((match, i) => (
+                          <a
+                            key={i}
+                            href={match[2]}
+                            download={`morgus-image-${Date.now()}-${i}.png`}
+                            className="download-image-btn"
+                            title="Download image"
+                          >
+                            📥 Download Image {matches.length > 1 ? `${i + 1}` : ''}
+                          </a>
+                        ));
+                      })()}
+                    </div>
+                  )}
                 </div>
                 <div className="message-actions">
                   <div className="message-time">{formatTime(message.timestamp)}</div>

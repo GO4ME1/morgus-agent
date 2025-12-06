@@ -202,25 +202,62 @@ export default {
         });
       }
 
-      // MOE Chat endpoint - Model competition with Nash Equilibrium
+      // MOE Chat endpoint - Model competition + Gemini agent execution
       if (path === '/moe-chat' && request.method === 'POST') {
         const body = await request.json() as ChatMessage;
         
         try {
+          // Step 1: Run MOE competition to get best answer
           const moe = new MOEEndpoint(env.OPENROUTER_API_KEY);
-          
-          // Convert conversation history to MOE format
           const messages = (body.history || []).concat([{
             role: 'user',
             content: body.message
           }]);
           
-          // Query MOE system
-          const result = await moe.chat({ messages });
+          // Run MOE with OpenRouter models + Gemini + GPT-4o-mini
+          const moeResult = await moe.chatWithMultipleAPIs({ 
+            messages, 
+            geminiApiKey: env.GEMINI_API_KEY,
+            openaiApiKey: env.OPENAI_API_KEY
+          });
+          
+          // Step 2: Pass MOE winner's answer to autonomous agent for tool execution
+          const agent = new AutonomousAgent({ 
+            maxIterations: 10,
+            model: 'gpt-4o-mini' // Use OpenAI for tool support
+          });
+          
+          // Create enhanced prompt that encourages tool use when appropriate
+          const enhancedPrompt = `User query: ${body.message}
+
+MOE expert analysis: ${moeResult.content}
+
+Enhance this response if needed:
+- If user asks for images/pictures, use search_images tool
+- If user asks for charts/data visualization, use execute_code tool
+- Otherwise, provide a helpful response based on the expert analysis
+
+Be smart about when to use tools - don't force them if not needed.`;
+          
+          console.log('[MOE-CHAT] User message:', body.message);
+          console.log('[MOE-CHAT] Has PEXELS_API_KEY:', !!env.PEXELS_API_KEY);
+          
+          // Collect all streamed messages from agent execution
+          let finalResponse = '';
+          const conversationHistory = body.history || [];
+          
+          for await (const message of agent.executeTask(enhancedPrompt, env, conversationHistory)) {
+            console.log('[MOE-CHAT] Agent message:', message.type, message.content?.substring(0, 100));
+            
+            // Only capture actual response content, not status messages
+            if (message.type === 'response') {
+              finalResponse = message.content;
+            }
+          }
           
           return new Response(JSON.stringify({
-            message: result.content,
-            moeMetadata: result.moeMetadata,
+            message: finalResponse || moeResult.content,
+            moeMetadata: moeResult.moeMetadata,
             status: 'completed'
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },

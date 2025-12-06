@@ -84,6 +84,49 @@ export async function callGemini(
 }
 
 /**
+ * Query Gemini for MOE competition (returns OpenRouter-compatible response)
+ */
+export async function queryGeminiForMOE(
+  apiKey: string,
+  model: string,
+  messages: Array<{ role: string; content: string }>
+): Promise<{
+  model: string;
+  content: string;
+  tokens: { prompt: number; completion: number; total: number };
+  cost: number;
+  latency: number;
+  timestamp: number;
+}> {
+  const startTime = Date.now();
+  
+  try {
+    const content = await callGemini(apiKey, model, messages);
+    const latency = Date.now() - startTime;
+    
+    // Estimate tokens (rough approximation: 1 token ≈ 4 chars)
+    const promptTokens = messages.reduce((sum, m) => sum + Math.ceil(m.content.length / 4), 0);
+    const completionTokens = Math.ceil(content.length / 4);
+    
+    return {
+      model: `google/${model}`,
+      content,
+      tokens: {
+        prompt: promptTokens,
+        completion: completionTokens,
+        total: promptTokens + completionTokens,
+      },
+      cost: 0, // Free tier
+      latency,
+      timestamp: Date.now(),
+    };
+  } catch (error: any) {
+    console.error(`Error querying Gemini for MOE:`, error);
+    throw error;
+  }
+}
+
+/**
  * Call Gemini API with streaming
  */
 export async function* callGeminiStream(

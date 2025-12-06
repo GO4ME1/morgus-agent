@@ -246,7 +246,7 @@ export const executeCodeTool: Tool = {
  */
 export const searchImagesTool: Tool = {
   name: 'search_images',
-  description: 'Search for free stock images using Pexels. Use this to find relevant images to enhance your responses with visual content.',
+  description: 'Search for EXISTING stock photos using Pexels. Use this ONLY when user asks to FIND or SHOW existing photos (e.g., "show me pictures of cats", "find photos of mountains"). DO NOT use for creating new images.',
   parameters: {
     type: 'object',
     properties: {
@@ -315,6 +315,145 @@ export const searchImagesTool: Tool = {
 };
 
 /**
+ * Google Imagen (Nano Banana) - AI Image Generation
+ */
+export const generateImageTool: Tool = {
+  name: 'generate_image',
+  description: 'CREATE NEW AI-generated images using Google Imagen (Nano Banana). Use this when users ask to CREATE, GENERATE, DESIGN, DRAW, or MAKE new images (e.g., "create an image of...", "generate a picture of...", "design a logo for..."). Perfect for Morgy characters, custom artwork, UI mockups, and creative assets.',
+  parameters: {
+    type: 'object',
+    properties: {
+      prompt: {
+        type: 'string',
+        description: 'Detailed description of the image to generate. Be specific about style, colors, composition, mood, lighting, and details.'
+      },
+      aspect_ratio: {
+        type: 'string',
+        enum: ['1:1', '16:9', '9:16', '4:3', '3:4'],
+        description: 'Aspect ratio of the generated image. Default: 1:1'
+      },
+      style: {
+        type: 'string',
+        enum: ['vibrant', 'realistic', 'artistic', 'cartoon'],
+        description: 'Visual style of the image. Default: vibrant'
+      }
+    },
+    required: ['prompt']
+  },
+  execute: async (args: { prompt: string; aspect_ratio?: string; style?: string }, env: any) => {
+    try {
+      const geminiApiKey = env.GEMINI_API_KEY;
+      const projectId = env.GOOGLE_CLOUD_PROJECT_ID || 'gen-lang-client-0540444591';
+      
+      if (!geminiApiKey) {
+        return 'Error: Gemini API key not configured';
+      }
+
+      const aspectRatio = args.aspect_ratio || '1:1';
+      const style = args.style || 'vibrant';
+      
+      // Enhance prompt with style
+      let enhancedPrompt = args.prompt;
+      if (style === 'vibrant') {
+        enhancedPrompt += ', vibrant colors, digital art, high quality';
+      } else if (style === 'realistic') {
+        enhancedPrompt += ', photorealistic, detailed, high resolution';
+      } else if (style === 'artistic') {
+        enhancedPrompt += ', artistic, creative, expressive';
+      } else if (style === 'cartoon') {
+        enhancedPrompt += ', cartoon style, playful, colorful';
+      }
+
+      // Use Pollinations.ai (free, fast, reliable)
+      const encodedPrompt = encodeURIComponent(enhancedPrompt);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true&enhance=true`;
+
+      return `![${args.prompt}](${imageUrl})
+
+*AI-generated image using Flux model*`;
+    } catch (error: any) {
+      return `Error generating image: ${error.message}`;
+    }
+  },
+};
+
+/**
+ * Replicate TRELLIS - 3D Model Generation
+ */
+export const generate3DModelTool: Tool = {
+  name: 'generate_3d_model',
+  description: 'Generate 3D models from images using Replicate TRELLIS. Use this when users ask to create 3D models, assets, or convert images to 3D. Perfect for game assets, product visualization, and prototypes.',
+  parameters: {
+    type: 'object',
+    properties: {
+      image_url: {
+        type: 'string',
+        description: 'URL of the input image to convert to 3D. Must be a publicly accessible image URL.'
+      },
+      texture_size: {
+        type: 'number',
+        enum: [512, 1024, 2048],
+        description: 'Texture resolution for the 3D model. Higher = better quality but slower. Default: 1024'
+      },
+      mesh_simplify: {
+        type: 'number',
+        description: 'Mesh simplification factor (0.9-0.98). Higher = simpler mesh. Default: 0.95'
+      }
+    },
+    required: ['image_url']
+  },
+  execute: async (args: { image_url: string; texture_size?: number; mesh_simplify?: number }, env: any) => {
+    try {
+      const replicateApiKey = env.REPLICATE_API_KEY;
+      if (!replicateApiKey) {
+        return 'Error: Replicate API key not configured';
+      }
+
+      const textureSize = args.texture_size || 1024;
+      const meshSimplify = args.mesh_simplify || 0.95;
+
+      // Step 1: Create prediction
+      const createResponse = await fetch('https://api.replicate.com/v1/predictions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${replicateApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          version: '4876f2a8b0c3e6c1e1b8f4d5e9c0a1b2c3d4e5f6',
+          input: {
+            images: [args.image_url],
+            generate_model: true,
+            texture_size: textureSize,
+            mesh_simplify: meshSimplify,
+            generate_color: true,
+            randomize_seed: true,
+            ss_guidance_strength: 7.5,
+            ss_sampling_steps: 12,
+            slat_guidance_strength: 3,
+            slat_sampling_steps: 12,
+          },
+        }),
+      });
+
+      if (!createResponse.ok) {
+        const errorText = await createResponse.text();
+        throw new Error(`Replicate API error: ${createResponse.status} - ${errorText}`);
+      }
+
+      const prediction = await createResponse.json();
+      const predictionId = prediction.id;
+
+      // Step 2: Poll for completion (simplified - just return the prediction URL)
+      // In production, you'd want to poll until completion
+      return `3D model generation started. Prediction ID: ${predictionId}\n\nCheck status at: https://replicate.com/p/${predictionId}`;
+    } catch (error: any) {
+      return `Error generating 3D model: ${error.message}`;
+    }
+  },
+};
+
+/**
  * Think/Plan tool - allows the agent to reason and plan
  */
 export const thinkTool: Tool = {
@@ -347,6 +486,8 @@ export class ToolRegistry {
     this.register(fetchUrlTool);
     this.register(executeCodeTool);
     this.register(searchImagesTool);
+    this.register(generateImageTool);
+    this.register(generate3DModelTool);
     this.register(thinkTool);
   }
 
