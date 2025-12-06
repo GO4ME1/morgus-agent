@@ -58,6 +58,12 @@ export default {
       if (path.startsWith('/api/thoughts')) {
         return handleThoughtsAPI(request, env);
       }
+      
+      // Stats API routing
+      if (path.startsWith('/api/stats')) {
+        const { handleStatsAPI } = await import('./stats-api');
+        return handleStatsAPI(request, env);
+      }
 
       // File upload endpoint
       if (path === '/upload' && request.method === 'POST') {
@@ -210,9 +216,23 @@ export default {
         try {
           // Step 1: Run MOE competition to get best answer
           const moe = new MOEEndpoint(env.OPENROUTER_API_KEY);
+          
+          // Enhance prompt when files are attached
+          let userMessage = body.message;
+          if (body.files && body.files.length > 0) {
+            const fileCount = body.files.length;
+            const fileTypes = body.files.map(f => {
+              const match = f.match(/^data:([^;]+)/);
+              return match ? match[1] : 'unknown';
+            });
+            
+            // Add explicit instruction to analyze the documents
+            userMessage = `${body.message}\n\n[${fileCount} file(s) attached: ${fileTypes.join(', ')}]\n\nPlease analyze the attached document(s) in detail and answer the user's question based on the content.`;
+          }
+          
           const messages = (body.history || []).concat([{
             role: 'user',
-            content: body.message
+            content: userMessage
           }]);
           
           // Run MOE with OpenRouter models + Gemini + GPT-4o-mini + Claude
@@ -223,6 +243,40 @@ export default {
             anthropicApiKey: env.ANTHROPIC_API_KEY,
             files: body.files // Pass uploaded files for vision models
           });
+          
+          // Record competition stats in background (don't await)
+          try {
+            const { ModelStatsService } = await import('./services/model-stats');
+            const statsService = new ModelStatsService(env.SUPABASE_URL, env.SUPABASE_KEY);
+            
+            // Extract file types if present
+            const fileTypes = body.files?.map(f => {
+              const match = f.match(/^data:([^;]+)/);
+              return match ? match[1] : 'unknown';
+            }) || [];
+            
+            // Prepare competition results
+            const competitionResults = moeResult.moeMetadata.allModels.map((model, index) => ({
+              model_name: model.model,
+              is_winner: model.model === moeResult.moeMetadata.winner.model,
+              score: model.score,
+              rank: index + 1,
+              latency: model.latency,
+              tokens: model.tokens,
+              cost: model.cost,
+              user_message: body.message,
+              model_response: model.model === moeResult.moeMetadata.winner.model ? moeResult.content : undefined,
+              had_files: (body.files?.length || 0) > 0,
+              file_types: fileTypes.length > 0 ? fileTypes : undefined,
+            }));
+            
+            // Record asynchronously (don't block response)
+            statsService.recordCompetition(competitionResults).catch(err => {
+              console.error('[MOE-CHAT] Failed to record stats:', err);
+            });
+          } catch (error) {
+            console.error('[MOE-CHAT] Error setting up stats tracking:', error);
+          }
           
           // Step 2: Pass MOE winner's answer to autonomous agent for tool execution
           const agent = new AutonomousAgent({ 
