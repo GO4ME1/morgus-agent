@@ -53,7 +53,7 @@ function App() {
     {
       id: '1',
       role: 'assistant',
-      content: '👋 Hello! I\'m **Morgus**, your autonomous AI agent. I can help you with:\n\n• Research and information gathering\n• Planning complex projects\n• Writing and executing code\n• Deploying applications\n• And much more!\n\nWhat would you like to accomplish today?',
+      content: '👋 Hello! I\'m Morgus, your autonomous AI agent. What would you like to accomplish today?',
       timestamp: new Date(),
     },
   ]);
@@ -119,7 +119,7 @@ function App() {
           setMessages([{
             id: '1',
             role: 'assistant',
-            content: '👋 Hello! I\'m **Morgus**, your autonomous AI agent. I can help you with:\n\n• Research and information gathering\n• Planning complex projects\n• Writing and executing code\n• Deploying applications\n• And much more!\n\nWhat would you like to accomplish today?',
+            content: '👋 Hello! I\'m Morgus, your autonomous AI agent. What would you like to accomplish today?',
             timestamp: new Date(),
           }]);
         } else {

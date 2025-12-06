@@ -131,7 +131,7 @@ export const fetchUrlTool: Tool = {
  */
 export const executeCodeTool: Tool = {
   name: 'execute_code',
-  description: 'Execute Python or JavaScript code in a secure sandbox. Use this to run calculations, test code, or process data.',
+  description: 'DEPRECATED: Code execution is currently unavailable. For charts, use create_chart tool instead.',
   parameters: {
     type: 'object',
     properties: {
@@ -239,6 +239,76 @@ export const executeCodeTool: Tool = {
       return `Error executing code: ${error.message}`;
     }
   },
+};
+
+/**
+ * QuickChart - Free chart generation tool
+ */
+export const createChartTool: Tool = {
+  name: 'create_chart',
+  description: 'Create charts and visualizations (bar, line, pie charts). Use this when user asks for charts, graphs, or data visualization. Completely FREE!',
+  parameters: {
+    type: 'object',
+    properties: {
+      type: {
+        type: 'string',
+        enum: ['bar', 'line', 'pie'],
+        description: 'Type of chart to create'
+      },
+      labels: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Labels for the data points (e.g., ["Q1", "Q2", "Q3"])'
+      },
+      data: {
+        type: 'array',
+        items: { type: 'number' },
+        description: 'Data values (e.g., [100, 150, 120])'
+      },
+      title: {
+        type: 'string',
+        description: 'Chart title'
+      }
+    },
+    required: ['type', 'labels', 'data', 'title']
+  },
+  execute: async (args: { type: string; labels: string[]; data: number[]; title: string }) => {
+    try {
+      // Import the chart generation functions
+      const { generateChart } = await import('./tools/quickchart-tool');
+      
+      const colors = [
+        '#FF1493', '#00CED1', '#FFD700', '#FF6347', '#9370DB',
+        '#32CD32', '#FF69B4', '#1E90FF', '#FFA500', '#BA55D3'
+      ];
+
+      const chartConfig: any = {
+        type: args.type,
+        data: {
+          labels: args.labels,
+          datasets: [{
+            label: args.title,
+            data: args.data,
+            backgroundColor: args.type === 'pie' ? colors.slice(0, args.labels.length) : '#FF1493',
+            borderColor: '#FF1493',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          title: {
+            display: true,
+            text: args.title
+          }
+        }
+      };
+
+      const chartUrl = await generateChart(chartConfig);
+      
+      return `### 📊 ${args.title}\n\n![Chart](${chartUrl})\n\n*Generated with QuickChart.io (100% FREE) ✨*`;
+    } catch (error: any) {
+      return `Error creating chart: ${error.message}`;
+    }
+  }
 };
 
 /**
@@ -484,7 +554,7 @@ export class ToolRegistry {
     // Register default tools
     this.register(searchWebTool);
     this.register(fetchUrlTool);
-    this.register(executeCodeTool);
+    this.register(createChartTool);  // FREE chart generation
     this.register(searchImagesTool);
     this.register(generateImageTool);
     this.register(generate3DModelTool);
