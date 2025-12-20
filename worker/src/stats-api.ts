@@ -27,7 +27,7 @@ export async function handleStatsAPI(request: Request, env: any): Promise<Respon
       const limit = parseInt(url.searchParams.get('limit') || '10');
       const leaderboard = await statsService.getLeaderboard(limit);
 
-      return new Response(JSON.stringify(leaderboard), {
+      return new Response(JSON.stringify({ stats: leaderboard }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

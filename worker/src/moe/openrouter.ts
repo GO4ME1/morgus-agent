@@ -50,18 +50,6 @@ export const FREE_MODELS: ModelConfig[] = [
     provider: 'kwaipilot',
     free: true,
   },
-  {
-    id: 'nvidia/nemotron-nano-12b-2-vl:free',
-    name: 'NVIDIA: Nemotron Nano 12B 2 VL',
-    provider: 'nvidia',
-    free: true,
-  },
-  {
-    id: 'google/gemma-3-27b:free',
-    name: 'Google: Gemma 3 27B',
-    provider: 'google',
-    free: true,
-  },
 ];
 
 /**

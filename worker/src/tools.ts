@@ -127,18 +127,18 @@ export const fetchUrlTool: Tool = {
 };
 
 /**
- * Execute code tool using E2B sandbox
+ * Execute code tool using Fly.io service
  */
 export const executeCodeTool: Tool = {
   name: 'execute_code',
-  description: 'DEPRECATED: Code execution is currently unavailable. For charts, use create_chart tool instead.',
+  description: 'Execute Python, JavaScript, or Bash code in a secure sandbox. Use this to run code, process data, use GitHub CLI, install packages, or perform computations. Supports: Python 3.11, Node.js 18, GitHub CLI, Git, Bash.',
   parameters: {
     type: 'object',
     properties: {
       language: {
         type: 'string',
-        enum: ['python', 'javascript'],
-        description: 'Programming language'
+        enum: ['python', 'javascript', 'bash'],
+        description: 'Programming language (python, javascript, or bash)'
       },
       code: {
         type: 'string',
@@ -149,93 +149,44 @@ export const executeCodeTool: Tool = {
   },
   execute: async (args: { language: string; code: string }, env: any) => {
     try {
-      // Use E2B API for code execution
-      const apiKey = env.E2B_API_KEY;
-      if (!apiKey) {
-        return 'Error: E2B API key not configured';
-      }
-
-      const response = await fetch('https://api.e2b.dev/v1/sandboxes', {
+      console.log('[CodeExec] Executing', args.language, 'code, length:', args.code.length);
+      
+      // Use Fly.io deployment service for code execution
+      const response = await fetch('https://morgus-deploy.fly.dev/execute', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          template: args.language === 'python' ? 'python3' : 'nodejs',
-          timeout: 30,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`E2B API error: ${response.statusText}`);
-      }
-
-      const sandbox = await response.json();
-      const sandboxId = sandbox.id;
-
-      // Execute code
-      const execResponse = await fetch(`https://api.e2b.dev/v1/sandboxes/${sandboxId}/execute`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+          language: args.language,
           code: args.code,
         }),
       });
 
-      const result = await execResponse.json();
-
-      // Check if there are any image files created (for charts/visualizations)
-      let imageData = '';
-      try {
-        // List files in the sandbox
-        const filesResponse = await fetch(`https://api.e2b.dev/v1/sandboxes/${sandboxId}/files`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-          },
-        });
-        
-        if (filesResponse.ok) {
-          const files = await filesResponse.json();
-          // Look for image files (png, jpg, jpeg, svg)
-          const imageFile = files.find((f: any) => 
-            f.name.match(/\.(png|jpg|jpeg|svg)$/i)
-          );
-          
-          if (imageFile) {
-            // Download the image file
-            const imageResponse = await fetch(`https://api.e2b.dev/v1/sandboxes/${sandboxId}/files/${imageFile.name}`, {
-              method: 'GET',
-              headers: {
-                'Authorization': `Bearer ${apiKey}`,
-              },
-            });
-            
-            if (imageResponse.ok) {
-              const imageBuffer = await imageResponse.arrayBuffer();
-              const base64 = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
-              imageData = `\n\n![Generated Chart](data:image/png;base64,${base64})`;
-            }
-          }
-        }
-      } catch (e) {
-        // Ignore file listing errors
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[CodeExec] Execution failed:', response.status, errorText);
+        return `Error executing code: ${response.status} - ${errorText}`;
       }
 
-      // Clean up sandbox
-      await fetch(`https://api.e2b.dev/v1/sandboxes/${sandboxId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-        },
-      });
+      const result = await response.json();
+      console.log('[CodeExec] Result:', { success: result.success, exitCode: result.exitCode });
 
-      return `Output:\n${result.stdout || ''}\n${result.stderr || ''}${imageData}`;
+      if (!result.success) {
+        return `Execution failed (exit code ${result.exitCode}):\n\nStdout:\n${result.stdout}\n\nStderr:\n${result.stderr}`;
+      }
+
+      let output = '';
+      if (result.stdout) {
+        output += `Output:\n${result.stdout}`;
+      }
+      if (result.stderr) {
+        output += `\n\nWarnings/Errors:\n${result.stderr}`;
+      }
+      
+      return output || 'Code executed successfully (no output)';
     } catch (error: any) {
+      console.error('[CodeExec] Error:', error);
       return `Error executing code: ${error.message}`;
     }
   },
@@ -524,8 +475,217 @@ export const generate3DModelTool: Tool = {
 };
 
 /**
- * Think/Plan tool - allows the agent to reason and plan
+ * Get current date and time
  */
+export const getCurrentTimeTool: Tool = {
+  name: 'get_current_time',
+  description: 'Get the current date and time. Use this when you need to know what time it is, what day it is, or for any time-sensitive information.',
+  parameters: {
+    type: 'object',
+    properties: {
+      timezone: {
+        type: 'string',
+        description: 'Timezone (e.g., America/New_York, Europe/London, Asia/Tokyo). Default: UTC',
+        default: 'UTC'
+      },
+      format: {
+        type: 'string',
+        enum: ['full', 'date', 'time', 'iso'],
+        description: 'Format of the output. Default: full',
+        default: 'full'
+      }
+    },
+    required: []
+  },
+  execute: async (args: { timezone?: string; format?: string }, env: any) => {
+    try {
+      const timezone = args.timezone || 'UTC';
+      const format = args.format || 'full';
+      
+      // Get current time
+      const now = new Date();
+      
+      // Format based on requested format
+      let result = '';
+      
+      if (format === 'iso') {
+        result = now.toISOString();
+      } else if (format === 'date') {
+        result = now.toLocaleDateString('en-US', { 
+          timeZone: timezone,
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      } else if (format === 'time') {
+        result = now.toLocaleTimeString('en-US', {
+          timeZone: timezone,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          timeZoneName: 'short'
+        });
+      } else {
+        // Full format
+        const dateStr = now.toLocaleDateString('en-US', { 
+          timeZone: timezone,
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        const timeStr = now.toLocaleTimeString('en-US', {
+          timeZone: timezone,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          timeZoneName: 'short'
+        });
+        result = `${dateStr} at ${timeStr}`;
+      }
+      
+      return `Current time: ${result}`;
+    } catch (error: any) {
+      return `Error getting time: ${error.message}`;
+    }
+  },
+};
+
+/**
+ * Text-to-Speech tool - Morgan Freeman voice
+ */
+export const textToSpeechTool: Tool = {
+  name: 'text_to_speech',
+  description: 'Convert text to speech using Morgan Freeman\'s voice. Use this when user asks to "say it in Morgan Freeman\'s voice" or wants audio output.',
+  parameters: {
+    type: 'object',
+    properties: {
+      text: {
+        type: 'string',
+        description: 'The text to convert to speech'
+      }
+    },
+    required: ['text']
+  },
+  execute: async (args: { text: string }, env: any) => {
+    try {
+      const apiKey = env.ELEVENLABS_API_KEY;
+      const voiceId = env.ELEVENLABS_VOICE_ID;
+      
+      if (!apiKey || !voiceId) {
+        return 'Error: ElevenLabs API key or voice ID not configured';
+      }
+
+      const { generateSpeech } = await import('./tools/tts-tool');
+      const audioDataUrl = await generateSpeech(args.text, apiKey, voiceId);
+      
+      return `🎤 **Audio generated!**\n\n<audio controls src="${audioDataUrl}"></audio>\n\n*"${args.text}"* - Morgan Freeman`;
+    } catch (error: any) {
+      return `Error generating speech: ${error.message}`;
+    }
+  },
+};
+
+/**
+ * Browser automation tool - Full web browser control via BrowserBase
+ */
+export const browserAutomationTool: Tool = {
+  name: 'browse_web',
+  description: 'Control a real web browser to navigate websites, click buttons, fill forms, and interact with web pages. Use this for tasks that require JavaScript execution or complex web interactions.',
+  parameters: {
+    type: 'object',
+    properties: {
+      action: {
+        type: 'string',
+        enum: ['navigate', 'click', 'type', 'screenshot', 'get_content'],
+        description: 'The browser action to perform'
+      },
+      url: {
+        type: 'string',
+        description: 'URL to navigate to (for navigate action)'
+      },
+      selector: {
+        type: 'string',
+        description: 'CSS selector for element (for click/type actions)'
+      },
+      text: {
+        type: 'string',
+        description: 'Text to type (for type action)'
+      }
+    },
+    required: ['action']
+  },
+  execute: async (args: { action: string; url?: string; selector?: string; text?: string; conversationId?: string }, env: any) => {
+    try {
+      const apiKey = env.BROWSERBASE_API_KEY;
+      const projectId = env.BROWSERBASE_PROJECT_ID;
+      
+      if (!apiKey || !projectId) {
+        return 'Error: BrowserBase credentials not configured';
+      }
+
+      // Call Fly.io service /browse endpoint
+      // Pass conversationId to reuse existing browser sessions
+      const response = await fetch('https://morgus-deploy.fly.dev/browse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: args.action,
+          url: args.url,
+          selector: args.selector,
+          text: args.text,
+          apiKey: apiKey,
+          projectId: projectId,
+          conversationId: args.conversationId || env.CONVERSATION_ID || 'default'
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        return `Browser automation error: ${error.message || response.statusText}`;
+      }
+
+      const result = await response.json();
+      
+      // Format result based on action
+      let message = '';
+      
+      if (args.action === 'navigate') {
+        message = `✅ Navigated to ${result.url}\nPage title: ${result.title}`;
+      } else if (args.action === 'get_content') {
+        message = `✅ Page content retrieved\nURL: ${result.url}\nTitle: ${result.title}\n\nText content:\n${result.text.substring(0, 2000)}${result.text.length > 2000 ? '...' : ''}`;
+      } else if (args.action === 'screenshot') {
+        message = `✅ Screenshot captured\n![Screenshot](data:${result.mimeType};base64,${result.screenshot})`;
+      } else {
+        message = `✅ Browser action '${args.action}' completed successfully`;
+      }
+      
+      // Add Live View URL if available
+      if (result.liveViewUrl) {
+        message += `\n\n🌐 **Live Browser View:** [Click here to watch and control the browser](${result.liveViewUrl})\n\n✅ You can click, type, and navigate in real-time!\n⏰ Session stays active for 15 minutes.`;
+      }
+      
+      // Add session message if available
+      if (result.sessionMessage) {
+        message += `\n\n📌 ${result.sessionMessage}`;
+      }
+      
+      return message;
+    } catch (error: any) {
+      return `Error with browser automation: ${error.message}`;
+    }
+  },
+};
+
+/**
+ * Think tool - for reasoning and planning
+ */
+/**
+ * Deploy Website Tool
+ */
+import { deployWebsiteTool } from './tools/deploy-website-tool';
+
 export const thinkTool: Tool = {
   name: 'think',
   description: 'Use this to think through a problem, plan your approach, or reason about the task. This helps break down complex tasks.',
@@ -554,11 +714,19 @@ export class ToolRegistry {
     // Register default tools
     this.register(searchWebTool);
     this.register(fetchUrlTool);
+    this.register(getCurrentTimeTool);
+    this.register(deployWebsiteTool);  // Direct Cloudflare Pages deployment
+    this.register(executeCodeTool);  // E2B sandbox execution (for other code)
     this.register(createChartTool);  // FREE chart generation
     this.register(searchImagesTool);
     this.register(generateImageTool);
     this.register(generate3DModelTool);
+    this.register(textToSpeechTool);  // Morgan Freeman voice!
+    this.register(browserAutomationTool);  // Full browser automation via BrowserBase
     this.register(thinkTool);
+    
+    // Skills tools - for self-improving agent
+    this.registerSkillsTools();
   }
 
   register(tool: Tool) {
@@ -582,6 +750,16 @@ export class ToolRegistry {
         parameters: tool.parameters,
       },
     }));
+  }
+
+  /**
+   * Register skills-related tools
+   */
+  private registerSkillsTools() {
+    // Import and register skills tools
+    const { listSkillsTool, loadSkillTool } = require('./tools/skills-tool');
+    this.register(listSkillsTool);
+    this.register(loadSkillTool);
   }
 
   async execute(name: string, args: any, env: any): Promise<string> {

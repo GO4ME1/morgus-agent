@@ -33,13 +33,23 @@ function buildClaudeVisionContent(prompt: string, files: string[]): any[] {
     if (matches) {
       const [, mimeType, base64Data] = matches;
       
-      // Claude supports image/* mime types
+      // Claude supports specific image formats: jpeg, png, gif, webp
+      // For PDFs and other formats, treat as image/png
       if (mimeType.startsWith('image/') || mimeType === 'application/pdf') {
+        // Normalize mime type to Claude-supported formats
+        let claudeMimeType = mimeType;
+        if (mimeType === 'application/pdf') {
+          claudeMimeType = 'image/png'; // PDFs work as PNG
+        } else if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(mimeType)) {
+          // Convert unsupported image formats to PNG
+          claudeMimeType = 'image/png';
+        }
+        
         content.push({
           type: 'image',
           source: {
             type: 'base64',
-            media_type: mimeType.startsWith('image/') ? mimeType : 'image/png',
+            media_type: claudeMimeType,
             data: base64Data
           }
         });

@@ -105,9 +105,15 @@ export async function callGeminiWithVision(
     const [, mimeType, base64Data] = matches;
     console.log(`[GEMINI_VISION] File ${index}: ${mimeType}, size: ${base64Data.length} chars`);
     
+    // Gemini supports: image/png, image/jpeg, image/webp, image/heic, image/heif, application/pdf
+    const supportedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/heic', 'image/heif', 'application/pdf'];
+    if (!supportedTypes.includes(mimeType.toLowerCase())) {
+      console.warn(`[GEMINI_VISION] Unsupported mime type ${mimeType}, treating as image/png`);
+    }
+    
     return {
       inlineData: {
-        mimeType,
+        mimeType: supportedTypes.includes(mimeType.toLowerCase()) ? mimeType : 'image/png',
         data: base64Data
       }
     };

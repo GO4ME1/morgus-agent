@@ -212,21 +212,26 @@ export class MOEEndpoint {
     
     // Query Claude (if API key provided)
     const { queryClaude } = await import('../claude-moe');
+    console.log('[MOE] Anthropic API key present:', !!request.anthropicApiKey);
     const claudePromise = request.anthropicApiKey
       ? queryClaude(
           request.messages[request.messages.length - 1].content,
           request.anthropicApiKey,
           request.files // Pass files for vision support
         )
-          .then((response) => ({
-            model: 'claude-3-5-haiku-20241022',
-            content: response.content,
-            tokens: { prompt: 0, completion: response.tokens, total: response.tokens },
-            latency: response.latency,
-            cost: (response.tokens / 1000000) * 1.5, // Approximate cost
-          }))
+          .then((response) => {
+            console.log('[MOE] Claude response received:', response.content.substring(0, 100));
+            return {
+              model: 'claude-3-5-haiku-20241022',
+              content: response.content,
+              tokens: { prompt: 0, completion: response.tokens, total: response.tokens },
+              latency: response.latency,
+              cost: (response.tokens / 1000000) * 1.5, // Approximate cost
+            };
+          })
           .catch((error) => {
-            console.error('Claude query failed:', error);
+            console.error('[MOE] Claude query failed:', error.message || error);
+            console.error('[MOE] Claude error details:', JSON.stringify(error, null, 2));
             return null;
           })
       : Promise.resolve(null);

@@ -4,6 +4,9 @@ import { supabase } from './lib/supabase';
 import { ThoughtsPanel } from './components/ThoughtsPanel';
 import { VoiceInput, speakText, stopSpeaking } from './components/VoiceInput';
 import { MOEHeader } from './components/MOEHeader';
+import { MOELeaderboard } from './components/MOELeaderboard';
+import { ThinkingIndicator } from './components/ThinkingIndicator';
+import { BrowserView } from './components/BrowserView';
 import './App.css';
 
 // Configure marked for inline rendering
@@ -63,10 +66,13 @@ function App() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const [currentThoughtId, setCurrentThoughtId] = useState<string | null>(null);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isListening, setIsListening] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [currentTool] = useState<string | undefined>(); // TODO: Track tool usage from backend
+  const [darkMode, setDarkMode] = useState(false); // Default to light mode
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -132,14 +138,21 @@ function App() {
   };
 
   const loadTasks = async () => {
+    // Load conversations (recent chats)
     const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .order('created_at', { ascending: false })
+      .from('conversations')
+      .select('id, title, created_at, updated_at')
+      .order('updated_at', { ascending: false })
       .limit(20);
 
     if (!error && data) {
-      setTasks(data);
+      // Map to Task interface for compatibility
+      setTasks(data.map(conv => ({
+        id: conv.id,
+        description: conv.title,
+        status: 'completed',
+        created_at: conv.created_at,
+      })));
     }
   };
 
@@ -147,7 +160,7 @@ function App() {
     e.stopPropagation(); // Prevent task selection when clicking delete
     
     const { error } = await supabase
-      .from('tasks')
+      .from('conversations')
       .delete()
       .eq('id', taskId);
 
@@ -155,6 +168,7 @@ function App() {
       setTasks(prev => prev.filter(t => t.id !== taskId));
       if (currentTaskId === taskId) {
         setCurrentTaskId(null);
+        setCurrentConversationId(null);
       }
     }
   };
@@ -290,6 +304,7 @@ function App() {
         body: JSON.stringify({
           message: userInput || (fileUrls.length > 0 ? 'Please analyze these files' : ''),
           task_id: currentTaskId,
+          conversation_id: currentConversationId,
           thought_id: currentThoughtId,
           history: messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
           files: fileUrls,
@@ -355,7 +370,7 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <div className={`app ${darkMode ? 'dark-mode' : 'light-mode'}`}>
       {/* Sidebar */}
       <div className={`sidebar ${showSidebar ? 'show' : 'hide'}`}>
         <div className="sidebar-header">
@@ -363,14 +378,33 @@ function App() {
             <div className="logo-icon">M</div>
             <h1>Morgus</h1>
           </div>
-          <button className="new-chat-button" onClick={() => {
-            setMessages([{
-              id: '1',
-              role: 'assistant',
-              content: '👋 Hello! I\'m **Morgus**, your autonomous AI agent. What would you like to accomplish today?',
-              timestamp: new Date(),
-            }]);
-            setCurrentTaskId(null);
+          <button className="new-chat-button" onClick={async () => {
+            // Create new conversation
+            try {
+              const { data, error } = await supabase
+                .from('conversations')
+                .insert({
+                  title: 'New Chat',
+                  thought_id: currentThoughtId,
+                  created_at: new Date().toISOString(),
+                })
+                .select()
+                .single();
+              
+              if (!error && data) {
+                setCurrentConversationId(data.id);
+                setMessages([{
+                  id: '1',
+                  role: 'assistant',
+                  content: '👋 Hello! I\'m **Morgus**, your autonomous AI agent. What would you like to accomplish today?',
+                  timestamp: new Date(),
+                }]);
+                setCurrentTaskId(null);
+                await loadTasks(); // Reload to show new conversation
+              }
+            } catch (error) {
+              console.error('Failed to create conversation:', error);
+            }
           }}>
             + New Chat
           </button>
@@ -385,12 +419,37 @@ function App() {
         />
 
         <div className="task-list">
-          <h3>Recent Tasks</h3>
+          <h3>💬 Recent Chats</h3>
           {tasks.map((task) => (
             <div
               key={task.id}
               className={`task-item ${currentTaskId === task.id ? 'active' : ''}`}
-              onClick={() => setCurrentTaskId(task.id)}
+              onClick={async () => {
+                setCurrentTaskId(task.id);
+                setCurrentConversationId(task.id);
+                // Load conversation messages
+                const { data, error } = await supabase
+                  .from('conversation_messages')
+                  .select('*')
+                  .eq('conversation_id', task.id)
+                  .order('created_at', { ascending: true });
+                
+                if (!error && data) {
+                  const loadedMessages: Message[] = data.map((msg: any) => ({
+                    id: msg.id,
+                    role: msg.role,
+                    content: msg.content,
+                    timestamp: new Date(msg.created_at),
+                    moeMetadata: msg.metadata?.moeMetadata,
+                  }));
+                  setMessages(loadedMessages.length > 0 ? loadedMessages : [{
+                    id: '1',
+                    role: 'assistant',
+                    content: '👋 Hello! I\'m **Morgus**, your autonomous AI agent. What would you like to accomplish today?',
+                    timestamp: new Date(),
+                  }]);
+                }
+              }}
             >
               <div className="task-info">
                 <div className="task-title">{task.description.substring(0, 50)}...</div>
@@ -415,6 +474,14 @@ function App() {
             ☰
           </button>
           <h2>Morgus AI Agent</h2>
+          <MOELeaderboard />
+          <button 
+            className="dark-mode-toggle"
+            onClick={() => setDarkMode(!darkMode)}
+            title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {darkMode ? '☀️' : '🌙'}
+          </button>
           <div className="status-indicator">
             <span className="status-dot online"></span>
             Online
@@ -423,7 +490,7 @@ function App() {
 
         <div className="messages-container">
           {messages.map((message) => (
-            <div key={message.id} className={`message ${message.role}`}>
+            <div key={message.id} id={`msg-${message.id}`} className={`message ${message.role}`}>
               <div className="message-avatar">
                 {message.role === 'assistant' ? '🤖' : '👤'}
               </div>
@@ -441,6 +508,14 @@ function App() {
                       ))}
                     </div>
                   )}
+                  {/* Browser View iframe */}
+                  {message.role === 'assistant' && message.content.includes('browserbase.com/devtools-fullscreen') && (() => {
+                    const urlMatch = message.content.match(/https:\/\/www\.browserbase\.com\/devtools-fullscreen\/[^)\s]+/);
+                    if (urlMatch) {
+                      return <BrowserView liveViewUrl={urlMatch[0]} />;
+                    }
+                    return null;
+                  })()}
                   {/* Image download buttons */}
                   {message.role === 'assistant' && message.content.includes('![') && (
                     <div className="image-download-buttons">
@@ -522,24 +597,27 @@ function App() {
                       >
                         🍅
                       </button>
+                      {message.content.includes('<details>') && (
+                        <button 
+                          className="icon-button debug-toggle" 
+                          onClick={() => {
+                            const details = document.querySelector(`#msg-${message.id} details`);
+                            if (details) {
+                              (details as HTMLDetailsElement).open = !(details as HTMLDetailsElement).open;
+                            }
+                          }}
+                          title="Toggle debug info"
+                        >
+                          🔧
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
             </div>
           ))}
-          {isLoading && (
-            <div className="message assistant">
-              <div className="message-avatar">🤖</div>
-              <div className="message-content">
-                <div className="typing-indicator">
-                  <span className="typing-dot"></span>
-                  <span className="typing-dot"></span>
-                  <span className="typing-dot"></span>
-                </div>
-              </div>
-            </div>
-          )}
+          {isLoading && <ThinkingIndicator toolName={currentTool} />}
           <div ref={messagesEndRef} />
         </div>
 

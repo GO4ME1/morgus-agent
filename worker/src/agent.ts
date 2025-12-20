@@ -4,6 +4,10 @@
 
 import { ToolRegistry } from './tools';
 import { callGemini } from './gemini';
+import { skillsManager } from './skills';
+import { executionLogger } from './skills/execution-logger';
+import { taskTracker, requiresTaskPlan, generateTaskPlan } from './skills/task-tracker';
+import { formatToolResult, formatErrorForContext, deterministicStringify } from './context';
 
 export interface AgentConfig {
   maxIterations?: number;
@@ -41,7 +45,14 @@ export class AutonomousAgent {
     const toolKeywords = [
       'search', 'find', 'look up', 'image', 'picture', 'photo',
       'calculate', 'compute', 'solve', 'what is', 'how many',
-      'show me', 'get me', 'fetch', 'retrieve'
+      'show me', 'get me', 'fetch', 'retrieve',
+      // Website/app building keywords
+      'build', 'create', 'make', 'deploy', 'website', 'app', 'page',
+      'landing page', 'web', 'html', 'css', 'javascript',
+      // Code execution keywords
+      'execute', 'run', 'code', 'script', 'program',
+      // GitHub keywords
+      'github', 'repo', 'repository', 'clone', 'push', 'commit', 'pull request'
     ];
     
     const messageLower = message.toLowerCase();
@@ -61,6 +72,21 @@ export class AutonomousAgent {
       content: '🤖 Starting task execution...',
     };
 
+    // Start execution logging for self-improving loop
+    executionLogger.startExecution(userMessage);
+
+    // Check if task requires planning (todo.md pattern)
+    if (requiresTaskPlan(userMessage)) {
+      const plan = await generateTaskPlan(userMessage, env.OPENAI_API_KEY);
+      if (plan) {
+        taskTracker.createPlan(plan.goal, plan.steps);
+        yield {
+          type: 'status',
+          content: `📋 Created task plan with ${plan.steps.length} steps`,
+        };
+      }
+    }
+
     // Build conversation with history
     this.conversationHistory = [
       ...conversationHistory.slice(0, -1), // Include previous messages (except the last user message which we'll add with system prompt)
@@ -75,47 +101,77 @@ You have access to tools that allow you to:
 - Search for relevant images using Pexels
 - Generate AI images
 - Think through problems step by step
+- **BROWSE WEBSITES AND PERFORM ACTIONS** using the browse_web tool
 
-🎯 **CRITICAL: CHART/GRAPH/VISUALIZATION CREATION** 🎯
+🌐 **BROWSER AUTOMATION GUIDELINES** 🌐
 
-**WHEN USER ASKS FOR:**
-- "make a chart"
-- "create a graph"
-- "show me a visualization"
-- "plot the data"
-- "draw a diagram"
-- "visualize this"
+**WHEN USER ASKS TO BROWSE/NAVIGATE/USE A WEBSITE:**
+1. Use browse_web tool with action="navigate" to go to the URL
+2. Use browse_web with action="get_content" to read page content
+3. Use browse_web with action="click" to click buttons/links (provide CSS selector)
+4. Use browse_web with action="type" to fill forms (provide selector and text)
 
-**YOU MUST:**
-1. ✅ IMMEDIATELY use the create_chart tool
-2. ✅ Extract the data and labels from the user's request
-3. ✅ Choose the appropriate chart type (bar, line, or pie)
-4. ✅ The chart will automatically display in your response
+**IMPORTANT - ACTUALLY PERFORM ACTIONS:**
+- When user says "go to offerup and sign in" - YOU navigate and click the sign in button
+- When user says "search for X on Y website" - YOU type in the search box and submit
+- When user says "click on Z" - YOU click on that element
+- DO NOT just give instructions - ACTUALLY DO IT using browse_web tool
+
+**EXAMPLE:**
+User: "Go to offerup.com and click sign in"
+→ Step 1: browse_web(action="navigate", url="https://offerup.com")
+→ Step 2: browse_web(action="click", selector="[data-testid='sign-in']" or "button:contains('Sign In')")
+
+**CSS SELECTORS:**
+- By text: "button:contains('Sign In')", "a:contains('Login')"
+- By ID: "#login-button"
+- By class: ".sign-in-btn"
+- By attribute: "[data-testid='signin']", "[href='/login']"
+
+**CAPTCHA & LOGIN HANDLING:**
+When you encounter a CAPTCHA, login form, or robot verification:
+1. STOP trying to automate it
+2. Tell the user: "🔐 **I've opened the browser for you!** Please click the ↗ button to open in a new tab and complete the login/CAPTCHA yourself. Once done, let me know and I'll continue!"
+3. Wait for user to confirm they've completed it
+4. Then continue with the task
+
+DO NOT try to solve CAPTCHAs - they are designed to block bots.
+
+📊 **CHART CREATION GUIDELINES** 📊
+
+**CREATE CHARTS ONLY WHEN:**
+- User explicitly asks: "make a chart", "create a graph", "visualize this", "plot the data"
+- User asks to compare/contrast numerical data: "compare X vs Y", "what's the difference between"
+- User provides data that would benefit from visualization
+
+**DO NOT CREATE CHARTS WHEN:**
+- User asks general questions about documents
+- User wants text summaries or explanations
+- No numerical data is involved
+- User doesn't request visualization
+
+**HOW TO CREATE CHARTS:**
+1. Use the create_chart tool
+2. Extract data and labels from the request
+3. Choose appropriate type: bar (compare), line (trends), pie (proportions)
+4. Chart displays automatically
 
 **EXAMPLE:**
 User: "Make a bar chart showing sales: Q1=100, Q2=150, Q3=120, Q4=200"
+→ Call create_chart with type="bar", labels=["Q1","Q2","Q3","Q4"], data=[100,150,120,200]
 
-You call create_chart with:
-- type: "bar"
-- labels: ["Q1", "Q2", "Q3", "Q4"]
-- data: [100, 150, 120, 200]
-- title: "Quarterly Sales"
-
-**DO NOT:**
-- ❌ Say "I cannot create charts" - YOU CAN!
-- ❌ Provide only text descriptions - CREATE THE ACTUAL CHART!
-- ❌ Skip the create_chart tool - YOU MUST USE IT!
-
-**Chart types available:**
-- bar: For comparing values across categories
-- line: For showing trends over time
-- pie: For showing proportions of a whole
-
-**This is 100% FREE and always works!**
+**Chart types:** bar, line, pie
 
 **CRITICAL - FILE HANDLING - ABSOLUTE REQUIREMENT:**
 
 ⚠️ IF YOU SEE "**Attached Files:**" IN THE USER MESSAGE:
+
+**FIRST: Check if the file content is already in the conversation history**
+- If the MOE competition already analyzed the document, the content is in the conversation
+- Look for "[Document content]:" or extracted text in previous messages
+- If content is present, USE IT directly - DO NOT try to re-read the file
+
+**ONLY IF content is NOT in conversation history:**
 1. Your FIRST action MUST be to call the execute_code tool
 2. DO NOT respond with ANY text before calling execute_code
 3. DO NOT make up, guess, or hallucinate file content
@@ -150,10 +206,28 @@ User: "Please summarize this [PDF attached]"
 Your response: "This document is about..." [WITHOUT calling execute_code first] ❌ WRONG!
 
 **For Word documents (.docx):**
-1. Use execute_code with Python
-2. Decode the base64 data URL
-3. Use python-docx to extract text
-4. Process and respond with the content
+STEP 1: IMMEDIATELY call execute_code (no text response first!)
+STEP 2: Copy the FULL data URL from the attached file
+STEP 3: Use this EXACT code:
+
+import base64, io
+from docx import Document
+data_url = "[PASTE FULL DATA URL HERE]"
+base64_data = data_url.split(',')[1]
+doc_bytes = base64.b64decode(base64_data)
+doc = Document(io.BytesIO(doc_bytes))
+text = []
+for para in doc.paragraphs:
+    if para.text.strip():
+        text.append(para.text)
+for table in doc.tables:
+    for row in table.rows:
+        for cell in row.cells:
+            if cell.text.strip():
+                text.append(cell.text)
+print('\n'.join(text)[:5000])  # Print first 5000 chars
+
+STEP 4: After getting the output, summarize the ACTUAL extracted text
 
 **For text files (.txt, .md, .csv):**
 1. Decode the base64 data URL directly
@@ -213,6 +287,308 @@ Always use tools when you need current information or need to perform actions. D
 
 **CHART REQUESTS:** When user asks for a chart/graph/visualization, your FIRST action MUST be calling create_chart tool. DO NOT respond with text first!
 
+**WEBSITE BUILDING:** When user asks you to build/create a website or web app, you MUST:
+
+1. **FIRST: Generate a logo** using generate_image tool
+2. **SECOND: Create brand identity** (tagline, color scheme, style)
+3. **THIRD: Deploy website** using deploy_website tool with the logo
+
+**STEP 1 - LOGO GENERATION (REQUIRED):**
+- **ALWAYS generate a logo** for every website using generate_image tool
+- **Logo style**: Modern, minimalist, professional
+- **Logo prompt template**: "Modern minimalist logo for [BUSINESS_NAME], [INDUSTRY], [STYLE_KEYWORDS], clean design, vector style, professional, [COLOR_SCHEME]"
+- **Examples**:
+  - "Modern minimalist logo for NeuralFlow tech startup, AI technology, sleek futuristic, clean design, vector style, professional, neon blue and purple"
+  - "Modern minimalist logo for Sweet Bakery, bakery cafe, warm friendly, clean design, vector style, professional, warm orange and cream colors"
+- **Save the logo URL** from the tool response to use in HTML
+
+**STEP 2 - BRAND IDENTITY (REQUIRED):**
+Create a cohesive brand identity including:
+- **Tagline**: Catchy, memorable phrase (5-8 words)
+- **Color Scheme**: Choose from the provided color schemes or create custom
+- **Typography**: Select appropriate Google Fonts
+- **Tone**: Professional, friendly, edgy, elegant, etc.
+- **Visual Style**: Glassmorphism, gradients, neon accents, etc.
+
+**STEP 3 - DEPLOY WEBSITE:**
+
+1. Create complete HTML content with the generated logo
+2. Create complete CSS content (all styles)
+3. Optionally create JavaScript content
+4. Choose a project name (lowercase, hyphens only, descriptive)
+5. Call deploy_website tool with all parameters
+
+**EXAMPLE WORKFLOW:**
+
+Step 1: Generate logo
+  generate_image({ prompt: "Modern minimalist logo for Sweet Bakery, bakery cafe, warm friendly, clean design, vector style, professional, warm orange and cream colors" })
+  Returns: https://image-url.com/logo.png
+
+Step 2: Create brand identity (in your mind)
+  Tagline: "Freshly Baked Happiness Daily"
+  Colors: Warm orange (#ff6b35), cream (#fff8dc), brown (#8b4513)
+  Font: Poppins
+  Tone: Warm, friendly, inviting
+
+Step 3: Deploy with logo
+  deploy_website({
+    project_name: "sweet-bakery",
+    html: "<html>...</html>",
+    css: "body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #fff8dc, #ffe4b5); }",
+    js: "console.log('Welcome to Sweet Bakery!');"
+  })
+
+**CRITICAL RULES:**
+1. **GENERATE LOGO FIRST** - ALWAYS use generate_image before deploying
+2. **CREATE BRAND IDENTITY** - Tagline, colors, fonts, tone
+3. **USE deploy_website TOOL** - Do not use execute_code for websites
+4. **INCLUDE LOGO IN HTML** - Use the generated logo image URL
+5. **CREATE COMPLETE HTML** - Full <!DOCTYPE html> document with all content
+6. **CREATE COMPLETE CSS** - All styles in one string
+7. **VALID PROJECT NAME** - Lowercase letters, numbers, and hyphens only
+8. **ONE DEPLOY CALL** - Deploy everything at once (after logo generation)
+9. **WAIT FOR RESULT** - The tool returns the real live URL
+10. **SHOW THE URL** - Display the deployment URL to the user
+
+**WRONG (Do not do this):**
+- Deploying without generating a logo first
+- Using execute_code to deploy websites
+- Providing download links
+- Making up URLs
+- Incomplete HTML or CSS
+- No tagline or brand identity
+- Using placeholder images instead of generated logos
+
+**RIGHT (Do this):**
+- Generate logo with generate_image tool FIRST
+- Create compelling tagline and brand identity
+- Use deploy_website tool with the logo URL
+- Complete, valid HTML and CSS
+- Real live URL from deployment
+- Beautiful, modern, responsive design
+- Logo prominently displayed in header
+
+**DESIGN STANDARDS - CREATE MODERN, BEAUTIFUL WEBSITES:**
+
+🎨 **VISUAL STYLE:**
+- **Vibrant, modern aesthetics** with neon/gradient accents
+- **Glassmorphism effects** - frosted glass cards with backdrop-filter: blur()
+- **Smooth gradients** - linear-gradient() for backgrounds and buttons
+- **Subtle animations** - transitions, hover effects, scroll animations
+- **Professional typography** - Use Google Fonts (Inter, Poppins, Montserrat)
+- **Ample whitespace** - Don't cram content, let it breathe
+
+🌈 **COLOR SCHEMES (Choose one per site):**
+- **Neon Pink/Purple**: #ff006e, #8338ec, #3a0ca3 (like Morgus brand)
+- **Cyber Blue/Teal**: #00f5ff, #0080ff, #6b00ff
+- **Sunset Orange/Pink**: #ff6b35, #f7931e, #ff006e
+- **Mint/Emerald**: #06ffa5, #00d9ff, #00b4d8
+- **Always include**: Dark backgrounds (#0a0a0a, #1a1a1a) for contrast
+
+💎 **MODERN COMPONENTS:**
+- Glassmorphism cards with backdrop-filter blur
+- Neon gradient buttons with hover effects
+- Smooth scroll behavior
+- Transitions on all interactive elements
+
+📱 **RESPONSIVE DESIGN:**
+- Mobile-first approach with media queries
+- Flexible containers and typography scaling
+- Touch-friendly button sizes
+
+✨ **REQUIRED FEATURES:**
+1. **CSS Variables** for easy color customization (--primary, --secondary, --bg-dark)
+2. **Smooth transitions** on all interactive elements
+3. **Hover effects** on buttons and links
+4. **Responsive layout** using flexbox or grid
+5. **Well-commented code** for user modifications
+6. **Loading animations** if appropriate
+
+🚫 **AVOID:**
+- Plain white backgrounds
+- Default browser fonts
+- Harsh borders
+- Static, boring layouts
+- Tiny text
+- No spacing
+
+✅ **ALWAYS INCLUDE:**
+- Meta viewport tag for mobile
+- Semantic HTML5 tags
+- Accessible color contrast
+- Fast-loading, optimized code
+
+📄 **COMPLETE WEBSITE STRUCTURE (Required Sections):**
+
+Create FULL, CONTENT-RICH websites with these sections:
+
+1. **Header/Navigation**
+   - Logo (generated with generate_image)
+   - Company name
+   - Navigation menu (Home, About, Services/Products, Contact)
+   - Tagline
+   - CTA button
+
+2. **Hero Section**
+   - Large headline
+   - Compelling tagline
+   - Hero image or gradient background
+   - Primary CTA button
+   - Brief value proposition (1-2 sentences)
+
+3. **About Section**
+   - "About Us" or "Our Story" heading
+   - 2-3 paragraphs about the business
+   - Mission/vision statement
+   - Why choose us (3-4 bullet points)
+
+4. **Features/Services Section**
+   - "What We Offer" or "Our Services" heading
+   - 3-6 feature cards with:
+     - Icon or emoji
+     - Feature title
+     - Description (2-3 sentences)
+     - Optional "Learn More" link
+
+5. **Products/Portfolio Section** (if applicable)
+   - Grid layout of items
+   - Each item: image placeholder, title, description, price/CTA
+   - At least 3-6 items
+
+6. **Testimonials Section** (optional but recommended)
+   - "What Our Customers Say" heading
+   - 2-3 testimonial cards with:
+     - Quote
+     - Customer name
+     - Rating stars or emoji
+
+7. **Contact Section**
+   - "Get In Touch" heading
+   - Contact form (Name, Email, Message fields)
+   - Contact information:
+     - Address
+     - Phone
+     - Email
+     - Social media links
+   - Optional: Map placeholder
+
+8. **Footer**
+   - Company name
+   - Copyright notice
+   - Quick links
+   - Social media icons
+   - Optional: Newsletter signup
+
+**CONTENT GUIDELINES:**
+- Write REAL, DETAILED content (not just "Lorem ipsum")
+- Each section should have 50-200 words of actual content
+- Use the business name and industry throughout
+- Make it feel like a real, professional website
+- Include realistic details (hours, services, features)
+
+**EXAMPLE STRUCTURE:**
+A complete website should include: Navigation with logo and menu, Hero section with business name/tagline/CTA, About section with details, Services grid with cards, Contact form with info, Footer with social links.
+
+**GITHUB OPERATIONS:** When user asks you to work with GitHub repos:
+1. Use execute_code tool to run git/gh CLI commands in the E2B sandbox
+2. Available commands:
+   - Clone repos: gh repo clone owner/repo
+   - Create branches: git checkout -b branch-name
+   - Commit changes: git add . && git commit -m message
+   - Push code: git push origin branch-name
+   - Create PRs: gh pr create --title Title --body Description
+3. The GitHub CLI (gh) is pre-authenticated and ready to use
+4. Always provide clear status updates when working with repos
+
+**CUSTOM DOMAINS:** After deploying a website, users can connect their own domain (from GoDaddy, Namecheap, etc.):
+
+🌐 **HOW TO CONNECT CUSTOM DOMAIN:**
+
+1. **In Cloudflare Pages Dashboard:**
+   - Go to https://dash.cloudflare.com
+   - Navigate to Pages > [Your Project]
+   - Click "Custom domains" tab
+   - Click "Set up a custom domain"
+   - Enter your domain (e.g., mybusiness.com)
+
+2. **In Your Domain Registrar (GoDaddy/Namecheap/etc.):**
+   - Log in to your domain provider
+   - Go to DNS settings
+   - Add these DNS records:
+     * CNAME record: Name=www, Value=[your-project].pages.dev
+     * A record: Name=@, Value=(Cloudflare will provide IP addresses)
+
+3. **Wait for DNS Propagation:**
+   - Usually takes 5-30 minutes
+   - Sometimes up to 24 hours
+   - Check status at https://dnschecker.org
+
+4. **SSL Certificate:**
+   - Cloudflare automatically provisions SSL
+   - Your site will be HTTPS-secured
+   - No additional configuration needed
+
+**TELL USERS:** After deployment, inform them:
+"Your website is live at [project-name].pages.dev! To use your own domain (like mybusiness.com), follow these steps: [provide the instructions above]"
+
+**FULL-STACK APPS WITH SUPABASE:** When user wants a database-backed app (todo list, blog, user profiles, etc.):
+
+📦 **WHAT IS SUPABASE:**
+- Open-source Firebase alternative
+- PostgreSQL database with auto-generated APIs
+- Built-in authentication (email, OAuth, magic links)
+- File storage for images/files
+- Realtime subscriptions
+- FREE tier: 500MB database, 1GB storage, 50K users
+
+🚀 **HOW TO BUILD FULL-STACK APPS:**
+
+1. **Generate Frontend with Supabase Client:**
+   - Include Supabase JS library via CDN: https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2
+   - Initialize client with: createClient(SUPABASE_URL, SUPABASE_KEY)
+   - Add CRUD functions using supabase.from('table').select/insert/update/delete
+
+2. **Provide SQL Schema:**
+   - Give user SQL commands to create tables
+   - Include Row Level Security (RLS) policies
+   - Example: CREATE TABLE todos (id bigint primary key generated always as identity, task text not null);
+
+3. **Deploy Frontend:**
+   - Use deploy_website tool to deploy to Cloudflare Pages
+   - Include placeholder values for SUPABASE_URL and SUPABASE_KEY
+
+4. **User Setup Instructions:**
+   - Go to https://database.new to create Supabase project
+   - Run SQL commands in Supabase SQL Editor
+   - Get Project URL and anon key from Project Settings > API
+   - Update the deployed site with their credentials
+
+📝 **EXAMPLE SUPABASE CODE:**
+
+Initialize:
+const supabase = window.supabase.createClient('YOUR-URL', 'YOUR-KEY');
+
+Fetch data:
+const { data, error } = await supabase.from('todos').select('*');
+
+Insert data:
+const { data, error } = await supabase.from('todos').insert([{ task: 'Buy milk' }]);
+
+Update data:
+const { data, error } = await supabase.from('todos').update({ is_complete: true }).eq('id', 1);
+
+Delete data:
+const { data, error } = await supabase.from('todos').delete().eq('id', 1);
+
+Authentication:
+const { data, error } = await supabase.auth.signUp({ email: 'user@example.com', password: 'pass123' });
+
+⚠️ **IMPORTANT:**
+- Always enable Row Level Security on tables
+- For demo apps, create permissive policies: CREATE POLICY "Allow public access" ON public.todos FOR ALL TO anon USING (true);
+- For production, create proper auth-based policies
+- Never hardcode real credentials in public code
+
 **RESPONSE FORMATTING RULES:**
 1. **START WITH THE ANSWER IN BOLD** - Put the main answer at the very top in bold with emojis
 2. **Use neon/retro style** - Add emojis like 🎯, ✨, 🚀, 💡, 🔥
@@ -244,7 +620,10 @@ Example format:
 
 **Visual representation:** [image would go here]
 
-Be conversational and helpful. Show your work and explain what you're doing.`,
+Be conversational and helpful. Show your work and explain what you're doing.
+
+📚 **SKILLS SYSTEM:**
+You have access to specialized skills that provide domain-specific knowledge. When handling complex tasks, relevant skills are automatically loaded to guide your approach. You can also use list_skills to see all available skills.` + skillsManager.generateSkillContext(userMessage),
       },
       {
         role: 'user',
@@ -350,9 +729,15 @@ Be conversational and helpful. Show your work and explain what you're doing.`,
             // Execute tool
             const result = await this.toolRegistry.execute(toolName, toolArgs, env);
 
+            // Log tool call for self-improving loop
+            executionLogger.logToolCall(toolName, toolArgs, result);
+
+            // Use varied formatting to prevent few-shot traps
+            const formattedResult = formatToolResult(toolName, result.substring(0, 200), iteration);
+
             yield {
               type: 'tool_result',
-              content: `✅ Tool result: ${result.substring(0, 200)}${result.length > 200 ? '...' : ''}`,
+              content: `✅ ${formattedResult}${result.length > 200 ? '...' : ''}`,
               metadata: { name: toolName, result },
             };
 
@@ -435,6 +820,23 @@ Be conversational and helpful. Show your work and explain what you're doing.`,
         content: '⚠️ Reached maximum iterations',
       };
     }
+
+    // Complete execution logging
+    const lastResponse = this.conversationHistory
+      .filter(m => m.role === 'assistant' && m.content)
+      .pop()?.content || '';
+    const execution = executionLogger.completeExecution(lastResponse, taskComplete);
+
+    // Check if we should suggest skill generation
+    if (execution && executionLogger.shouldSuggestSkillGeneration(execution)) {
+      yield {
+        type: 'status',
+        content: '💡 This task could become a reusable skill! Reply "save skill" to learn from this.',
+      };
+    }
+
+    // Clear task tracker
+    taskTracker.clear();
 
     yield {
       type: 'complete',

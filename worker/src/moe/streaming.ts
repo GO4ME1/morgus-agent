@@ -43,47 +43,52 @@ export class MOEStreamingService {
       timestamp: Date.now(),
     };
 
-    // Query all models in parallel with progress tracking
-    const responses: OpenRouterResponse[] = [];
-    const promises = modelsToQuery.map(async (model) => {
-      // Model start event
+    // Emit model start events
+    for (const model of modelsToQuery) {
       yield {
         type: 'model_start',
         data: { model },
         timestamp: Date.now(),
       };
+    }
 
+    // Query all models in parallel
+    const responses: OpenRouterResponse[] = [];
+    const events: MOEStreamEvent[] = [];
+
+    const promises = modelsToQuery.map(async (model) => {
       try {
         const response = await this.openrouter.query(model, messages);
-
-        // Model complete event
-        yield {
+        
+        events.push({
           type: 'model_complete',
-          data: {
-            model,
-            response,
-          },
+          data: { model, response },
           timestamp: Date.now(),
-        };
+        });
 
         responses.push(response);
         return response;
       } catch (error) {
-        // Model error event
-        yield {
+        events.push({
           type: 'model_error',
           data: {
             model,
             error: error instanceof Error ? error.message : 'Unknown error',
           },
           timestamp: Date.now(),
-        };
+        });
         return null;
       }
     });
 
     // Wait for all models to complete
     const results = await Promise.all(promises);
+    
+    // Yield collected events
+    for (const event of events) {
+      yield event;
+    }
+
     const validResponses = results.filter((r): r is OpenRouterResponse => r !== null);
 
     if (validResponses.length === 0) {

@@ -83,7 +83,17 @@ export default {
           const fileData = await Promise.all(
             files.map(async (file: any) => {
               const buffer = await file.arrayBuffer();
-              const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+              const bytes = new Uint8Array(buffer);
+              
+              // Convert to base64 in chunks to avoid stack overflow
+              let base64 = '';
+              const chunkSize = 8192;
+              for (let i = 0; i < bytes.length; i += chunkSize) {
+                const chunk = bytes.slice(i, i + chunkSize);
+                base64 += String.fromCharCode(...chunk);
+              }
+              base64 = btoa(base64);
+              
               return {
                 name: file.name,
                 type: file.type,
@@ -173,9 +183,14 @@ export default {
         const keyPrefix = env.OPENAI_API_KEY ? env.OPENAI_API_KEY.substring(0, 10) : 'missing';
         return new Response(JSON.stringify({ 
           hasOpenAI: !!env.OPENAI_API_KEY,
+          hasGemini: !!env.GEMINI_API_KEY,
+          hasAnthropic: !!env.ANTHROPIC_API_KEY,
+          hasOpenRouter: !!env.OPENROUTER_API_KEY,
+          hasBrowserBase: !!env.BROWSERBASE_API_KEY && !!env.BROWSERBASE_PROJECT_ID,
           hasSupabase: !!env.SUPABASE_URL && !!env.SUPABASE_KEY,
           hasE2B: !!env.E2B_API_KEY,
           hasTavily: !!env.TAVILY_API_KEY,
+          hasPexels: !!env.PEXELS_API_KEY,
           openaiKeyPrefix: keyPrefix
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -222,7 +237,9 @@ export default {
           
           // Enhance prompt when files are attached
           let userMessage = body.message;
+          let processedFiles = body.files || [];
           console.log('[MOE-CHAT] Files received:', body.files?.length || 0);
+          
           if (body.files && body.files.length > 0) {
             const fileCount = body.files.length;
             const fileTypes = body.files.map(f => {
@@ -233,9 +250,55 @@ export default {
             console.log('[MOE-CHAT] File types:', fileTypes);
             console.log('[MOE-CHAT] File sizes:', body.files.map(f => f.length));
             
-            // Add explicit instruction to analyze the documents
-            userMessage = `${body.message}\n\n[${fileCount} file(s) attached: ${fileTypes.join(', ')}]\n\nPlease analyze the attached document(s) in detail and answer the user's question based on the content.`;
-            console.log('[MOE-CHAT] Enhanced message:', userMessage.substring(0, 200));
+            // Extract text from Word documents for models that don't support them
+            const extractedTexts: string[] = [];
+            for (let i = 0; i < body.files.length; i++) {
+              const file = body.files[i];
+              const fileType = fileTypes[i];
+              
+              if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                console.log('[MOE-CHAT] Extracting text from Word document...');
+                try {
+                  // Extract base64 data
+                  const base64Data = file.split(',')[1];
+                  
+                  // Call code execution service to extract text
+                  const extractResponse = await fetch('https://morgus-deploy.fly.dev/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      language: 'python',
+                      code: `import base64, io\nfrom docx import Document\nbase64_data = '''${base64Data}'''\ndoc_bytes = base64.b64decode(base64_data)\ndoc = Document(io.BytesIO(doc_bytes))\ntext = []\nfor para in doc.paragraphs:\n    if para.text.strip():\n        text.append(para.text)\nfor table in doc.tables:\n    for row in table.rows:\n        for cell in row.cells:\n            if cell.text.strip():\n                text.append(cell.text)\nprint('\\n'.join(text))`
+                    })
+                  });
+                  
+                  const extractResult = await extractResponse.json();
+                  
+                  if (extractResult.success && extractResult.stdout) {
+                    const extractedText = extractResult.stdout.trim();
+                    console.log('[MOE-CHAT] Extracted text length:', extractedText.length);
+                    extractedTexts.push(`[Document ${i + 1} content]:\n${extractedText}`);
+                  } else {
+                    console.error('[MOE-CHAT] Failed to extract text:', extractResult.error);
+                    extractedTexts.push(`[Document ${i + 1}: Failed to extract text]`);
+                  }
+                } catch (error: any) {
+                  console.error('[MOE-CHAT] Word extraction error:', error);
+                  extractedTexts.push(`[Document ${i + 1}: Error extracting text]`);
+                }
+              }
+            }
+            
+            // Add file info and extracted text to message
+            let fileInfo = `\n\n[${fileCount} file(s) attached: ${fileTypes.join(', ')}]`;
+            if (extractedTexts.length > 0) {
+              fileInfo += `\n\n${extractedTexts.join('\n\n')}`;
+              // Remove Word docs from files array since we extracted text
+              processedFiles = body.files.filter((_, i) => fileTypes[i] !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+            }
+            
+            userMessage = `${body.message}${fileInfo}\n\nIMPORTANT: Carefully examine the attached image(s)/document(s). Read ALL visible text exactly as shown. Identify the actual source/website/brand visible in the image. Do NOT guess or make assumptions. Only state what you can clearly see in the image. If you're unsure about something, say so.`;
+            console.log('[MOE-CHAT] Enhanced message length:', userMessage.length);
           }
           
           const messages = (body.history || []).concat([{
@@ -249,13 +312,15 @@ export default {
             geminiApiKey: env.GEMINI_API_KEY,
             openaiApiKey: env.OPENAI_API_KEY,
             anthropicApiKey: env.ANTHROPIC_API_KEY,
-            files: body.files // Pass uploaded files for vision models
+            files: processedFiles // Pass processed files (Word docs removed, text extracted)
           });
           
           // Record competition stats in background (don't await)
+          console.log('[MOE-CHAT] Starting stats recording...');
           try {
             const { ModelStatsService } = await import('./services/model-stats');
             const statsService = new ModelStatsService(env.SUPABASE_URL, env.SUPABASE_KEY);
+            console.log('[MOE-CHAT] ModelStatsService initialized');
             
             // Extract file types if present
             const fileTypes = body.files?.map(f => {
@@ -279,7 +344,10 @@ export default {
             }));
             
             // Record asynchronously (don't block response)
-            statsService.recordCompetition(competitionResults).catch(err => {
+            console.log('[MOE-CHAT] Recording competition with', competitionResults.length, 'results');
+            statsService.recordCompetition(competitionResults).then(() => {
+              console.log('[MOE-CHAT] Stats recorded successfully!');
+            }).catch(err => {
               console.error('[MOE-CHAT] Failed to record stats:', err);
             });
           } catch (error) {
@@ -292,36 +360,136 @@ export default {
             model: 'gpt-4o-mini' // Use OpenAI for tool support
           });
           
-          // Create enhanced prompt that encourages tool use when appropriate
+          // Add conversation ID to env for browser session reuse
+          env.CONVERSATION_ID = body.conversation_id || body.thought_id || 'default';
+          
+          // Create action-oriented prompt that executes tasks
           const enhancedPrompt = `User query: ${body.message}
 
 MOE expert analysis: ${moeResult.content}
 
-Enhance this response if needed:
-- If user asks for images/pictures, use search_images tool
-- If user asks for charts/data visualization, use execute_code tool
-- Otherwise, provide a helpful response based on the expert analysis
+Your task: EXECUTE what the user asked for, don't just explain it.
 
-Be smart about when to use tools - don't force them if not needed.`;
+- If user asks to BUILD/CREATE a website/app: Use execute_code to actually generate files and deploy it
+- If user asks for images/pictures: Use search_images to find and show them
+- If user asks for charts/graphs: Use create_chart to generate them
+- If user asks for calculations/code: Use execute_code to run it
+- If user asks to search/find information: Use search_web to get current data
+
+DO NOT just provide code snippets or instructions. ACTUALLY DO THE TASK using the available tools.
+The MOE analysis above is just a plan - now you must execute it.`;
           
           console.log('[MOE-CHAT] User message:', body.message);
           console.log('[MOE-CHAT] Has PEXELS_API_KEY:', !!env.PEXELS_API_KEY);
           
           // Collect all streamed messages from agent execution
           let finalResponse = '';
+          let toolExecutionLog = '';
           const conversationHistory = body.history || [];
           
           for await (const message of agent.executeTask(enhancedPrompt, env, conversationHistory)) {
             console.log('[MOE-CHAT] Agent message:', message.type, message.content?.substring(0, 100));
             
-            // Only capture actual response content, not status messages
-            if (message.type === 'response') {
+            // Capture tool execution details for debugging
+            if (message.type === 'tool_call') {
+              toolExecutionLog += `\n\n🔧 ${message.content}`;
+            } else if (message.type === 'tool_result') {
+              // Include FULL tool result, not truncated
+              const fullResult = message.metadata?.result || message.content;
+              toolExecutionLog += `\n\n📋 Tool Output:\n${fullResult}`;
+            } else if (message.type === 'response') {
               finalResponse = message.content;
             }
           }
           
+          const responseContent = finalResponse || moeResult.content;
+          
+          // Save messages to database - use conversation_id if provided, otherwise thought_id
+          const conversationId = body.conversation_id || body.thought_id;
+          if (conversationId) {
+            try {
+              // Determine if this is a conversation or thought
+              const isConversation = !!body.conversation_id;
+              const messageTable = isConversation ? 'conversation_messages' : 'thought_messages';
+              const idField = isConversation ? 'conversation_id' : 'thought_id';
+              const parentTable = isConversation ? 'conversations' : 'thoughts';
+              
+              // Save user message
+              await supabase.from(messageTable).insert({
+                [idField]: conversationId,
+                role: 'user',
+                content: body.message,
+                created_at: new Date().toISOString(),
+              });
+              
+              // Save assistant response with MOE metadata
+              await supabase.from(messageTable).insert({
+                [idField]: conversationId,
+                role: 'assistant',
+                content: responseContent,
+                metadata: moeResult.moeMetadata ? { moeMetadata: moeResult.moeMetadata } : null,
+                created_at: new Date().toISOString(),
+              });
+              
+              // Auto-generate title if this is the first exchange
+              const { count } = await supabase
+                .from(messageTable)
+                .select('*', { count: 'exact', head: true })
+                .eq(idField, conversationId);
+              
+              if (count === 2) {
+                // First user message + first assistant response = generate title
+                try {
+                  const titlePrompt = `Generate a short, descriptive title (3-5 words max) for a conversation that starts with: "${body.message.substring(0, 100)}..."`;
+                  const titleResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${env.OPENROUTER_API_KEY}`,
+                    },
+                    body: JSON.stringify({
+                      model: 'mistralai/mistral-7b-instruct:free',
+                      messages: [{ role: 'user', content: titlePrompt }],
+                      max_tokens: 20,
+                    }),
+                  });
+                  
+                  if (titleResponse.ok) {
+                    const titleData = await titleResponse.json();
+                    const title = titleData.choices[0]?.message?.content?.trim().replace(/["|']/g, '') || 'New Chat';
+                    
+                    await supabase
+                      .from(parentTable)
+                      .update({ 
+                        title,
+                        updated_at: new Date().toISOString() 
+                      })
+                      .eq('id', conversationId);
+                    
+                    console.log('[MOE-CHAT] Generated title:', title);
+                  }
+                } catch (error) {
+                  console.error('[MOE-CHAT] Failed to generate title:', error);
+                }
+              }
+            } catch (error) {
+              console.error('[MOE-CHAT] Failed to save messages:', error);
+            }
+          }
+          
+          // Extract browser Live View URL if present in tool execution log
+          const liveViewMatch = toolExecutionLog.match(/https:\/\/www\.browserbase\.com\/devtools-fullscreen\/[^\s)]+/);
+          const browserViewSection = liveViewMatch ? 
+            `🌐 **Live Browser View:**\n\n[Click here to watch and control the browser](${liveViewMatch[0]})\n\n---\n\n` : '';
+          
+          // Append tool execution log to response if there were tool calls (collapsible)
+          const debugSection = toolExecutionLog ? 
+            `\n\n<details>\n<summary>🔧 Debug Info (click to expand)</summary>\n${toolExecutionLog}\n</details>` : '';
+          
+          const fullResponse = browserViewSection + responseContent + debugSection;
+          
           return new Response(JSON.stringify({
-            message: finalResponse || moeResult.content,
+            message: fullResponse,
             moeMetadata: moeResult.moeMetadata,
             status: 'completed'
           }), {
@@ -439,6 +607,48 @@ Be smart about when to use tools - don't force them if not needed.`;
                     content: finalResponse.trim(),
                     created_at: new Date().toISOString(),
                   });
+                  
+                  // Auto-generate title if this is the first exchange
+                  const { data: messageCount } = await supabase
+                    .from('thought_messages')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('thought_id', body.thought_id);
+                  
+                  if (messageCount && (messageCount as any).count === 2) {
+                    // First user message + first assistant response = generate title
+                    try {
+                      const titlePrompt = `Generate a short, descriptive title (3-5 words max) for a conversation that starts with: "${body.message.substring(0, 100)}..."`;
+                      const titleResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${env.OPENROUTER_API_KEY}`,
+                        },
+                        body: JSON.stringify({
+                          model: 'mistralai/mistral-7b-instruct:free',
+                          messages: [{ role: 'user', content: titlePrompt }],
+                          max_tokens: 20,
+                        }),
+                      });
+                      
+                      if (titleResponse.ok) {
+                        const titleData = await titleResponse.json();
+                        const title = titleData.choices[0]?.message?.content?.trim().replace(/["|']/g, '') || 'New Chat';
+                        
+                        await supabase
+                          .from('thoughts')
+                          .update({ 
+                            title,
+                            updated_at: new Date().toISOString() 
+                          })
+                          .eq('id', body.thought_id);
+                        
+                        console.log('Generated title:', title);
+                      }
+                    } catch (error) {
+                      console.error('Failed to generate title:', error);
+                    }
+                  }
                 } catch (error) {
                   console.error('Failed to save assistant response to thought:', error);
                 }
@@ -523,6 +733,133 @@ Be smart about when to use tools - don't force them if not needed.`;
           status: 'completed',
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Root path - Landing page
+      if (path === '/' && request.method === 'GET') {
+        const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Morgus - Autonomous AI Agent</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+    .container {
+      max-width: 800px;
+      padding: 2rem;
+      text-align: center;
+    }
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    .tagline {
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+      opacity: 0.9;
+    }
+    .features {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      margin: 2rem 0;
+      text-align: left;
+    }
+    .feature {
+      margin: 1rem 0;
+      padding: 0.5rem 0;
+    }
+    .feature strong {
+      color: #ffd700;
+    }
+    .endpoints {
+      background: rgba(0,0,0,0.2);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin: 2rem 0;
+      text-align: left;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+    }
+    .endpoint {
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      background: rgba(255,255,255,0.05);
+      border-radius: 5px;
+    }
+    .status {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: #00ff00;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    a {
+      color: #ffd700;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🤖 Morgus</h1>
+    <p class="tagline">Autonomous AI Agent with MOE System</p>
+    
+    <div class="features">
+      <h2>✨ Capabilities</h2>
+      <div class="feature"><strong>🌐 Website Generation:</strong> Build & deploy modern websites with AI-generated logos</div>
+      <div class="feature"><strong>💻 Code Execution:</strong> Run Python, JavaScript, and Bash scripts</div>
+      <div class="feature"><strong>🔧 GitHub Integration:</strong> Clone repos, create PRs, manage code</div>
+      <div class="feature"><strong>🌍 Browser Automation:</strong> Navigate websites, fill forms, extract data</div>
+      <div class="feature"><strong>📦 Full-Stack Apps:</strong> Build database-backed apps with Supabase</div>
+      <div class="feature"><strong>🎯 MOE System:</strong> 6 AI models compete for best responses</div>
+    </div>
+
+    <div class="endpoints">
+      <h3><span class="status"></span>API Endpoints</h3>
+      <div class="endpoint"><strong>GET</strong> /health - Health check</div>
+      <div class="endpoint"><strong>POST</strong> /chat - Chat with Morgus</div>
+      <div class="endpoint"><strong>POST</strong> /moe-chat - MOE system chat</div>
+      <div class="endpoint"><strong>GET</strong> /moe - MOE system status</div>
+      <div class="endpoint"><strong>POST</strong> /upload - File upload</div>
+    </div>
+
+    <p style="margin-top: 2rem; opacity: 0.8;">
+      <a href="/health">Check Health</a> | 
+      <a href="/moe">MOE Status</a> | 
+      <a href="https://github.com" target="_blank">Documentation</a>
+    </p>
+    
+    <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.7;">
+      Version 2.0 | All Features Complete
+    </p>
+  </div>
+</body>
+</html>`;
+        return new Response(html, {
+          headers: { ...corsHeaders, 'Content-Type': 'text/html' },
         });
       }
 
