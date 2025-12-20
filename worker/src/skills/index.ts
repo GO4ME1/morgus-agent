@@ -667,6 +667,39 @@ export class SkillsManager {
   }
 
   /**
+   * List all skills in a formatted string for the list_skills tool
+   */
+  listSkills(): string {
+    const skills = this.getAllSkills();
+    
+    let output = `# 🎯 Morgus Skills Library v2.0\n\n`;
+    output += `Morgus has **${skills.length} specialized skills** that guide task execution with expert-level knowledge.\n\n`;
+    output += `| # | Skill | Description |\n`;
+    output += `|---|-------|-------------|\n`;
+    
+    skills.forEach((skill, index) => {
+      output += `| ${index + 1} | **${skill.name}** | ${skill.description} |\n`;
+    });
+    
+    output += `\n---\n\n`;
+    output += `## 📚 Skill Details\n\n`;
+    
+    skills.forEach((skill, index) => {
+      output += `### ${index + 1}. ${skill.name}\n`;
+      output += `- **ID:** \`${skill.id}\`\n`;
+      output += `- **Description:** ${skill.description}\n`;
+      output += `- **Keywords:** ${skill.keywords.join(', ')}\n`;
+      output += `- **Source:** ${skill.source || 'builtin'}\n\n`;
+    });
+    
+    output += `---\n\n`;
+    output += `💡 **Pro Tip:** These skills are automatically activated when you ask related questions. `;
+    output += `For example, asking "build me a landing page" will activate the Landing Page skill!\n`;
+    
+    return output;
+  }
+
+  /**
    * Generate skill context for the system prompt
    */
   generateSkillContext(query: string): string {
