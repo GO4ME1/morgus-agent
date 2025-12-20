@@ -956,6 +956,119 @@ This skill empowers Morgus to integrate secure, production-ready user authentica
 - Customizable email templates
 `;
 
+const SPREADSHEET_CONTENT = `# 📊 Morgus Spreadsheet & Excel Skill v2.0
+
+This skill enables Morgus to perform advanced spreadsheet operations, including data analysis, visualization, and financial modeling, with a focus on creating client-ready, professional-grade Excel workbooks (.xlsx).
+
+## 💡 Core Principles (The Morgus Philosophy)
+
+| Principle | Description |
+|---|---|
+| Clarity First | Spreadsheets must be easy to understand. A clear model is a correct model. |
+| Automate, Don't Obfuscate | Use formulas for all derived values. No magic numbers. |
+| Structure is Everything | A well-organized layout is crucial for readability and maintainability. |
+| Visualize to Understand | Use charts and conditional formatting to reveal insights. |
+| Client-Ready by Default | Every spreadsheet should be polished and professional. |
+
+## 🛠️ Primary Tooling
+
+- **openpyxl**: The primary library for all .xlsx operations (reading, writing, styling, charts).
+- **pandas**: For complex data manipulation and analysis before writing to Excel.
+- **matplotlib**: For generating complex charts as images to be inserted into the workbook.
+
+## 📐 Formula Requirements
+
+- Use Formulas for Derived Values: All calculations must be done with Excel formulas.
+- No Dynamic Array Functions: Avoid FILTER, XLOOKUP, SORT, etc., as they are not universally supported.
+- Simple & Legible: Use helper cells for intermediate calculations.
+- Use Cell References: No hardcoded numbers in formulas (e.g., =A1 * (1 + \$B\$1), not =A1 * 1.05).
+- Error Handling: Use IFERROR to gracefully handle potential errors.
+
+## 🎨 Formatting & Styling
+
+- Number Formats: Use appropriate formats for dates, currencies, percentages, etc.
+- Clear Layout: Use headers, fill colors, and borders to create a professional look.
+- Standard Colors (for new models): Blue Text = User inputs, Black Text = Formulas, Green Text = Links to other sheets.
+- Financial Models: Negative numbers in red with parentheses (500). Zeros formatted as -. Specify units in headers.
+
+## 📊 Charting & Visualization
+
+- Choose the Right Chart: Use bar, line, pie, etc., as appropriate for the data.
+- Clear & Concise: Charts should be easy to read with clear titles, labels, and legends.
+- Native Charts: Use openpyxl.chart to create native Excel charts whenever possible.
+
+## ✅ Quality Checks
+
+- Recalculate All: Ensure all formulas are calculated and values are up-to-date.
+- Error Free: The final workbook must not contain any formula errors (#REF!, #DIV/0!, etc.).
+`;
+
+const DOCX_CONTENT = `# 📄 Morgus DOCX Generation Skill v2.0
+
+This skill enables Morgus to create and edit professional, client-ready Microsoft Word documents (.docx) with a focus on structure, formatting, and visual quality.
+
+## 💡 Core Principles (The Morgus Philosophy)
+
+| Principle | Description |
+|---|---|
+| Structure First | A well-structured document is easy to navigate and understand. |
+| Consistency is Key | Consistent formatting (fonts, spacing, styles) is the hallmark of professionalism. |
+| Visuals Matter | Use tables, images, and charts to break up text and convey information effectively. |
+| Client-Ready by Default | Every document should be polished and ready for review. |
+
+## 🛠️ Primary Tooling
+
+- **python-docx**: The primary library for creating and editing .docx files.
+- **soffice (LibreOffice)**: For converting .docx to .pdf for visual review.
+- **pdftoppm**: For converting the resulting PDF to PNG images for detailed inspection.
+
+## 📐 Document Structure & Formatting
+
+- Use Styles: Use built-in styles (e.g., 'Heading 1', 'Normal') for consistent formatting.
+- Clear Hierarchy: Use headings, subheadings, and lists to create a clear visual hierarchy.
+- Consistent Spacing: Ensure consistent paragraph spacing and line height.
+- Professional Fonts: Use standard, professional fonts (e.g., Calibri, Times New Roman, Arial).
+
+## ✅ Quality Checks
+
+- Visual Inspection Loop: After every significant change, convert the .docx to .pdf and then to .png images to visually inspect the output.
+- Error Free: The final document must be free of typos, grammatical errors, and formatting issues.
+- Human-Readable Citations: All citations must be in a standard, human-readable format.
+`;
+
+const PDF_CONTENT = `# 📑 Morgus PDF Generation Skill v2.0
+
+This skill enables Morgus to create professional, high-quality PDF documents from scratch, with a focus on precise layout, custom graphics, and data visualization.
+
+## 💡 Core Principles (The Morgus Philosophy)
+
+| Principle | Description |
+|---|---|
+| Pixel-Perfect Precision | PDFs demand precise control over layout and design. |
+| Design for Readability | A well-designed PDF is a pleasure to read. |
+| Vector is Better | Use vector graphics for logos, charts, and diagrams for infinite scalability. |
+| Client-Ready by Default | Every PDF should be a polished, professional artifact. |
+
+## 🛠️ Primary Tooling
+
+- **reportlab**: The primary library for creating PDFs from scratch. It offers precise control over layout, text, and graphics.
+- **pdftoppm**: For converting the generated PDF to PNG images for visual inspection.
+- **pdfplumber**: For reading and extracting text from existing PDFs.
+
+## 📐 Document Design & Layout
+
+- Use a Grid: Use a grid system for consistent alignment of text and graphics.
+- Branding: Incorporate logos, brand colors, and fonts for a consistent brand identity.
+- White Space: Use white space effectively to improve readability and create a clean, professional look.
+- Page Numbers & Headers/Footers: Include page numbers, headers, and footers for easy navigation.
+
+## ✅ Quality Checks
+
+- Visual Inspection Loop: After every significant change, render the PDF and convert it to PNGs for visual inspection.
+- Error Free: The final PDF must be free of typos, grammatical errors, and rendering artifacts.
+- Human-Readable Citations: All citations must be in a standard, human-readable format.
+`;
+
 const EXTERNAL_API_CONTENT = `# 🔌 Morgus External API Integration Skill v2.0
 
 ## 🌟 Overview
@@ -1151,6 +1264,33 @@ export const BUILTIN_SKILLS: Skill[] = [
     createdAt: '2024-12-20',
     source: 'builtin',
     content: EXTERNAL_API_CONTENT
+  },
+  {
+    id: 'spreadsheet-v2',
+    name: 'Morgus Spreadsheet & Excel',
+    description: 'Creates professional Excel workbooks with formulas, charts, and financial modeling',
+    keywords: ['spreadsheet', 'excel', 'xlsx', 'csv', 'financial model', 'dcf', 'lbo', 'data analysis', 'pivot table', 'charts', 'graphs', 'budget', 'forecast', 'openpyxl', 'pandas'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: SPREADSHEET_CONTENT
+  },
+  {
+    id: 'docx-v2',
+    name: 'Morgus DOCX Generation',
+    description: 'Creates professional Microsoft Word documents with proper structure and formatting',
+    keywords: ['docx', 'word document', 'report', 'proposal', 'document generation', 'create a doc', 'python-docx', 'soffice', 'libreoffice', 'memo', 'letter', 'article'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: DOCX_CONTENT
+  },
+  {
+    id: 'pdf-v2',
+    name: 'Morgus PDF Generation',
+    description: 'Creates professional PDF documents with precise layout and custom graphics',
+    keywords: ['pdf', 'create pdf', 'generate pdf', 'report', 'invoice', 'certificate', 'presentation', 'reportlab', 'pdfplumber', 'custom layout', 'branding'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: PDF_CONTENT
   }
 ];
 

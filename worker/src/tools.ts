@@ -727,6 +727,9 @@ export class ToolRegistry {
     
     // Skills tools - for self-improving agent
     this.registerSkillsTools();
+    
+    // MCP tools - for connecting to external MCP servers
+    this.registerMCPTools();
   }
 
   register(tool: Tool) {
@@ -760,6 +763,28 @@ export class ToolRegistry {
     const { listSkillsTool, loadSkillTool } = require('./tools/skills-tool');
     this.register(listSkillsTool);
     this.register(loadSkillTool);
+  }
+
+  /**
+   * Register MCP-related tools
+   */
+  registerMCPTools() {
+    // Import MCP tools
+    const { mcpToolDefinitions, executeMCPTool } = require('./mcp/tools');
+    
+    // Register each MCP tool
+    for (const toolDef of mcpToolDefinitions) {
+      const tool: Tool = {
+        name: toolDef.name,
+        description: toolDef.description,
+        parameters: toolDef.parameters,
+        execute: async (args: any) => {
+          const result = await executeMCPTool(toolDef.name, args);
+          return result.success ? result.message : `Error: ${result.message}`;
+        }
+      };
+      this.register(tool);
+    }
   }
 
   async execute(name: string, args: any, env: any): Promise<string> {
