@@ -812,6 +812,197 @@ This skill enables Morgus to automate repetitive tasks and workflows, saving tim
 - **Iterate and improve:** Continuously refine the automation based on feedback and results.
 `;
 
+const WEB_APP_SCAFFOLD_CONTENT = `# 🏗️ Morgus Web App Scaffold Skill v2.0
+
+## 🌟 Overview
+
+This skill empowers Morgus to build production-grade, full-stack web applications from a single prompt. It combines a modern, best-practices tech stack with a seamless, AI-driven workflow.
+
+**The Morgus Philosophy:** We don't just build apps; we build businesses. Every app is built on a foundation of best practices for performance, security, and scalability.
+
+---
+
+## 🛠️ The Modern Full-Stack Architecture
+
+| Layer | Technology | Rationale |
+|---|---|---|
+| **Frontend** | Vite + React + TypeScript + TailwindCSS | Modern, performant, type-safe UI stack |
+| **Backend** | Supabase Edge Functions | Serverless functions for low-latency backend logic |
+| **Database** | Supabase (PostgreSQL) | Robust, scalable, open-source SQL database |
+| **ORM** | Drizzle ORM | Lightweight, type-safe SQL ORM |
+| **Authentication** | Supabase Auth | Secure built-in user authentication |
+
+---
+
+## 🗺️ The Build Process
+
+### Phase 1: Project Initialization
+1. Start with a clear prompt describing the application
+2. Use webdev_init_project with web-app-supabase scaffold
+
+### Phase 2: Database Schema Design
+1. Describe your data requirements
+2. Morgus generates the SQL schema
+3. Run the SQL in Supabase SQL Editor
+
+### Phase 3: Authentication Setup
+1. Request authentication (email/password, social logins)
+2. Morgus configures Supabase Auth and creates login/signup pages
+
+### Phase 4: Backend Logic with Edge Functions
+1. Describe the desired functionality
+2. Morgus creates Supabase Edge Functions
+
+### Phase 5: Frontend Development
+1. Build the UI with natural language
+2. Morgus creates React components connected to backend
+
+### Phase 6: Deployment
+1. Deploy to Cloudflare Pages or Vercel
+2. Connect custom domain
+`;
+
+const STRIPE_PAYMENTS_CONTENT = `# 💳 Morgus Stripe Payments Skill v2.0
+
+## 🌟 Overview
+
+This skill empowers Morgus to integrate secure, production-ready payment processing using Stripe. It provides a seamless, AI-driven workflow for products, subscriptions, and checkout.
+
+**The Morgus Philosophy:** Accepting payments should be simple, secure, and scalable. We remove the complexity so you can focus on growing your business.
+
+---
+
+## 🔮 Core Principles
+
+| Principle | Description |
+|---|---|
+| **Build First, Monetize Later** | Build and test payment flows before signing up for Stripe |
+| **Secure by Default** | Best-in-class security practices, never handle raw card data |
+| **Production-Ready** | Built on best practices for reliability and scalability |
+
+---
+
+## 🗺️ The Stripe Integration Workflow
+
+### Phase 1: Sandbox Setup
+1. Tell Morgus your goal (e.g., "sell a $10/month subscription")
+2. Morgus creates a Stripe claimable sandbox
+3. Test the entire checkout process with test cards
+
+### Phase 2: Going Live
+1. Claim your Stripe account
+2. Complete KYC process
+3. All configurations transfer to your permanent account
+
+### Phase 3: Managing Payments
+- Customer Portal for subscription management
+- Webhook configuration for payment events
+- Automatic invoice generation
+
+---
+
+## 🧪 Testing
+
+- Test Card: 4242 4242 4242 4242
+- Any future expiration date
+- Any 3-digit CVC
+`;
+
+const AUTHENTICATION_CONTENT = `# 🔒 Morgus Authentication & User Management Skill v2.0
+
+## 🌟 Overview
+
+This skill empowers Morgus to integrate secure, production-ready user authentication. It handles signup, login, social logins, and role-based access control.
+
+**The Morgus Philosophy:** Authentication should be simple, secure, and flexible. We remove the complexity so you can focus on building great user experiences.
+
+---
+
+## 🔮 Core Principles
+
+| Principle | Description |
+|---|---|
+| **Secure by Default** | Industry best practices for password hashing and session management |
+| **Flexible and Extensible** | Support for email/password, social logins, and custom providers |
+| **Seamless UX** | Smooth, intuitive authentication experience |
+
+---
+
+## 🗺️ The Authentication Workflow
+
+### Phase 1: Basic Setup
+1. Request authentication in your app
+2. Morgus configures Supabase Auth with email/password
+
+### Phase 2: Social Logins
+1. Request Google, GitHub, or other OAuth providers
+2. Morgus guides you through provider configuration
+
+### Phase 3: Role-Based Access Control (RBAC)
+1. Define user roles (admin, member, etc.)
+2. Morgus implements role enforcement
+
+### Phase 4: User Management
+- View, edit, and delete users
+- Bulk user operations
+- User analytics
+
+---
+
+## ✨ Advanced Features
+
+- Magic Links (passwordless login)
+- Two-Factor Authentication (2FA)
+- Customizable email templates
+`;
+
+const EXTERNAL_API_CONTENT = `# 🔌 Morgus External API Integration Skill v2.0
+
+## 🌟 Overview
+
+This skill empowers Morgus to connect your application to external APIs, unlocking new features and functionality. It handles API key management, data transformation, and error handling.
+
+**The Morgus Philosophy:** Your application should be able to talk to the world. We make it easy to connect to any API.
+
+---
+
+## 🔮 Core Principles
+
+| Principle | Description |
+|---|---|
+| **Secure by Default** | API keys stored as encrypted secrets, never exposed in frontend |
+| **Resilient and Reliable** | Robust error handling for API failures and rate limits |
+| **Infinitely Extensible** | Connect to any API with a public specification |
+
+---
+
+## 🗺️ The API Integration Workflow
+
+### Phase 1: API Discovery
+1. Tell Morgus what you want to achieve
+2. Morgus researches and recommends APIs
+
+### Phase 2: API Key Management
+1. Morgus prompts for your API key
+2. Key stored securely in Supabase secrets
+
+### Phase 3: Backend Integration
+1. Morgus creates Supabase Edge Function
+2. Handles data transformation and error handling
+
+### Phase 4: Frontend Integration
+1. Morgus creates UI components
+2. Connects frontend to backend
+
+---
+
+## ✨ Advanced Features
+
+- Automatic OpenAPI/Swagger import
+- AI-powered data mapping
+- Built-in caching and rate limiting
+`;
+
 /**
  * Built-in skills that come with Morgus v2.0
  * These are comprehensive, production-ready skills with the Morgus Flair
@@ -924,6 +1115,42 @@ export const BUILTIN_SKILLS: Skill[] = [
     createdAt: '2024-12-20',
     source: 'builtin',
     content: TASK_AUTOMATION_CONTENT
+  },
+  {
+    id: 'web-app-scaffold-v2',
+    name: 'Morgus Web App Scaffold',
+    description: 'Builds production-grade, full-stack web applications with Supabase backend',
+    keywords: ['web app', 'full-stack', 'supabase', 'database', 'backend', 'frontend', 'scaffold', 'saas', 'startup', 'mvp'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: WEB_APP_SCAFFOLD_CONTENT
+  },
+  {
+    id: 'stripe-payments-v2',
+    name: 'Morgus Stripe Payments',
+    description: 'Integrates secure, production-ready payment processing with Stripe',
+    keywords: ['stripe', 'payment', 'checkout', 'subscription', 'billing', 'monetize', 'sell', 'ecommerce', 'pricing'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: STRIPE_PAYMENTS_CONTENT
+  },
+  {
+    id: 'authentication-v2',
+    name: 'Morgus Authentication & User Management',
+    description: 'Implements secure user authentication with social logins and RBAC',
+    keywords: ['auth', 'login', 'signup', 'user', 'oauth', 'google login', 'github login', 'role', 'permission', 'session'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: AUTHENTICATION_CONTENT
+  },
+  {
+    id: 'external-api-v2',
+    name: 'Morgus External API Integration',
+    description: 'Connects applications to external APIs with secure key management',
+    keywords: ['api', 'integration', 'external', 'connect', 'openai', 'weather', 'third-party', 'webhook', 'rest', 'graphql'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: EXTERNAL_API_CONTENT
   }
 ];
 

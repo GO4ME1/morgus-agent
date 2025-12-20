@@ -1,4 +1,4 @@
-# 🚀 Morgus Website Builder Skill v2.0
+# 🚀 Morgus Website Builder Skill v2.1 (Production Grade)
 
 ## 🌟 Overview
 
@@ -24,58 +24,29 @@ This skill empowers Morgus to architect and construct cutting-edge, professional
 
 ### Phase 1: Discovery & Planning
 
-1.  **Define the Goal:**
-    *   Use `ask` to clarify the primary objective of the website (e.g., lead generation, e-commerce, portfolio).
-2.  **Identify the Target Audience:**
-    *   Who is this website for? Understanding the user helps tailor the design and content.
-3.  **Content Strategy:**
-    *   What information needs to be on the site? Plan the key sections (Home, About, Services, Contact, etc.).
-4.  **Tech Stack Selection:**
-    *   For most static sites, **Vite + React + TypeScript + TailwindCSS** is the recommended stack for its performance and developer experience.
-    *   Use `webdev_init_project` with the `web-static` scaffold.
+1.  **Define the Goal:** Use `ask` to clarify the primary objective of the website (e.g., lead generation, e-commerce, portfolio).
+2.  **Identify the Target Audience:** Who is this website for? Understanding the user helps tailor the design and content.
+3.  **Content Strategy:** What information needs to be on the site? Plan the key sections (Home, About, Services, Contact, etc.).
+4.  **Tech Stack Selection:** For most static sites, **Vite + React + TypeScript + TailwindCSS** is the recommended stack. Use `webdev_init_project` with the `web-static` scaffold.
 
 ### Phase 2: Design & Prototyping
 
-1.  **Logo & Branding:**
-    *   Use `generate` to create a unique logo.
-    *   Establish a color palette (primary, secondary, accent) and typography.
-2.  **Layout & Wireframing:**
-    *   Create a low-fidelity layout for each page. Focus on structure and user flow.
-    *   **Morgus Pro-Tip:** Use a design tool like Figma or simply sketch it out in a markdown file.
-3.  **Visual Design:**
-    *   Apply the branding to the wireframes.
-    *   Ensure visual hierarchy, contrast, and a clean, modern aesthetic.
+1.  **Logo & Branding:** Use `generate` to create a unique logo. Establish a color palette (primary, secondary, accent) and typography.
+2.  **Layout & Wireframing:** Create a low-fidelity layout for each page. Focus on structure and user flow.
+3.  **Visual Design:** Apply the branding to the wireframes. Ensure visual hierarchy, contrast, and a clean, modern aesthetic.
 
 ### Phase 3: Development
 
-1.  **Component-Based Architecture:**
-    *   Break down the design into reusable React components (e.g., Navbar, Hero, Footer, Card).
-2.  **Semantic HTML:**
-    *   Use meaningful HTML tags (`<header>`, `<nav>`, `<main>`, `<section>`, `<footer>`) for accessibility and SEO.
-3.  **Responsive Design with TailwindCSS:**
-    *   Use Tailwind's mobile-first utility classes to ensure the site looks great on all devices.
-    *   Example:
-        ```html
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <!-- This will be a single column on mobile, and a 3-column grid on medium screens and up -->
-        </div>
-        ```
-4.  **Accessibility (a11y):**
-    *   Ensure all images have `alt` tags.
-    *   Use proper heading structure (H1, H2, H3).
-    *   Ensure sufficient color contrast.
+1.  **Component-Based Architecture:** Break down the design into reusable React components (e.g., Navbar, Hero, Footer, Card).
+2.  **Semantic HTML:** Use meaningful HTML tags (`header`, `nav`, `main`, `section`, `footer`) for accessibility and SEO.
+3.  **Responsive Design with TailwindCSS:** Use Tailwind's mobile-first utility classes to ensure the site looks great on all devices.
+4.  **Accessibility (a11y):** Ensure all images have `alt` tags. Use proper heading structure (H1, H2, H3). Ensure sufficient color contrast.
 
 ### Phase 4: Optimization & Deployment
 
-1.  **Image Optimization:**
-    *   Use modern formats like WebP.
-    *   Compress images to reduce file size.
-2.  **Performance Tuning:**
-    *   Minify CSS and JavaScript (Vite handles this automatically in the build process).
-    *   Use lazy loading for images and videos below the fold.
-3.  **Deployment:**
-    *   Use `wrangler pages deploy` to deploy to Cloudflare Pages for global distribution and free SSL.
-    *   Provide instructions for connecting a custom domain.
+1.  **Image Optimization:** Use modern formats like WebP. Compress images to reduce file size.
+2.  **Performance Tuning:** Minify CSS and JavaScript (Vite handles this automatically in the build process). Use lazy loading for images and videos below the fold.
+3.  **Deployment:** Use `wrangler pages deploy` to deploy to Cloudflare Pages for global distribution and free SSL. Provide instructions for connecting a custom domain.
 
 ---
 
@@ -85,6 +56,31 @@ This skill empowers Morgus to architect and construct cutting-edge, professional
 *   **Engaging Micro-interactions:** Provide feedback for user actions (e.g., button clicks, form submissions).
 *   **Dark Mode:** Always offer a dark mode option for user preference and comfort.
 *   **Custom 404 Page:** Create a unique and helpful 404 page that guides users back on track.
+
+---
+
+## 🎨 Modern CSS Best Practices
+
+Use CSS custom properties for theming:
+- **Color System:** `primary`, `secondary`, `accent`, `background`, `surface`, `text`, `text-muted`
+- **Spacing Scale:** `0.25rem`, `0.5rem`, `0.75rem`, `1rem`, `1.5rem`, `2rem`, `3rem`, `4rem`
+- **Typography:** Use Inter or `system-ui` for body, Cal Sans for display
+- **Shadows:** `sm`, `md`, `lg` for depth
+- **Border Radius:** `sm` (0.375rem), `md` (0.5rem), `lg` (1rem), `full` (9999px)
+
+Support dark mode with `@media (prefers-color-scheme: dark)`
+
+---
+
+## 📐 Responsive Breakpoints
+
+| Breakpoint | Width | Use Case |
+|---|---|---|
+| sm | 640px | Large phones |
+| md | 768px | Tablets |
+| lg | 1024px | Laptops |
+| xl | 1280px | Desktops |
+| 2xl | 1536px | Large screens |
 
 ---
 
