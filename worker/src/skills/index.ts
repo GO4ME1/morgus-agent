@@ -524,6 +524,294 @@ When encountering CAPTCHAs or login forms:
 - Close sessions when done
 `;
 
+const RESEARCH_ANALYSIS_CONTENT = `# 🧠 Morgus Research & Deep Analysis Skill v2.0
+
+## 🌟 Overview
+
+This skill equips Morgus with a systematic framework for conducting in-depth research and analysis. It ensures that every research task is approached with rigor, clarity, and a focus on uncovering actionable insights.
+
+**The Morgus Philosophy:** We don't just find information; we synthesize it into knowledge. Our research is a journey from questions to answers, from data to decisions.
+
+---
+
+## 🔮 The Morgus Touch: Core Principles
+
+| Principle | Description |
+|---|---|
+| **Start with Why** | Every research task must begin with a clear objective. What are we trying to learn? What problem are we trying to solve? |
+| **Go Broad, Then Deep** | We start with a wide net to gather diverse perspectives, then dive deep into the most promising areas. |
+| **Synthesize, Don't Summarize** | We connect the dots between different sources to form a cohesive narrative, not just a list of facts. |
+| **Acknowledge Bias** | We are aware of potential biases in our sources and our own thinking, and we actively work to mitigate them. |
+| **Communicate with Clarity** | The final output must be clear, concise, and easy to understand, even for a non-expert audience. |
+
+---
+
+## 🗺️ The Research Workflow
+
+### 1. Deconstruct the Request
+- **Identify the core question:** What is the user *really* asking?
+- **Define the scope:** What is in-scope and out-of-scope for this research?
+- **Clarify deliverables:** What is the expected output? (e.g., a report, a presentation, a list of pros and cons)
+
+### 2. Information Gathering
+- **Identify keywords and search queries:** Use a variety of terms to uncover different angles.
+- **Use multiple search tools:** Don't rely on a single source. Use search with different type parameters (info, research, news).
+- **Evaluate sources:** Prioritize credible, authoritative sources (e.g., academic papers, reputable news organizations, official documentation).
+
+### 3. Synthesis & Analysis
+- **Extract key findings:** Pull out the most important pieces of information from each source.
+- **Identify patterns and themes:** What are the recurring ideas? Where is there consensus? Where is there disagreement?
+- **Formulate a point of view:** Based on the evidence, what is our conclusion? What is our recommendation?
+
+### 4. Content Creation
+- **Structure the narrative:** Create a logical flow for the information.
+- **Write with the audience in mind:** Use clear, simple language. Avoid jargon.
+- **Visualize the data:** Use charts, graphs, and tables to make the information more accessible.
+
+### 5. Review & Refine
+- **Fact-check all claims:** Ensure every piece of information is accurate.
+- **Check for clarity and coherence:** Does the narrative flow logically? Is the main point clear?
+- **Get feedback:** If possible, have a peer review the work.
+`;
+
+const PRESENTATION_SLIDESHOW_CONTENT = `# 🎬 Morgus Presentation & Slideshow Skill v2.0
+
+## 🌟 Overview
+
+This skill enables Morgus to create compelling, professional presentations and slideshows. It covers the entire process, from structuring the narrative to designing the visuals.
+
+**The Morgus Philosophy:** A presentation is a performance. We create slides that support the speaker, not replace them. Our presentations are designed to be clear, memorable, and persuasive.
+
+---
+
+## 🔮 The Morgus Touch: Core Principles
+
+| Principle | Description |
+|---|---|
+| **One Idea Per Slide** | Each slide should have a single, clear focus. This makes the information easier to digest and remember. |
+| **Visuals Over Text** | We use images, charts, and diagrams to illustrate our points. Text is used sparingly to support the visuals. |
+| **Storytelling is Key** | We structure our presentations as a story, with a clear beginning, middle, and end. This makes the content more engaging. |
+| **Design for the Back Row** | We use large fonts, high-contrast colors, and simple layouts to ensure that everyone in the room can read the slides. |
+| **Practice Makes Perfect** | We create a script and speaker notes to help the presenter deliver a smooth, confident performance. |
+
+---
+
+## 🗺️ The Presentation Workflow
+
+### 1. Define the Objective
+- **What is the key takeaway?** What is the one thing you want the audience to remember?
+- **Who is the audience?** What do they already know? What do they care about?
+- **What is the call to action?** What do you want the audience to do after the presentation?
+
+### 2. Outline the Narrative
+- **The Hook:** Start with a compelling story, a surprising statistic, or a provocative question to grab the audience's attention.
+- **The Body:** Present your main points in a logical sequence. Use a clear structure, such as problem-solution, chronological, or topical.
+- **The Close:** Summarize your key message and end with a strong call to action.
+
+### 3. Create the Content
+- **Write the script first:** Focus on the words you will say, not the slides you will show.
+- **Then, create the slides:** Use the slides to support your script, not the other way around.
+- **Use the slides tool:** This tool allows you to create professional-looking slides with a consistent design.
+
+### 4. Design the Visuals
+- **Choose a consistent color palette and font:** This creates a professional, polished look.
+- **Use high-quality images:** Avoid pixelated or cheesy stock photos.
+- **Create clear, simple charts:** Don't cram too much information into a single visualization.
+
+### 5. Rehearse and Refine
+- **Practice out loud:** This will help you identify any awkward phrasing or timing issues.
+- **Get feedback:** Rehearse in front of a friendly audience and ask for their honest feedback.
+- **Time yourself:** Make sure your presentation fits within the allotted time.
+`;
+
+const DOCUMENT_GENERATION_CONTENT = `# 📝 Morgus Document Generation Skill v2.0
+
+## 🌟 Overview
+
+This skill empowers Morgus to create a wide range of professional documents, from reports and proposals to articles and emails. It provides a structured approach to ensure that every document is clear, concise, and fit for purpose.
+
+**The Morgus Philosophy:** We write with the reader in mind. Our documents are not just a collection of words; they are a tool for communication. We strive to make our writing easy to read, understand, and act upon.
+
+---
+
+## 🔮 The Morgus Touch: Core Principles
+
+| Principle | Description |
+|---|---|
+| **Audience First** | We tailor our writing style, tone, and content to the specific needs and expectations of the reader. |
+| **Structure is Everything** | We use a clear, logical structure to guide the reader through the document. This includes headings, subheadings, and bullet points. |
+| **Clarity and Conciseness** | We use simple, direct language and avoid jargon. We get to the point quickly and efficiently. |
+| **Active Voice** | We use the active voice to make our writing more engaging and easier to read. |
+| **Proofread, Proofread, Proofread** | We check our work for spelling, grammar, and punctuation errors before we send it. |
+
+---
+
+## 🗺️ The Document Workflow
+
+### 1. Define the Purpose
+- **What is the goal of this document?** What do you want the reader to know, feel, or do after reading it?
+- **Who is the audience?** What is their level of expertise? What is their relationship to you?
+- **What is the key message?** What is the single most important piece of information you want to convey?
+
+### 2. Gather and Organize Information
+- **Brainstorm ideas:** Use a mind map or a simple list to get all your thoughts down on paper.
+- **Do your research:** If necessary, gather additional information from credible sources.
+- **Create an outline:** This will help you organize your thoughts and ensure a logical flow.
+
+### 3. Write the First Draft
+- **Just write:** Don't worry about perfection at this stage. The goal is to get your ideas down on paper.
+- **Follow your outline:** This will help you stay on track and ensure that you cover all the key points.
+- **Write in a natural, conversational tone:** Imagine you are talking to the reader in person.
+
+### 4. Edit and Revise
+- **Check for clarity and conciseness:** Can you say it more simply? Can you cut any unnecessary words?
+- **Check for grammar and spelling:** Use a spell checker and a grammar checker, but don't rely on them completely.
+- **Read it out loud:** This will help you catch any awkward phrasing or run-on sentences.
+
+### 5. Format and Finalize
+- **Use a clean, professional layout:** Use headings, subheadings, and white space to make the document easy to read.
+- **Choose a readable font:** Stick to simple, classic fonts like Arial, Helvetica, or Times New Roman.
+- **Add a title and your name:** Make it clear what the document is about and who wrote it.
+`;
+
+const IMAGE_GENERATION_CONTENT = `# 🎨 Morgus Image Generation Skill v2.0
+
+## 🌟 Overview
+
+This skill empowers Morgus to create stunning, high-quality images from text descriptions. It provides a framework for crafting effective prompts and leveraging advanced techniques to achieve the desired visual style.
+
+**The Morgus Philosophy:** We believe that a picture is worth a thousand words. Our goal is to translate your ideas into compelling visuals that communicate with clarity and impact.
+
+---
+
+## 🔮 The Morgus Touch: Core Principles
+
+| Principle | Description |
+|---|---|
+| **Specificity is Key** | The more detailed the prompt, the better the result. We use descriptive language to paint a clear picture for the AI. |
+| **Style Matters** | We define the desired artistic style, whether it's photorealistic, cartoonish, or something in between. |
+| **Iterate and Refine** | We don't expect perfection on the first try. We generate multiple options and refine the prompt based on the results. |
+| **Composition is Crucial** | We consider the arrangement of elements within the image to create a balanced and visually appealing composition. |
+| **Harness the Power of Negative Prompts** | We use negative prompts to exclude unwanted elements and refine the final image. |
+
+---
+
+## 🗺️ The Image Generation Workflow
+
+### 1. Deconstruct the Request
+- **What is the subject of the image?** (e.g., a person, an animal, a landscape)
+- **What is the setting?** (e.g., a forest, a city, a beach)
+- **What is the mood or tone?** (e.g., happy, sad, mysterious)
+- **What is the desired artistic style?** (e.g., photorealistic, impressionistic, surreal)
+
+### 2. Craft the Prompt
+- **Use descriptive adjectives and adverbs:** (e.g., "a majestic lion with a flowing mane," "a serene forest with dappled sunlight")
+- **Specify the camera angle and lighting:** (e.g., "a low-angle shot with dramatic backlighting")
+- **Include artistic influences:** (e.g., "in the style of Vincent van Gogh," "inspired by the work of Ansel Adams")
+
+### 3. Generate and Iterate
+- **Use the generate tool:** This tool allows you to create images from text prompts.
+- **Generate multiple options:** This will give you a range of possibilities to choose from.
+- **Refine the prompt:** Based on the results, adjust the prompt to get closer to your desired outcome.
+
+### 4. Post-Processing (Optional)
+- **Use image editing software:** Tools like Photoshop or GIMP can be used to make minor adjustments to the final image.
+- **Apply filters and effects:** This can be a quick way to enhance the mood and style of the image.
+`;
+
+const EMAIL_COMMUNICATION_CONTENT = `# 📧 Morgus Email & Communication Skill v2.0
+
+## 🌟 Overview
+
+This skill empowers Morgus to craft professional, effective emails and other forms of written communication. It covers everything from subject lines to sign-offs, ensuring that every message is clear, concise, and achieves its intended purpose.
+
+**The Morgus Philosophy:** Communication is the foundation of all relationships. We write emails that are respectful of the reader's time, get to the point quickly, and leave a positive impression.
+
+---
+
+## 🔮 The Morgus Touch: Core Principles
+
+| Principle | Description |
+|---|---|
+| **Subject Line is King** | The subject line determines whether your email gets opened. Make it specific, clear, and action-oriented. |
+| **One Email, One Purpose** | Each email should have a single, clear objective. If you have multiple topics, consider sending separate emails. |
+| **Front-Load the Key Information** | Put the most important information at the beginning of the email. Don't bury the lead. |
+| **Be Concise** | Respect the reader's time. Use short sentences and paragraphs. Avoid unnecessary jargon. |
+| **Proofread Before Sending** | Typos and grammatical errors undermine your credibility. Always proofread before hitting send. |
+
+---
+
+## 🗺️ The Email Workflow
+
+### 1. Define the Purpose
+- **What is the goal of this email?** (e.g., to inform, to request, to persuade, to thank)
+- **Who is the recipient?** (e.g., a colleague, a client, a manager)
+- **What is the desired outcome?** (e.g., a reply, a meeting, an action)
+
+### 2. Craft the Subject Line
+- **Be specific:** "Meeting Request: Q4 Budget Review" is better than "Meeting"
+- **Be action-oriented:** "Action Required: Please Review by Friday" is better than "Document for Review"
+- **Keep it short:** Aim for 6-10 words.
+
+### 3. Write the Body
+- **Start with a greeting:** "Hi [Name]," or "Dear [Name],"
+- **State your purpose immediately:** "I'm writing to..."
+- **Provide context and details:** Keep it brief and to the point.
+- **Include a clear call to action:** "Could you please..." or "I'd appreciate it if you could..."
+- **End with a professional sign-off:** "Best regards," "Thanks," or "Sincerely,"
+
+### 4. Review and Send
+- **Proofread for errors:** Check spelling, grammar, and punctuation.
+- **Check the recipient:** Make sure you're sending to the right person.
+- **Consider the timing:** Avoid sending emails late at night or on weekends unless it's urgent.
+`;
+
+const TASK_AUTOMATION_CONTENT = `# ⚡ Morgus Task Automation Skill v2.0
+
+## 🌟 Overview
+
+This skill enables Morgus to automate repetitive tasks and workflows, saving time and reducing errors. It covers a range of automation techniques, from simple scripts to complex multi-step processes.
+
+**The Morgus Philosophy:** We believe that humans should focus on creative and strategic work, while machines handle the repetitive tasks. Our goal is to free up your time and energy for the things that matter most.
+
+---
+
+## 🔮 The Morgus Touch: Core Principles
+
+| Principle | Description |
+|---|---|
+| **Identify the Pattern** | Before automating, understand the task. What are the steps? What are the inputs and outputs? What are the edge cases? |
+| **Start Simple** | Don't try to automate everything at once. Start with a small, well-defined task and build from there. |
+| **Test Thoroughly** | Automation can amplify errors. Test your automation thoroughly before deploying it to production. |
+| **Handle Errors Gracefully** | Things will go wrong. Build in error handling and logging to make debugging easier. |
+| **Document Everything** | Write clear documentation so that others (and your future self) can understand and maintain the automation. |
+
+---
+
+## 🗺️ The Automation Workflow
+
+### 1. Identify the Task
+- **What is the task?** Describe it in detail.
+- **How often is it performed?** Daily, weekly, monthly?
+- **How long does it take?** Estimate the time savings from automation.
+- **What are the inputs and outputs?** What data does the task need, and what does it produce?
+
+### 2. Design the Automation
+- **Break down the task into steps:** Create a flowchart or a numbered list.
+- **Identify the tools:** What tools will you use? (e.g., Python, shell scripts, browser automation)
+- **Plan for edge cases:** What happens if an input is missing? What happens if a step fails?
+
+### 3. Build the Automation
+- **Write the code:** Use the appropriate tools and languages.
+- **Test each step:** Make sure each step works correctly before moving on to the next.
+- **Add error handling:** Use try-catch blocks and logging to handle errors gracefully.
+
+### 4. Deploy and Monitor
+- **Deploy to production:** Run the automation in a real environment.
+- **Monitor for errors:** Set up alerts to notify you if something goes wrong.
+- **Iterate and improve:** Continuously refine the automation based on feedback and results.
+`;
+
 /**
  * Built-in skills that come with Morgus v2.0
  * These are comprehensive, production-ready skills with the Morgus Flair
@@ -582,6 +870,60 @@ export const BUILTIN_SKILLS: Skill[] = [
     createdAt: '2024-12-20',
     source: 'builtin',
     content: BROWSER_AUTOMATION_CONTENT
+  },
+  {
+    id: 'research-analysis-v2',
+    name: 'Morgus Research & Deep Analysis',
+    description: 'Conducts in-depth research and analysis with systematic methodology',
+    keywords: ['research', 'analyze', 'investigate', 'study', 'report', 'findings', 'synthesis', 'deep dive', 'comprehensive', 'sources'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: RESEARCH_ANALYSIS_CONTENT
+  },
+  {
+    id: 'presentation-slideshow-v2',
+    name: 'Morgus Presentation & Slideshow',
+    description: 'Creates compelling, professional presentations and slideshows',
+    keywords: ['presentation', 'slides', 'slideshow', 'powerpoint', 'ppt', 'deck', 'pitch', 'keynote', 'speaker', 'audience'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: PRESENTATION_SLIDESHOW_CONTENT
+  },
+  {
+    id: 'document-generation-v2',
+    name: 'Morgus Document Generation',
+    description: 'Creates professional documents from reports to proposals to articles',
+    keywords: ['document', 'report', 'proposal', 'article', 'essay', 'write', 'draft', 'memo', 'brief', 'whitepaper'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: DOCUMENT_GENERATION_CONTENT
+  },
+  {
+    id: 'image-generation-v2',
+    name: 'Morgus Image Generation',
+    description: 'Creates stunning images from text descriptions with advanced prompting',
+    keywords: ['image', 'picture', 'photo', 'generate', 'create', 'visual', 'art', 'illustration', 'design', 'logo'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: IMAGE_GENERATION_CONTENT
+  },
+  {
+    id: 'email-communication-v2',
+    name: 'Morgus Email & Communication',
+    description: 'Crafts professional, effective emails and written communications',
+    keywords: ['email', 'message', 'communication', 'write', 'reply', 'respond', 'professional', 'outreach', 'follow-up', 'letter'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: EMAIL_COMMUNICATION_CONTENT
+  },
+  {
+    id: 'task-automation-v2',
+    name: 'Morgus Task Automation',
+    description: 'Automates repetitive tasks and workflows to save time and reduce errors',
+    keywords: ['automate', 'workflow', 'task', 'schedule', 'repeat', 'batch', 'process', 'efficiency', 'script', 'cron'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: TASK_AUTOMATION_CONTENT
   }
 ];
 
