@@ -7,6 +7,7 @@ import { MOEHeader } from './components/MOEHeader';
 import { MOELeaderboard } from './components/MOELeaderboard';
 import { ThinkingIndicator } from './components/ThinkingIndicator';
 import { BrowserView } from './components/BrowserView';
+import { SettingsPanel } from './components/SettingsPanel';
 import './App.css';
 
 // Configure marked for inline rendering
@@ -73,6 +74,7 @@ function App() {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [currentTool] = useState<string | undefined>(); // TODO: Track tool usage from backend
   const [darkMode, setDarkMode] = useState(false); // Default to light mode
+  const [showSettings, setShowSettings] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -476,6 +478,13 @@ function App() {
           <h2>Morgus AI Agent</h2>
           <MOELeaderboard />
           <button 
+            className="settings-toggle"
+            onClick={() => setShowSettings(true)}
+            title="Settings"
+          >
+            ⚙️
+          </button>
+          <button 
             className="dark-mode-toggle"
             onClick={() => setDarkMode(!darkMode)}
             title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
@@ -723,6 +732,14 @@ function App() {
       >
         ⬇️
       </button>
+
+      {/* Settings Panel */}
+      <SettingsPanel
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        darkMode={darkMode}
+        onDarkModeChange={setDarkMode}
+      />
     </div>
   );
 }

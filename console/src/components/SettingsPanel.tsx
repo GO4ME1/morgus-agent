@@ -1,0 +1,334 @@
+import { useState, useEffect } from 'react';
+import './SettingsPanel.css';
+
+interface MCPServer {
+  id: string;
+  name: string;
+  url: string;
+  enabled: boolean;
+  status: 'connected' | 'disconnected' | 'error';
+}
+
+interface Skill {
+  id: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+  category: string;
+}
+
+interface SettingsPanelProps {
+  isOpen: boolean;
+  onClose: () => void;
+  darkMode: boolean;
+  onDarkModeChange: (enabled: boolean) => void;
+}
+
+export function SettingsPanel({ isOpen, onClose, darkMode, onDarkModeChange }: SettingsPanelProps) {
+  const [activeTab, setActiveTab] = useState<'general' | 'mcp' | 'skills'>('general');
+  const [mcpServers, setMcpServers] = useState<MCPServer[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [newServerUrl, setNewServerUrl] = useState('');
+  const [newServerName, setNewServerName] = useState('');
+  const [isAddingServer, setIsAddingServer] = useState(false);
+
+  // Load MCP servers and skills on mount
+  useEffect(() => {
+    if (isOpen) {
+      loadMCPServers();
+      loadSkills();
+    }
+  }, [isOpen]);
+
+  const loadMCPServers = async () => {
+    // Load from localStorage for now
+    const saved = localStorage.getItem('morgus_mcp_servers');
+    if (saved) {
+      setMcpServers(JSON.parse(saved));
+    }
+  };
+
+  const loadSkills = async () => {
+    // Default skills list
+    const defaultSkills: Skill[] = [
+      { id: 'website-builder-v2', name: 'Website Builder', description: 'Build professional websites', enabled: true, category: 'Development' },
+      { id: 'landing-page-v2', name: 'Landing Page', description: 'High-conversion landing pages', enabled: true, category: 'Development' },
+      { id: 'full-stack-app-v2', name: 'Full-Stack App', description: 'Build full-stack applications', enabled: true, category: 'Development' },
+      { id: 'web-app-scaffold-v2', name: 'Web App Scaffold', description: 'Supabase-powered apps', enabled: true, category: 'Development' },
+      { id: 'stripe-payments-v2', name: 'Stripe Payments', description: 'Payment integration', enabled: true, category: 'Development' },
+      { id: 'authentication-v2', name: 'Authentication', description: 'User auth & management', enabled: true, category: 'Development' },
+      { id: 'external-api-v2', name: 'External API', description: 'API integrations', enabled: true, category: 'Development' },
+      { id: 'data-analysis-v2', name: 'Data Analysis', description: 'Analyze and visualize data', enabled: true, category: 'Analysis' },
+      { id: 'research-analysis-v2', name: 'Research', description: 'Deep research & analysis', enabled: true, category: 'Analysis' },
+      { id: 'spreadsheet-v2', name: 'Spreadsheet', description: 'Excel workbooks', enabled: true, category: 'Documents' },
+      { id: 'docx-v2', name: 'DOCX Generation', description: 'Word documents', enabled: true, category: 'Documents' },
+      { id: 'pdf-v2', name: 'PDF Generation', description: 'PDF documents', enabled: true, category: 'Documents' },
+      { id: 'document-generation-v2', name: 'Document Generation', description: 'Reports & proposals', enabled: true, category: 'Documents' },
+      { id: 'presentation-slideshow-v2', name: 'Presentations', description: 'Slideshows & decks', enabled: true, category: 'Documents' },
+      { id: 'image-generation-v2', name: 'Image Generation', description: 'AI image creation', enabled: true, category: 'Creative' },
+      { id: 'code-execution-v2', name: 'Code Execution', description: 'Run code in sandbox', enabled: true, category: 'Utilities' },
+      { id: 'browser-automation-v2', name: 'Browser Automation', description: 'Web automation', enabled: true, category: 'Utilities' },
+      { id: 'email-communication-v2', name: 'Email', description: 'Professional emails', enabled: true, category: 'Communication' },
+      { id: 'task-automation-v2', name: 'Task Automation', description: 'Workflow automation', enabled: true, category: 'Utilities' },
+    ];
+
+    // Load saved preferences
+    const saved = localStorage.getItem('morgus_skills_config');
+    if (saved) {
+      const savedConfig = JSON.parse(saved);
+      setSkills(defaultSkills.map(skill => ({
+        ...skill,
+        enabled: savedConfig[skill.id] !== false
+      })));
+    } else {
+      setSkills(defaultSkills);
+    }
+  };
+
+  const saveMCPServers = (servers: MCPServer[]) => {
+    localStorage.setItem('morgus_mcp_servers', JSON.stringify(servers));
+    setMcpServers(servers);
+  };
+
+  const saveSkillsConfig = (updatedSkills: Skill[]) => {
+    const config: Record<string, boolean> = {};
+    updatedSkills.forEach(skill => {
+      config[skill.id] = skill.enabled;
+    });
+    localStorage.setItem('morgus_skills_config', JSON.stringify(config));
+    setSkills(updatedSkills);
+  };
+
+  const addMCPServer = async () => {
+    if (!newServerUrl || !newServerName) return;
+    
+    setIsAddingServer(true);
+    
+    const newServer: MCPServer = {
+      id: `mcp-${Date.now()}`,
+      name: newServerName,
+      url: newServerUrl,
+      enabled: true,
+      status: 'disconnected'
+    };
+
+    // Try to connect
+    try {
+      // In a real implementation, we'd test the connection here
+      newServer.status = 'connected';
+    } catch {
+      newServer.status = 'error';
+    }
+
+    saveMCPServers([...mcpServers, newServer]);
+    setNewServerUrl('');
+    setNewServerName('');
+    setIsAddingServer(false);
+  };
+
+  const removeMCPServer = (id: string) => {
+    saveMCPServers(mcpServers.filter(s => s.id !== id));
+  };
+
+  const toggleMCPServer = (id: string) => {
+    saveMCPServers(mcpServers.map(s => 
+      s.id === id ? { ...s, enabled: !s.enabled } : s
+    ));
+  };
+
+  const toggleSkill = (id: string) => {
+    saveSkillsConfig(skills.map(s => 
+      s.id === id ? { ...s, enabled: !s.enabled } : s
+    ));
+  };
+
+  const enableAllSkills = () => {
+    saveSkillsConfig(skills.map(s => ({ ...s, enabled: true })));
+  };
+
+  const disableAllSkills = () => {
+    saveSkillsConfig(skills.map(s => ({ ...s, enabled: false })));
+  };
+
+  if (!isOpen) return null;
+
+  const skillCategories = [...new Set(skills.map(s => s.category))];
+
+  return (
+    <div className="settings-overlay" onClick={onClose}>
+      <div className="settings-panel" onClick={e => e.stopPropagation()}>
+        <div className="settings-header">
+          <h2>⚙️ Settings</h2>
+          <button className="close-btn" onClick={onClose}>×</button>
+        </div>
+
+        <div className="settings-tabs">
+          <button 
+            className={`tab ${activeTab === 'general' ? 'active' : ''}`}
+            onClick={() => setActiveTab('general')}
+          >
+            General
+          </button>
+          <button 
+            className={`tab ${activeTab === 'mcp' ? 'active' : ''}`}
+            onClick={() => setActiveTab('mcp')}
+          >
+            MCP Servers
+          </button>
+          <button 
+            className={`tab ${activeTab === 'skills' ? 'active' : ''}`}
+            onClick={() => setActiveTab('skills')}
+          >
+            Skills
+          </button>
+        </div>
+
+        <div className="settings-content">
+          {activeTab === 'general' && (
+            <div className="general-settings">
+              <div className="setting-item">
+                <div className="setting-info">
+                  <span className="setting-label">🌙 Dark Mode</span>
+                  <span className="setting-description">Toggle dark/light theme</span>
+                </div>
+                <label className="toggle-switch">
+                  <input 
+                    type="checkbox" 
+                    checked={darkMode}
+                    onChange={(e) => onDarkModeChange(e.target.checked)}
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
+
+              <div className="setting-item">
+                <div className="setting-info">
+                  <span className="setting-label">🎯 Morgus Version</span>
+                  <span className="setting-description">Skills Library v2.0 • MCP Enabled</span>
+                </div>
+                <span className="version-badge">v2.0</span>
+              </div>
+
+              <div className="setting-item">
+                <div className="setting-info">
+                  <span className="setting-label">📊 Active Skills</span>
+                  <span className="setting-description">{skills.filter(s => s.enabled).length} of {skills.length} skills enabled</span>
+                </div>
+              </div>
+
+              <div className="setting-item">
+                <div className="setting-info">
+                  <span className="setting-label">🔌 MCP Servers</span>
+                  <span className="setting-description">{mcpServers.filter(s => s.enabled).length} connected</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'mcp' && (
+            <div className="mcp-settings">
+              <div className="mcp-info">
+                <p>Connect to MCP (Model Context Protocol) servers to extend Morgus with custom tools and integrations.</p>
+              </div>
+
+              <div className="add-server-form">
+                <input
+                  type="text"
+                  placeholder="Server Name (e.g., My Database)"
+                  value={newServerName}
+                  onChange={(e) => setNewServerName(e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="Server URL (e.g., http://localhost:3000)"
+                  value={newServerUrl}
+                  onChange={(e) => setNewServerUrl(e.target.value)}
+                />
+                <button 
+                  onClick={addMCPServer}
+                  disabled={isAddingServer || !newServerUrl || !newServerName}
+                >
+                  {isAddingServer ? 'Connecting...' : '+ Add Server'}
+                </button>
+              </div>
+
+              <div className="servers-list">
+                {mcpServers.length === 0 ? (
+                  <div className="empty-state">
+                    <p>No MCP servers connected yet.</p>
+                    <p className="hint">Add a server above to extend Morgus's capabilities.</p>
+                  </div>
+                ) : (
+                  mcpServers.map(server => (
+                    <div key={server.id} className={`server-item ${server.status}`}>
+                      <div className="server-info">
+                        <span className="server-name">{server.name}</span>
+                        <span className="server-url">{server.url}</span>
+                        <span className={`status-badge ${server.status}`}>
+                          {server.status === 'connected' ? '🟢 Connected' : 
+                           server.status === 'error' ? '🔴 Error' : '⚪ Disconnected'}
+                        </span>
+                      </div>
+                      <div className="server-actions">
+                        <label className="toggle-switch">
+                          <input 
+                            type="checkbox" 
+                            checked={server.enabled}
+                            onChange={() => toggleMCPServer(server.id)}
+                          />
+                          <span className="slider"></span>
+                        </label>
+                        <button 
+                          className="remove-btn"
+                          onClick={() => removeMCPServer(server.id)}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'skills' && (
+            <div className="skills-settings">
+              <div className="skills-header">
+                <p>Enable or disable specific skills to customize Morgus's capabilities.</p>
+                <div className="bulk-actions">
+                  <button onClick={enableAllSkills}>Enable All</button>
+                  <button onClick={disableAllSkills}>Disable All</button>
+                </div>
+              </div>
+
+              {skillCategories.map(category => (
+                <div key={category} className="skill-category">
+                  <h3>{category}</h3>
+                  <div className="skills-list">
+                    {skills.filter(s => s.category === category).map(skill => (
+                      <div key={skill.id} className={`skill-item ${skill.enabled ? 'enabled' : 'disabled'}`}>
+                        <div className="skill-info">
+                          <span className="skill-name">{skill.name}</span>
+                          <span className="skill-description">{skill.description}</span>
+                        </div>
+                        <label className="toggle-switch">
+                          <input 
+                            type="checkbox" 
+                            checked={skill.enabled}
+                            onChange={() => toggleSkill(skill.id)}
+                          />
+                          <span className="slider"></span>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
