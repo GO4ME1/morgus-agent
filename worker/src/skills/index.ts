@@ -1194,6 +1194,41 @@ This skill creates study flashcards from any content provided by the user. It ca
 | Exportable | Flashcards can be exported to various formats (Anki, CSV, etc.) |
 `;
 
+const MOBILE_APP_CONTENT = `# 📱 Morgus Mobile App Development Skill v2.0
+
+This skill enables Morgus to build and deploy production-grade native mobile applications for iOS and Android from a natural language description.
+
+## Core Principles
+
+| Principle | Description |
+|---|---|
+| From Idea to App Store | Handle the entire mobile app development lifecycle |
+| Native Performance | Build true native applications using Expo + React Native |
+| Modern & Maintainable | Use TypeScript, TailwindCSS, and Drizzle ORM |
+| Full-Stack Capability | Integrate with Supabase for backend, auth, and database |
+
+## Technology Stack
+
+| Component | Technology |
+|---|---|
+| Framework | Expo + React Native |
+| Language | TypeScript |
+| Styling | TailwindCSS |
+| Database | Drizzle + Supabase |
+| Authentication | OAuth with social logins |
+
+## Key Capabilities
+
+| Capability | Description |
+|---|---|
+| End-to-End App Generation | Generate complete projects from descriptions |
+| Interactive Prototyping | Create clickable prototypes from PRDs |
+| UI/UX Design | Create beautiful, responsive interfaces |
+| Backend Integration | Connect to databases and APIs |
+| Push Notifications | Implement engagement features |
+| App Store Deployment | Generate builds for iOS and Android |
+`;
+
 const VOICE_TOOLS_CONTENT = `# 🎙️ Morgus Voice & Audio Tools v2.0
 
 This skill provides a suite of tools for working with voice and audio, including text-to-speech, speech-to-text, and voice cloning.
@@ -1510,6 +1545,15 @@ export const BUILTIN_SKILLS: Skill[] = [
     createdAt: '2024-12-20',
     source: 'builtin',
     content: VOICE_TOOLS_CONTENT
+  },
+  {
+    id: 'mobile-app-v2',
+    name: 'Morgus Mobile App Development',
+    description: 'Builds production-grade native mobile apps for iOS and Android using Expo + React Native',
+    keywords: ['mobile', 'app', 'ios', 'android', 'expo', 'react native', 'phone', 'smartphone', 'native app', 'app store', 'play store'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: MOBILE_APP_CONTENT
   }
 ];
 

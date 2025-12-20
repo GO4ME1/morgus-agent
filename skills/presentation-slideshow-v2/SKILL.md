@@ -1,56 +1,39 @@
 # 🎬 Morgus Presentation & Slideshow Skill v2.0
 
-## 🌟 Overview
+This skill enables Morgus to create, edit, and deliver stunning, professional presentations. It combines the creative power of AI with the precision of traditional design tools, giving users the best of both worlds.
 
-This skill enables Morgus to create compelling, professional presentations and slideshows. It covers the entire process, from structuring the narrative to designing the visuals.
-
-**The Morgus Philosophy:** A presentation is a performance. We create slides that support the speaker, not replace them. Our presentations are designed to be clear, memorable, and persuasive.
-
----
-
-## 🔮 The Morgus Touch: Core Principles
+## Core Principles
 
 | Principle | Description |
 |---|---|
-| **One Idea Per Slide** | Each slide should have a single, clear focus. This makes the information easier to digest and remember. |
-| **Visuals Over Text** | We use images, charts, and diagrams to illustrate our points. Text is used sparingly to support the visuals. |
-| **Storytelling is Key** | We structure our presentations as a story, with a clear beginning, middle, and end. This makes the content more engaging. |
-| **Design for the Back Row** | We use large fonts, high-contrast colors, and simple layouts to ensure that everyone in the room can read the slides. |
-| **Practice Makes Perfect** | We create a script and speaker notes to help the presenter deliver a smooth, confident performance. |
+| **AI-Powered Creativity** | Generate visually stunning slides from a simple text description, leveraging the power of image generation. |
+| **Precision Editing** | Make targeted edits to any element on a slide without sacrificing visual quality or regenerating the entire slide. |
+| **Seamless Workflow** | Move effortlessly from idea to final presentation, with a workflow that combines generation, editing, and delivery. |
+| **Brand Consistency** | Apply custom themes, templates, and branding to ensure all presentations are on-brand. |
 
----
+## Key Capabilities
 
-## 🗺️ The Presentation Workflow
+| Capability | Description |
+|---|---|
+| **Nano Banana Pro Engine** | Generate visually rich, image-based slides that capture attention and communicate ideas effectively. |
+| **Point-and-Click Editing** | Select any element on a slide—text, images, shapes—and edit it directly with intuitive controls. |
+| **Text & Visual Refinement** | Edit text with high-quality rendering that matches the original design, and make local changes to visual elements. |
+| **Bulk Editing** | Select multiple areas and apply changes across a slide or the entire presentation. |
+| **Template & Theme Integration** | Upload your own PowerPoint templates (.pptx) or choose from a library of pre-built themes. |
+| **Multi-Format Export** | Export presentations to PowerPoint (.pptx), PDF, or as interactive web slides. |
 
-### 1. Define the Objective
-- **What is the key takeaway?** What is the one thing you want the audience to remember?
-- **Who is the audience?** What do they already know? What do they care about?
-- **What is the call to action?** What do you want the audience to do after the presentation?
+## The Editing Workflow
 
-### 2. Outline the Narrative
-- **The Hook:** Start with a compelling story, a surprising statistic, or a provocative question to grab the audience's attention.
-- **The Body:** Present your main points in a logical sequence. Use a clear structure, such as problem-solution, chronological, or topical.
-- **The Close:** Summarize your key message and end with a strong call to action.
+Morgus introduces a revolutionary editing workflow for AI-generated slides:
 
-### 3. Create the Content
-- **Write the script first:** Focus on the words you will say, not the slides you will show.
-- **Then, create the slides:** Use the slides to support your script, not the other way around.
-- **Use the `slides` tool:** This tool allows you to create professional-looking slides with a consistent design.
+1. **Generate with Nano Banana Pro**: Create a presentation using Morgus's image generation mode.
+2. **Select a Slide**: Choose the slide you want to edit.
+3. **Point and Click**: Click on any element on the slide to open the editing controls.
+4. **Edit with Precision**: Modify text, change colors, adjust layouts, or replace images.
+5. **Save and Update**: The slide is updated instantly, preserving the original visual quality.
 
-### 4. Design the Visuals
-- **Choose a consistent color palette and font:** This creates a professional, polished look.
-- **Use high-quality images:** Avoid pixelated or cheesy stock photos.
-- **Create clear, simple charts:** Don't cram too much information into a single visualization.
+This workflow eliminates the trade-off between visual excellence and editability, allowing for rapid iteration and fine-tuning of AI-generated content.
 
-### 5. Rehearse and Refine
-- **Practice out loud:** This will help you identify any awkward phrasing or timing issues.
-- **Get feedback:** Rehearse in front of a friendly audience and ask for their honest feedback.
-- **Time yourself:** Make sure your presentation fits within the allotted time.
+## Design View
 
----
-
-## 📚 Resources & References
-
-- **For slide design inspiration:** Dribbble, Behance, Canva
-- **For public speaking tips:** TED Talks, Toastmasters International
-- **For presentation templates:** Slidesgo, Canva, Envato Elements
+Design View provides an interactive canvas for visual editing, bridging the gap between text-based commands and direct manipulation. It allows for a more intuitive and creative editing experience, making Morgus a powerful tool for both designers and non-designers alike.
