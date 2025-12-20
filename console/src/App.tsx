@@ -8,6 +8,7 @@ import { MOELeaderboard } from './components/MOELeaderboard';
 import { ThinkingIndicator } from './components/ThinkingIndicator';
 import { BrowserView } from './components/BrowserView';
 import { SettingsPanel } from './components/SettingsPanel';
+import MorgyPen from './components/MorgyPen';
 import './App.css';
 
 // Configure marked for inline rendering
@@ -75,6 +76,7 @@ function App() {
   const [currentTool] = useState<string | undefined>(); // TODO: Track tool usage from backend
   const [darkMode, setDarkMode] = useState(false); // Default to light mode
   const [showSettings, setShowSettings] = useState(false);
+  const [activeMorgys, setActiveMorgys] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -732,6 +734,14 @@ function App() {
       >
         ⬇️
       </button>
+
+      {/* Morgy Pen - shows when sidebar is collapsed */}
+      <MorgyPen
+        isVisible={!showSidebar}
+        onActivateMorgy={(id) => setActiveMorgys(prev => [...prev, id])}
+        onDeactivateMorgy={(id) => setActiveMorgys(prev => prev.filter(m => m !== id))}
+        activeMorgys={activeMorgys}
+      />
 
       {/* Settings Panel */}
       <SettingsPanel

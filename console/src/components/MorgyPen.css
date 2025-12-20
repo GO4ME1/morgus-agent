@@ -1,0 +1,345 @@
+.morgy-pen {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 200px;
+  height: 100vh;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.morgy-pen-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.morgy-pen-icon {
+  font-size: 24px;
+}
+
+.morgy-pen-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #00f5ff;
+  text-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+}
+
+.morgy-grid {
+  flex: 1;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.morgy-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  border: 2px solid transparent;
+}
+
+.morgy-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.morgy-card.active {
+  border-color: currentColor;
+  box-shadow: 0 0 20px currentColor;
+}
+
+/* Color variants */
+.morgy-green {
+  color: #06ffa5;
+}
+
+.morgy-green .morgy-xp-fill {
+  background: linear-gradient(90deg, #06ffa5, #00d9ff);
+}
+
+.morgy-pink {
+  color: #ff006e;
+}
+
+.morgy-pink .morgy-xp-fill {
+  background: linear-gradient(90deg, #ff006e, #ff6b9d);
+}
+
+.morgy-blue {
+  color: #00f5ff;
+}
+
+.morgy-blue .morgy-xp-fill {
+  background: linear-gradient(90deg, #00f5ff, #0080ff);
+}
+
+.morgy-purple {
+  color: #8338ec;
+}
+
+.morgy-purple .morgy-xp-fill {
+  background: linear-gradient(90deg, #8338ec, #ff006e);
+}
+
+.morgy-orange {
+  color: #ff6b35;
+}
+
+.morgy-orange .morgy-xp-fill {
+  background: linear-gradient(90deg, #ff6b35, #f7931e);
+}
+
+.morgy-avatar {
+  font-size: 32px;
+  text-align: center;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+.morgy-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.morgy-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #fff;
+}
+
+.morgy-level {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.morgy-xp-bar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.morgy-xp-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.morgy-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.morgy-activate-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.morgy-activate-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.morgy-activate-btn.active {
+  background: currentColor;
+  color: #1a1a2e;
+}
+
+.morgy-active-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 10px;
+  padding: 2px 6px;
+  background: currentColor;
+  color: #1a1a2e;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Add Morgy card */
+.morgy-card.add-morgy {
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.morgy-card.add-morgy:hover {
+  border-color: #00f5ff;
+  color: #00f5ff;
+}
+
+.add-morgy-icon {
+  font-size: 32px;
+  margin-bottom: 4px;
+}
+
+.add-morgy-text {
+  font-size: 12px;
+}
+
+/* Footer */
+.morgy-pen-footer {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sounder-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sounder-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.sounder-count {
+  font-size: 12px;
+  color: #06ffa5;
+  font-weight: 600;
+}
+
+/* Modal */
+.morgy-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.morgy-modal {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.morgy-modal h3 {
+  color: #00f5ff;
+  margin-bottom: 16px;
+}
+
+.morgy-modal p {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 16px;
+}
+
+.morgy-modal button {
+  background: linear-gradient(135deg, #ff006e, #8338ec);
+  border: none;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.morgy-modal button:hover {
+  opacity: 0.9;
+}
+
+/* Light mode */
+.light-mode .morgy-pen {
+  background: linear-gradient(180deg, #fff5e6 0%, #ffe4c4 100%);
+  border-right-color: rgba(0, 0, 0, 0.1);
+}
+
+.light-mode .morgy-pen-header {
+  border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+.light-mode .morgy-pen-title {
+  color: #ff6b35;
+  text-shadow: none;
+}
+
+.light-mode .morgy-card {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.light-mode .morgy-card:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.light-mode .morgy-name {
+  color: #333;
+}
+
+.light-mode .morgy-level {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.light-mode .morgy-xp-bar {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.light-mode .morgy-activate-btn {
+  background: rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+
+.light-mode .morgy-pen-footer {
+  border-top-color: rgba(0, 0, 0, 0.1);
+}
+
+.light-mode .sounder-label {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.light-mode .morgy-card.add-morgy {
+  border-color: rgba(0, 0, 0, 0.2);
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.light-mode .morgy-card.add-morgy:hover {
+  border-color: #ff6b35;
+  color: #ff6b35;
+}
