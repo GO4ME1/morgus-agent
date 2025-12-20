@@ -1069,6 +1069,144 @@ This skill enables Morgus to create professional, high-quality PDF documents fro
 - Human-Readable Citations: All citations must be in a standard, human-readable format.
 `;
 
+const DYNAMIC_VIEW_CONTENT = `# 🎨 Morgus Dynamic View & Interactive Experience Generator v2.0
+
+This skill enables Morgus to generate fully interactive, dynamic user experiences in response to any prompt. Instead of just text, Morgus can create rich, visual, and interactive UIs, mini-apps, games, and simulations on the fly.
+
+## Core Principles
+
+| Principle | Description |
+|---|---|
+| Beyond Text | Move beyond static text responses to create immersive, engaging experiences |
+| Context is King | The generated UI is fully customized to the user's prompt, context, and intent |
+| Interactivity First | Users can click, play, explore, and interact with the generated content |
+| Agentic Coding | Morgus uses its agentic coding capabilities to design and code the UI in real-time |
+
+## Key Capabilities
+
+| Capability | Description |
+|---|---|
+| Interactive Learning | Create educational simulations and interactive tutorials |
+| Visual Galleries | Generate magazine-style layouts and image galleries |
+| Interactive Tools | Build calculators, converters, and planning tools |
+| Games & Simulations | Generate simple games, puzzles, and simulations |
+| Data Dashboards | Create interactive charts, graphs, and dashboards |
+`;
+
+const DASHBOARD_BUILDER_CONTENT = `# 📊 Morgus Dashboard & Visualization Builder v2.0
+
+This skill enables Morgus to create interactive dashboards and data visualizations from various data sources. Users can upload data, connect to databases, or provide data in the prompt, and Morgus will generate a rich, interactive dashboard.
+
+## Core Principles
+
+| Principle | Description |
+|---|---|
+| Data to Insights | Transform raw data into actionable insights through visualization |
+| Interactivity is Key | Users can filter, sort, and drill down into the data |
+| Customizable | Dashboards are tailored to the user's specific needs and questions |
+| Multiple Data Sources | Supports CSV, Excel, JSON, databases, and direct data input |
+
+## Key Capabilities
+
+| Capability | Description |
+|---|---|
+| Business Intelligence | Create dashboards for tracking business metrics |
+| Financial Analysis | Analyze financial data and create reports |
+| Project Management | Track project progress with Gantt charts and burndown charts |
+| Scientific Visualization | Plot scientific data and create interactive simulations |
+`;
+
+const PRD_TO_PROTOTYPE_CONTENT = `# 📝 Morgus PRD to Prototype v2.0
+
+This skill transforms a Product Requirements Document (PRD) into a working, interactive prototype. Users can provide a PRD in any format, and Morgus will generate a clickable prototype.
+
+## Core Principles
+
+| Principle | Description |
+|---|---|
+| From Words to Wireframes | Bridge the gap between written requirements and tangible products |
+| Rapid Prototyping | Generate prototypes in minutes, not days |
+| Interactive Feedback | Allow stakeholders to click through the prototype and provide feedback early |
+`;
+
+const CODE_TRANSLATOR_CONTENT = `# 🔄 Morgus Code Translator v2.0
+
+This skill translates code from one programming language to another. It supports a wide range of languages and can handle complex codebases.
+
+## Core Principles
+
+| Principle | Description |
+|---|---|
+| Language Agnostic | Support for all major programming languages |
+| Syntax and Semantics | Translate not just the syntax, but also the underlying logic |
+| Library Mapping | Map equivalent libraries and frameworks between languages |
+`;
+
+const GAME_BUILDER_CONTENT = `# 🎮 Morgus Interactive Game Builder v2.0
+
+This skill allows users to create simple, interactive games and quizzes on the fly. Users can describe the game they want to create, and Morgus will generate the code and render the game.
+
+## Core Principles
+
+| Principle | Description |
+|---|---|
+| Fun and Engaging | Create enjoyable experiences for users |
+| No-Code Game Development | Allow anyone to create a game without writing code |
+| Customizable | Games can be customized with different themes, characters, and rules |
+`;
+
+const QR_CODE_GENERATOR_CONTENT = `# 📱 Morgus QR Code Generator v2.0
+
+This skill generates QR codes for URLs, text, contact information, and more. It's a simple but highly useful utility.
+
+## Core Principles
+
+| Principle | Description |
+|---|---|
+| Simple and Fast | Generate QR codes instantly |
+| Versatile | Support for various data types |
+| Customizable | Options for colors, logos, and error correction |
+`;
+
+const MEETING_NOTES_TRANSFORMER_CONTENT = `# 📋 Morgus Meeting Notes Transformer v2.0
+
+This skill transforms raw, unstructured meeting notes into a professional, organized summary. It identifies action items, key decisions, and discussion points.
+
+## Core Principles
+
+| Principle | Description |
+|---|---|
+| Clarity from Chaos | Bring structure to messy notes |
+| Action-Oriented | Highlight action items and owners |
+| Professional Formatting | Generate a polished document suitable for sharing |
+`;
+
+const FLASHCARD_GENERATOR_CONTENT = `# 🃏 Morgus Flashcard Generator v2.0
+
+This skill creates study flashcards from any content provided by the user. It can take a document, URL, or text paste and generate a set of flashcards.
+
+## Core Principles
+
+| Principle | Description |
+|---|---|
+| Active Recall | Facilitate learning through active recall |
+| Automated Content Creation | Automatically generate flashcards from any source |
+| Exportable | Flashcards can be exported to various formats (Anki, CSV, etc.) |
+`;
+
+const VOICE_TOOLS_CONTENT = `# 🎙️ Morgus Voice & Audio Tools v2.0
+
+This skill provides a suite of tools for working with voice and audio, including text-to-speech, speech-to-text, and voice cloning.
+
+## Core Principles
+
+| Principle | Description |
+|---|---|
+| Natural Sounding Voices | Use high-quality, natural-sounding voices for TTS |
+| Accurate Transcription | Provide highly accurate speech-to-text transcription |
+| Ethical Voice Cloning | Voice cloning with a focus on ethics and user consent |
+`;
+
 const EXTERNAL_API_CONTENT = `# 🔌 Morgus External API Integration Skill v2.0
 
 ## 🌟 Overview
@@ -1291,6 +1429,87 @@ export const BUILTIN_SKILLS: Skill[] = [
     createdAt: '2024-12-20',
     source: 'builtin',
     content: PDF_CONTENT
+  },
+  {
+    id: 'dynamic-view-v2',
+    name: 'Morgus Dynamic View & Interactive Experience',
+    description: 'Generates fully interactive, dynamic user experiences, mini-apps, games, and simulations',
+    keywords: ['interactive', 'dynamic', 'simulation', 'game', 'quiz', 'tool', 'calculator', 'experience', 'ui', 'app'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: DYNAMIC_VIEW_CONTENT
+  },
+  {
+    id: 'dashboard-builder-v2',
+    name: 'Morgus Dashboard & Visualization Builder',
+    description: 'Creates interactive dashboards and data visualizations from various data sources',
+    keywords: ['dashboard', 'visualization', 'chart', 'graph', 'kpi', 'metrics', 'gantt', 'analytics', 'bi', 'business intelligence'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: DASHBOARD_BUILDER_CONTENT
+  },
+  {
+    id: 'prd-to-prototype-v2',
+    name: 'Morgus PRD to Prototype',
+    description: 'Transforms Product Requirements Documents into working, interactive prototypes',
+    keywords: ['prd', 'prototype', 'requirements', 'wireframe', 'mockup', 'product', 'design', 'spec', 'specification'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: PRD_TO_PROTOTYPE_CONTENT
+  },
+  {
+    id: 'code-translator-v2',
+    name: 'Morgus Code Translator',
+    description: 'Translates code between programming languages with syntax and library mapping',
+    keywords: ['translate', 'convert', 'port', 'python to javascript', 'javascript to python', 'language', 'migration', 'rewrite'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: CODE_TRANSLATOR_CONTENT
+  },
+  {
+    id: 'game-builder-v2',
+    name: 'Morgus Interactive Game Builder',
+    description: 'Creates simple, interactive games and quizzes on the fly',
+    keywords: ['game', 'quiz', 'trivia', 'puzzle', 'play', 'snake', 'tetris', 'fun', 'interactive'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: GAME_BUILDER_CONTENT
+  },
+  {
+    id: 'qr-code-generator-v2',
+    name: 'Morgus QR Code Generator',
+    description: 'Generates QR codes for URLs, text, and contact information',
+    keywords: ['qr', 'qr code', 'barcode', 'scan', 'url', 'link', 'contact'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: QR_CODE_GENERATOR_CONTENT
+  },
+  {
+    id: 'meeting-notes-transformer-v2',
+    name: 'Morgus Meeting Notes Transformer',
+    description: 'Transforms raw meeting notes into professional, organized summaries',
+    keywords: ['meeting', 'notes', 'summary', 'action items', 'minutes', 'transcript', 'organize'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: MEETING_NOTES_TRANSFORMER_CONTENT
+  },
+  {
+    id: 'flashcard-generator-v2',
+    name: 'Morgus Flashcard Generator',
+    description: 'Creates study flashcards from any content for active recall learning',
+    keywords: ['flashcard', 'study', 'learn', 'anki', 'quiz', 'memorize', 'cards', 'education'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: FLASHCARD_GENERATOR_CONTENT
+  },
+  {
+    id: 'voice-tools-v2',
+    name: 'Morgus Voice & Audio Tools',
+    description: 'Text-to-speech, speech-to-text, and voice cloning capabilities',
+    keywords: ['voice', 'audio', 'tts', 'stt', 'speech', 'transcribe', 'read aloud', 'clone', 'podcast'],
+    createdAt: '2024-12-20',
+    source: 'builtin',
+    content: VOICE_TOOLS_CONTENT
   }
 ];
 

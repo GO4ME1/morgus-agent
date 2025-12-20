@@ -8,6 +8,7 @@ import { skillsManager } from './skills';
 import { executionLogger } from './skills/execution-logger';
 import { taskTracker, requiresTaskPlan, generateTaskPlan } from './skills/task-tracker';
 import { formatToolResult, formatErrorForContext, deterministicStringify } from './context';
+import { factChecker } from './fact-checker';
 
 export interface AgentConfig {
   maxIterations?: number;
@@ -756,6 +757,9 @@ You have access to specialized skills that provide domain-specific knowledge. Wh
 
         // No tool calls - check if we have a response
         if (message.content) {
+          // Fact-check the response before yielding
+          const verifiedContent = await factChecker.processResponse(message.content);
+          message.content = verifiedContent;
           yield {
             type: 'response',
             content: message.content,
