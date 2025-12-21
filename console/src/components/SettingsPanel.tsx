@@ -22,15 +22,40 @@ interface SettingsPanelProps {
   onClose: () => void;
   darkMode: boolean;
   onDarkModeChange: (enabled: boolean) => void;
+  dontTrainOnMe?: boolean;
+  onDontTrainChange?: (enabled: boolean) => void;
+  user?: { email?: string } | null;
+  profile?: { display_name?: string | null; subscription_tier?: string; is_admin?: boolean; dont_train_on_me?: boolean } | null;
+  onLogout?: () => void;
+  onNavigate?: (path: string) => void;
 }
 
-export function SettingsPanel({ isOpen, onClose, darkMode, onDarkModeChange }: SettingsPanelProps) {
+export function SettingsPanel({ isOpen, onClose, darkMode, onDarkModeChange, dontTrainOnMe: dontTrainOnMeProp, onDontTrainChange, user, profile, onLogout, onNavigate }: SettingsPanelProps) {
   const [activeTab, setActiveTab] = useState<'general' | 'mcp' | 'skills'>('general');
+  
+  // Debug logging
+  console.log('[SettingsPanel] Rendering with:', { user: user?.email, profile, isAdmin: profile?.is_admin });
   const [mcpServers, setMcpServers] = useState<MCPServer[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [newServerUrl, setNewServerUrl] = useState('');
   const [newServerName, setNewServerName] = useState('');
   const [isAddingServer, setIsAddingServer] = useState(false);
+  // Use prop if provided, otherwise fall back to local state
+  const [localDontTrain, setLocalDontTrain] = useState(() => {
+    const saved = localStorage.getItem('morgus_dont_train');
+    return saved === 'true';
+  });
+  
+  const dontTrainOnMe = dontTrainOnMeProp !== undefined ? dontTrainOnMeProp : localDontTrain;
+
+  const handleDontTrainOnMeChange = (enabled: boolean) => {
+    if (onDontTrainChange) {
+      onDontTrainChange(enabled);
+    } else {
+      setLocalDontTrain(enabled);
+      localStorage.setItem('morgus_dont_train', enabled.toString());
+    }
+  };
 
   // Load MCP servers and skills on mount
   useEffect(() => {
@@ -186,6 +211,63 @@ export function SettingsPanel({ isOpen, onClose, darkMode, onDarkModeChange }: S
         <div className="settings-content">
           {activeTab === 'general' && (
             <div className="general-settings">
+              {/* User Account Section */}
+              {user && (
+                <div className="setting-section">
+                  <h3 className="section-title">👤 Account</h3>
+                  <div className="setting-item">
+                    <div className="setting-info">
+                      <span className="setting-label">{profile?.display_name || user.email}</span>
+                      <span className="setting-description">{user.email}</span>
+                    </div>
+                    <span className={`plan-badge ${profile?.is_admin ? 'admin-badge' : ''}`}>
+                      {profile?.is_admin ? '👑 Admin' : (profile?.subscription_tier || 'free')}
+                    </span>
+                  </div>
+                  <div className="account-actions">
+                    <button className="account-btn" onClick={() => onNavigate?.('/account')}>
+                      ⚙️ My Account
+                    </button>
+                    <button className="account-btn" onClick={() => onNavigate?.('/pricing')}>
+                      ⭐ Upgrade Plan
+                    </button>
+                    {profile?.is_admin && (
+                      <button className="account-btn admin" onClick={() => onNavigate?.('/admin')}>
+                        🔧 Admin Panel
+                      </button>
+                    )}
+                    <button 
+                      className="account-btn logout" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('[SettingsPanel] Logout clicked');
+                        if (onLogout) {
+                          onLogout();
+                        } else {
+                          console.error('[SettingsPanel] onLogout not provided!');
+                        }
+                      }}
+                    >
+                      🚪 Log Out
+                    </button>
+                  </div>
+                </div>
+              )}
+              {!user && (
+                <div className="setting-section">
+                  <h3 className="section-title">👤 Account</h3>
+                  <div className="account-actions">
+                    <button className="account-btn primary" onClick={() => onNavigate?.('/login')}>
+                      🔑 Log In
+                    </button>
+                    <button className="account-btn" onClick={() => onNavigate?.('/signup')}>
+                      ✨ Sign Up
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="setting-item">
                 <div className="setting-info">
                   <span className="setting-label">🌙 Dark Mode</span>
@@ -198,6 +280,28 @@ export function SettingsPanel({ isOpen, onClose, darkMode, onDarkModeChange }: S
                     onChange={(e) => onDarkModeChange(e.target.checked)}
                   />
                   <span className="slider"></span>
+                </label>
+              </div>
+
+              {/* Don't Train on Me Privacy Toggle */}
+              <div className="setting-item privacy-toggle">
+                <div className="setting-info">
+                  <span className="setting-label">
+                    <span className="snake-icon">🐍</span> Don't Train on Me
+                  </span>
+                  <span className="setting-description">
+                    {dontTrainOnMe 
+                      ? "Your conversations won't be used for training" 
+                      : "Your conversations help improve Morgus for everyone"}
+                  </span>
+                </div>
+                <label className="toggle-switch privacy">
+                  <input 
+                    type="checkbox" 
+                    checked={dontTrainOnMe}
+                    onChange={(e) => handleDontTrainOnMeChange(e.target.checked)}
+                  />
+                  <span className="slider privacy-slider"></span>
                 </label>
               </div>
 

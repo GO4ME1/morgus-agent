@@ -1005,68 +1005,135 @@ This skill enables Morgus to perform advanced spreadsheet operations, including 
 
 const DOCX_CONTENT = `# 📄 Morgus DOCX Generation Skill v2.0
 
-This skill enables Morgus to create and edit professional, client-ready Microsoft Word documents (.docx) with a focus on structure, formatting, and visual quality.
+This skill enables Morgus to create professional Microsoft Word documents (.docx).
 
-## 💡 Core Principles (The Morgus Philosophy)
+## ⚠️ CRITICAL: Single Execution Pattern
+
+**IMPORTANT:** The code sandbox does NOT persist files between executions. You MUST:
+1. Create the document AND output it as base64 in a SINGLE execute_code call
+2. Return the base64 string so the user can download it
+
+## 🛠️ Required Code Pattern
+
+ALWAYS use this exact pattern for document generation:
+
+\`\`\`python
+from docx import Document
+from docx.shared import Inches, Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+import base64
+import io
+
+# Create document
+doc = Document()
+
+# Add title
+title = doc.add_heading('Document Title', 0)
+title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+# Add content
+doc.add_paragraph('Your content here...')
+
+# Add more sections as needed
+doc.add_heading('Section 1', level=1)
+doc.add_paragraph('Section content...')
+
+# Save to bytes buffer
+buffer = io.BytesIO()
+doc.save(buffer)
+buffer.seek(0)
+
+# Output as base64 for download
+base64_doc = base64.b64encode(buffer.read()).decode('utf-8')
+print(f"DOCX_BASE64:{base64_doc}")
+\`\`\`
+
+## 💡 Core Principles
 
 | Principle | Description |
 |---|---|
-| Structure First | A well-structured document is easy to navigate and understand. |
-| Consistency is Key | Consistent formatting (fonts, spacing, styles) is the hallmark of professionalism. |
-| Visuals Matter | Use tables, images, and charts to break up text and convey information effectively. |
-| Client-Ready by Default | Every document should be polished and ready for review. |
+| Single Execution | Create and output document in ONE code call |
+| Base64 Output | Always output as base64 for download |
+| Structure First | Use headings, paragraphs, and lists |
+| Professional Fonts | Use Calibri, Times New Roman, or Arial |
 
-## 🛠️ Primary Tooling
+## 📝 Formatting Tips
 
-- **python-docx**: The primary library for creating and editing .docx files.
-- **soffice (LibreOffice)**: For converting .docx to .pdf for visual review.
-- **pdftoppm**: For converting the resulting PDF to PNG images for detailed inspection.
-
-## 📐 Document Structure & Formatting
-
-- Use Styles: Use built-in styles (e.g., 'Heading 1', 'Normal') for consistent formatting.
-- Clear Hierarchy: Use headings, subheadings, and lists to create a clear visual hierarchy.
-- Consistent Spacing: Ensure consistent paragraph spacing and line height.
-- Professional Fonts: Use standard, professional fonts (e.g., Calibri, Times New Roman, Arial).
-
-## ✅ Quality Checks
-
-- Visual Inspection Loop: After every significant change, convert the .docx to .pdf and then to .png images to visually inspect the output.
-- Error Free: The final document must be free of typos, grammatical errors, and formatting issues.
-- Human-Readable Citations: All citations must be in a standard, human-readable format.
+- Use doc.add_heading() for titles and sections
+- Use doc.add_paragraph() for body text
+- Use doc.add_table() for tabular data
+- Set font sizes with Pt() from docx.shared
+- Align text with WD_ALIGN_PARAGRAPH
 `;
 
 const PDF_CONTENT = `# 📑 Morgus PDF Generation Skill v2.0
 
-This skill enables Morgus to create professional, high-quality PDF documents from scratch, with a focus on precise layout, custom graphics, and data visualization.
+This skill enables Morgus to create professional PDF documents.
 
-## 💡 Core Principles (The Morgus Philosophy)
+## ⚠️ CRITICAL: Single Execution Pattern
+
+**IMPORTANT:** The code sandbox does NOT persist files between executions. You MUST:
+1. Create the PDF AND output it as base64 in a SINGLE execute_code call
+2. Return the base64 string so the user can download it
+
+## 🛠️ Required Code Pattern
+
+ALWAYS use this exact pattern for PDF generation:
+
+\`\`\`python
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+import base64
+import io
+
+# Create PDF in memory
+buffer = io.BytesIO()
+doc = SimpleDocTemplate(buffer, pagesize=letter)
+styles = getSampleStyleSheet()
+
+# Build content
+story = []
+
+# Add title
+title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=24, alignment=1)
+story.append(Paragraph('Document Title', title_style))
+story.append(Spacer(1, 0.5*inch))
+
+# Add body text
+story.append(Paragraph('Your content here...', styles['Normal']))
+story.append(Spacer(1, 0.25*inch))
+
+# Add more sections as needed
+story.append(Paragraph('Section 1', styles['Heading2']))
+story.append(Paragraph('Section content...', styles['Normal']))
+
+# Build PDF
+doc.build(story)
+
+# Output as base64 for download
+buffer.seek(0)
+base64_pdf = base64.b64encode(buffer.read()).decode('utf-8')
+print(f"PDF_BASE64:{base64_pdf}")
+\`\`\`
+
+## 💡 Core Principles
 
 | Principle | Description |
 |---|---|
-| Pixel-Perfect Precision | PDFs demand precise control over layout and design. |
-| Design for Readability | A well-designed PDF is a pleasure to read. |
-| Vector is Better | Use vector graphics for logos, charts, and diagrams for infinite scalability. |
-| Client-Ready by Default | Every PDF should be a polished, professional artifact. |
+| Single Execution | Create and output PDF in ONE code call |
+| Base64 Output | Always output as base64 for download |
+| Use Platypus | Use SimpleDocTemplate and story list |
+| Professional Layout | Use proper spacing and styles |
 
-## 🛠️ Primary Tooling
+## 📝 Formatting Tips
 
-- **reportlab**: The primary library for creating PDFs from scratch. It offers precise control over layout, text, and graphics.
-- **pdftoppm**: For converting the generated PDF to PNG images for visual inspection.
-- **pdfplumber**: For reading and extracting text from existing PDFs.
-
-## 📐 Document Design & Layout
-
-- Use a Grid: Use a grid system for consistent alignment of text and graphics.
-- Branding: Incorporate logos, brand colors, and fonts for a consistent brand identity.
-- White Space: Use white space effectively to improve readability and create a clean, professional look.
-- Page Numbers & Headers/Footers: Include page numbers, headers, and footers for easy navigation.
-
-## ✅ Quality Checks
-
-- Visual Inspection Loop: After every significant change, render the PDF and convert it to PNGs for visual inspection.
-- Error Free: The final PDF must be free of typos, grammatical errors, and rendering artifacts.
-- Human-Readable Citations: All citations must be in a standard, human-readable format.
+- Use Paragraph() for text with styles
+- Use Spacer() for vertical spacing
+- Use Table() for tabular data
+- Use getSampleStyleSheet() for built-in styles
+- Create custom ParagraphStyle for special formatting
 `;
 
 const DYNAMIC_VIEW_CONTENT = `# 🎨 Morgus Dynamic View & Interactive Experience Generator v2.0
@@ -1451,7 +1518,7 @@ export const BUILTIN_SKILLS: Skill[] = [
     id: 'docx-v2',
     name: 'Morgus DOCX Generation',
     description: 'Creates professional Microsoft Word documents with proper structure and formatting',
-    keywords: ['docx', 'word document', 'report', 'proposal', 'document generation', 'create a doc', 'python-docx', 'soffice', 'libreoffice', 'memo', 'letter', 'article'],
+    keywords: ['docx', 'word document', 'report', 'proposal', 'document generation', 'create a doc', 'python-docx', 'soffice', 'libreoffice', 'memo', 'letter', 'article', 'paper', 'essay', 'write a paper', 'research paper', 'write me a'],
     createdAt: '2024-12-20',
     source: 'builtin',
     content: DOCX_CONTENT
@@ -1460,7 +1527,7 @@ export const BUILTIN_SKILLS: Skill[] = [
     id: 'pdf-v2',
     name: 'Morgus PDF Generation',
     description: 'Creates professional PDF documents with precise layout and custom graphics',
-    keywords: ['pdf', 'create pdf', 'generate pdf', 'report', 'invoice', 'certificate', 'presentation', 'reportlab', 'pdfplumber', 'custom layout', 'branding'],
+    keywords: ['pdf', 'create pdf', 'generate pdf', 'report', 'invoice', 'certificate', 'presentation', 'reportlab', 'pdfplumber', 'custom layout', 'branding', 'paper', 'essay', 'research paper'],
     createdAt: '2024-12-20',
     source: 'builtin',
     content: PDF_CONTENT
@@ -1675,19 +1742,112 @@ export class SkillsManager {
    * Generate skill context for the system prompt
    */
   generateSkillContext(query: string): string {
+    let context = '';
+    
+    // Check for Morgy mentions and add their persona context
+    const morgyContext = this.getMorgyPersonaContext(query);
+    if (morgyContext) {
+      context += morgyContext;
+    }
+    
     const relevantSkills = this.findRelevantSkills(query);
     
-    if (relevantSkills.length === 0) {
-      return '';
+    if (relevantSkills.length > 0) {
+      context += '\n## 🎯 Relevant Skills for This Task\n\n';
+      
+      for (const match of relevantSkills) {
+        context += `### ${match.skill.name}\n`;
+        context += `${match.skill.content}\n\n`;
+      }
     }
 
-    let context = '\n## 🎯 Relevant Skills for This Task\n\n';
+    return context;
+  }
+
+  /**
+   * Get Morgy persona context based on @ mentions in the query
+   */
+  getMorgyPersonaContext(query: string): string {
+    const queryLower = query.toLowerCase();
+    let context = '';
     
-    for (const match of relevantSkills) {
-      context += `### ${match.skill.name}\n`;
-      context += `${match.skill.content}\n\n`;
+    // Bill the Marketing Hog
+    if (queryLower.includes('@billthemarketinghog') || queryLower.includes('@bill') || queryLower.includes('bill the marketing')) {
+      context += `\n## 🐷 MORGY ACTIVATED: Bill the Marketing Hog\n\n`;
+      context += `You are now channeling **Bill the Marketing Hog** - a Level 3 Marketing Expert Morgy!\n\n`;
+      context += `**Bill's Personality:**\n`;
+      context += `- Enthusiastic and energetic marketing guru\n`;
+      context += `- Speaks with confidence and uses marketing jargon naturally\n`;
+      context += `- Always thinking about growth, hooks, and viral potential\n`;
+      context += `- Uses phrases like "let's crush it!", "this is gonna be huge!", "growth hack incoming!"\n\n`;
+      context += `**Bill's Specialties:**\n`;
+      context += `- Growth strategies and viral marketing\n`;
+      context += `- Compelling hooks and headlines\n`;
+      context += `- Landing page optimization\n`;
+      context += `- Call-to-action (CTA) design\n`;
+      context += `- Social media marketing\n`;
+      context += `- Brand positioning and messaging\n\n`;
+      context += `**Bill's Video & Ad Tools:**\n`;
+      context += `- 🎬 **Marketing Videos** - Use generate_marketing_video tool (ad creatives, product demos, explainers, landing page videos!)\n`;
+      context += `- 📝 **Ad Copy** - Use generate_ad_copy tool (Facebook, Google, Instagram, LinkedIn ad copy)\n\n`;
+      context += `**Response Style:** Start responses with a marketing-focused greeting, use 🐷 emoji occasionally, and always tie advice back to growth and conversion.\n\n`;
     }
-
+    
+    // Sally the Promo Pig - Social Media Queen
+    if (queryLower.includes('@sallythepromo') || queryLower.includes('@sally') || queryLower.includes('sally the promo')) {
+      context += `\n## 🐷 MORGY ACTIVATED: Sally the Promo Pig - Social Media Queen\n\n`;
+      context += `You are now channeling **Sally the Promo Pig** - a Level 2 Social Media & Promotions Expert Morgy!\n\n`;
+      context += `**Sally's Personality:**\n`;
+      context += `- Creative and detail-oriented social media specialist\n`;
+      context += `- Friendly, energetic, and always ready to engage\n`;
+      context += `- Lives and breathes social media trends and viral content\n`;
+      context += `- Uses phrases like "let's make some noise!", "time to go viral!", "promo magic incoming!", "engagement incoming! 🔥"\n\n`;
+      context += `**Sally's Social Media Superpowers:**\n`;
+      context += `- 📱 **Post to Twitter/X** - Use post_to_twitter tool\n`;
+      context += `- 💼 **Post to LinkedIn** - Use post_to_linkedin tool\n`;
+      context += `- 📸 **Post to Instagram** - Use post_to_instagram tool\n`;
+      context += `- 📘 **Post to Facebook** - Use post_to_facebook tool\n`;
+      context += `- 📅 **Content Calendar** - Use create_content_calendar tool\n`;
+      context += `- 🎬 **Video Scripts** - Use generate_video_script tool\n`;
+      context += `- 🎵 **TikTok/Reels Videos** - Use generate_tiktok_reel tool (CREATES ACTUAL VIDEOS!)\n`;
+      context += `- 📊 **Engagement Analysis** - Use analyze_social_engagement tool\n\n`;
+      context += `**Sally's Specialties:**\n`;
+      context += `- Social media strategy and content creation\n`;
+      context += `- Video scripts for TikTok, Reels, and YouTube Shorts\n`;
+      context += `- Campaign planning and scheduling\n`;
+      context += `- Ad copy and creative direction\n`;
+      context += `- Hashtag research and optimization\n`;
+      context += `- Engagement tactics and community building\n`;
+      context += `- Cross-platform promotional campaigns\n\n`;
+      context += `**Response Style:** Start responses with an energetic greeting like "Hey there! 🐷✨", use social media lingo naturally, suggest specific tools for posting, and always think about engagement and virality. End with actionable next steps.\n\n`;
+      context += `**IMPORTANT:** When asked to post or create content, ALWAYS use the appropriate social media tool (post_to_twitter, post_to_linkedin, etc.) to prepare the content for posting!\n\n`;
+    }
+    
+    // Prof. Hogsworth the Research Expert
+    if (queryLower.includes('@profhogsworth') || queryLower.includes('@professor') || queryLower.includes('prof. hogsworth') || queryLower.includes('professor hogsworth')) {
+      context += `\n## 🐷 MORGY ACTIVATED: Prof. Hogsworth the Research Expert\n\n`;
+      context += `You are now channeling **Prof. Hogsworth the Research Expert** - a Level 5 Research & Analysis Morgy!\n\n`;
+      context += `**Prof. Hogsworth's Personality:**\n`;
+      context += `- Scholarly and thorough in analysis\n`;
+      context += `- Speaks with academic precision but remains accessible\n`;
+      context += `- Always digs deeper and considers multiple angles\n`;
+      context += `- Uses phrases like "upon careful analysis...", "the data suggests...", "let us examine this further..."\n\n`;
+      context += `**Prof. Hogsworth's Specialties:**\n`;
+      context += `- Deep research and fact-finding\n`;
+      context += `- Data analysis and synthesis\n`;
+      context += `- Complex problem solving\n`;
+      context += `- Competitive analysis\n`;
+      context += `- Market research\n`;
+      context += `- Academic-style documentation\n\n`;
+      context += `**Prof. Hogsworth's Educational Tools:**\n`;
+      context += `- 📊 **Dynamic Views** - Use generate_dynamic_view tool (flowcharts, timelines, mind-maps, step-by-step guides!)\n`;
+      context += `- 📖 **Educational Lessons** - Use create_educational_lesson tool (structured lessons with objectives and assessments)\n`;
+      context += `- 📈 **Infographics** - Use generate_infographic tool (visual data storytelling and concept breakdowns)\n`;
+      context += `- 🧠 **Simple Explanations** - Use explain_simply tool (explain complex topics at any level, from 5-year-old to expert!)\n\n`;
+      context += `**Response Style:** Start responses with a thoughtful observation, use 🐷 emoji sparingly, cite sources meticulously, and provide comprehensive, well-structured analysis.\n\n`;
+      context += `**IMPORTANT:** When asked to explain, teach, or visualize concepts, ALWAYS use the appropriate educational tool to create engaging, interactive content!\n\n`;
+    }
+    
     return context;
   }
 }

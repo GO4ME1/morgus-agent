@@ -34,6 +34,39 @@ export const deployWebsiteTool: Tool = {
   execute: async (args: { project_name: string; html: string; css: string; js?: string }, env: any) => {
     try {
       console.log('[DEPLOY_WEBSITE] Starting deployment for:', args.project_name);
+      console.log('[DEPLOY_WEBSITE] HTML length:', args.html?.length || 0);
+      console.log('[DEPLOY_WEBSITE] CSS length:', args.css?.length || 0);
+      console.log('[DEPLOY_WEBSITE] HTML preview (first 200 chars):', args.html?.substring(0, 200));
+      
+      // VALIDATION: Check for empty or invalid HTML
+      if (!args.html || args.html.trim().length === 0) {
+        return `❌ **DEPLOYMENT BLOCKED - EMPTY HTML**
+
+The HTML content is empty. This usually happens when:
+1. The AI response was truncated due to token limits
+2. There was an error generating the HTML
+
+Please try again with a simpler request, or ask me to generate the HTML step by step.`;
+      }
+      
+      // VALIDATION: Check for suspiciously short HTML (likely corrupted)
+      if (args.html.trim().length < 50) {
+        return `❌ **DEPLOYMENT BLOCKED - INVALID HTML**
+
+The HTML content is too short (${args.html.trim().length} characters). Received: "${args.html.substring(0, 100)}"
+
+This usually happens when the AI response was truncated. Please try again.`;
+      }
+      
+      // VALIDATION: Check if HTML looks valid (should start with DOCTYPE or html tag)
+      const htmlTrimmed = args.html.trim().toLowerCase();
+      if (!htmlTrimmed.startsWith('<!doctype') && !htmlTrimmed.startsWith('<html') && !htmlTrimmed.startsWith('<')) {
+        return `❌ **DEPLOYMENT BLOCKED - MALFORMED HTML**
+
+The HTML content doesn't appear to be valid HTML. It starts with: "${args.html.substring(0, 50)}..."
+
+Please try again and ensure the HTML is properly formatted.`;
+      }
 
       // Validate project name
       const projectName = args.project_name.toLowerCase().replace(/[^a-z0-9-]/g, '-');

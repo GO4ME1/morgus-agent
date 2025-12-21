@@ -433,3 +433,164 @@
   border-color: #e0e0e0;
   color: #333;
 }
+
+/* Account Section */
+.setting-section {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+.section-title {
+  font-size: 14px;
+  color: #00ffff;
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.plan-badge {
+  background: linear-gradient(135deg, #00ffff, #00cccc);
+  color: #000;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.plan-badge.admin-badge {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #1a1a2e;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
+  animation: adminGlow 2s ease-in-out infinite;
+}
+
+@keyframes adminGlow {
+  0%, 100% { box-shadow: 0 0 12px rgba(255, 215, 0, 0.4); }
+  50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.6); }
+}
+
+.account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.account-btn {
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.account-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #00ffff;
+  color: #00ffff;
+}
+
+.account-btn.primary {
+  background: linear-gradient(135deg, #00ffff, #00cccc);
+  color: #000;
+  border: none;
+  font-weight: 600;
+}
+
+.account-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 255, 255, 0.4);
+}
+
+.account-btn.admin {
+  border-color: rgba(255, 215, 0, 0.4);
+  color: #ffd700;
+}
+
+.account-btn.admin:hover {
+  background: rgba(255, 215, 0, 0.1);
+  border-color: #ffd700;
+}
+
+.account-btn.logout {
+  border-color: rgba(255, 100, 100, 0.4);
+  color: #ff6b6b;
+}
+
+.account-btn.logout:hover {
+  background: rgba(255, 100, 100, 0.1);
+  border-color: #ff6b6b;
+}
+
+
+/* Don't Train on Me Privacy Toggle - Gadsden Flag Inspired */
+.setting-item.privacy-toggle {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(139, 69, 19, 0.1));
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.setting-item.privacy-toggle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M20,50 Q30,40 40,50 T60,50 T80,50' stroke='%23ffd700' stroke-width='2' fill='none' opacity='0.1'/%3E%3C/svg%3E") repeat;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.snake-icon {
+  font-size: 1.2em;
+  margin-right: 4px;
+  animation: snake-wiggle 3s ease-in-out infinite;
+}
+
+@keyframes snake-wiggle {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+
+.toggle-switch.privacy .slider.privacy-slider {
+  background-color: #8b4513;
+}
+
+.toggle-switch.privacy input:checked + .slider.privacy-slider {
+  background: linear-gradient(135deg, #ffd700, #daa520);
+}
+
+.toggle-switch.privacy input:checked + .slider.privacy-slider:before {
+  content: '🐍';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  background: #fff;
+}
+
+/* Privacy toggle description styling */
+.setting-item.privacy-toggle .setting-description {
+  font-style: italic;
+  color: #daa520;
+}
+
+/* Light mode overrides for privacy toggle */
+:root:not(.dark) .setting-item.privacy-toggle {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(139, 69, 19, 0.15));
+  border-color: rgba(255, 215, 0, 0.5);
+}
+
+:root:not(.dark) .setting-item.privacy-toggle .setting-description {
+  color: #8b4513;
+}

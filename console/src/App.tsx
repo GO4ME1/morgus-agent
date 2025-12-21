@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { marked } from 'marked';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
+import { useAuth } from './lib/auth';
 import { ThoughtsPanel } from './components/ThoughtsPanel';
 import { VoiceInput, speakText, stopSpeaking } from './components/VoiceInput';
 import { MOEHeader } from './components/MOEHeader';
@@ -9,6 +11,7 @@ import { ThinkingIndicator } from './components/ThinkingIndicator';
 import { BrowserView } from './components/BrowserView';
 import { SettingsPanel } from './components/SettingsPanel';
 import MorgyPen from './components/MorgyPen';
+import { MorgyAutocomplete } from './components/MorgyAutocomplete';
 import './App.css';
 
 // Configure marked for inline rendering
@@ -23,6 +26,7 @@ interface Message {
   content: string;
   timestamp: Date;
   isStreaming?: boolean;
+  isTruncated?: boolean;
   attachments?: string[];
   moeMetadata?: {
     winner: {
@@ -54,6 +58,8 @@ interface Task {
 const API_URL = 'https://morgus-orchestrator.morgan-426.workers.dev';
 
 function App() {
+  const navigate = useNavigate();
+  const { user, profile, signOut } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -77,8 +83,41 @@ function App() {
   const [darkMode, setDarkMode] = useState(false); // Default to light mode
   const [showSettings, setShowSettings] = useState(false);
   const [activeMorgys, setActiveMorgys] = useState<string[]>([]);
+  const [showMorgyAutocomplete, setShowMorgyAutocomplete] = useState(false);
+  const [dontTrainOnMe, setDontTrainOnMe] = useState(() => {
+    const saved = localStorage.getItem('morgus_dont_train');
+    return saved === 'true';
+  });
+
+  // Sync dontTrainOnMe with profile from Supabase
+  useEffect(() => {
+    if (profile?.dont_train_on_me !== undefined) {
+      setDontTrainOnMe(profile.dont_train_on_me);
+      localStorage.setItem('morgus_dont_train', profile.dont_train_on_me ? 'true' : 'false');
+    }
+  }, [profile?.dont_train_on_me]);
+
+  // Save dontTrainOnMe to Supabase when changed
+  const handleDontTrainToggle = async (value: boolean) => {
+    setDontTrainOnMe(value);
+    localStorage.setItem('morgus_dont_train', value ? 'true' : 'false');
+    
+    // Save to Supabase if user is logged in
+    if (user) {
+      try {
+        await supabase
+          .from('profiles')
+          .update({ dont_train_on_me: value })
+          .eq('id', user.id);
+        console.log('[App] Saved dont_train_on_me to profile:', value);
+      } catch (error) {
+        console.error('[App] Failed to save dont_train_on_me:', error);
+      }
+    }
+  };
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -312,6 +351,8 @@ function App() {
           thought_id: currentThoughtId,
           history: messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
           files: fileUrls,
+          dont_train_on_me: dontTrainOnMe,
+          user_id: user?.id,
         }),
       });
 
@@ -371,6 +412,135 @@ function App() {
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Detect if a response appears truncated
+  const isResponseTruncated = (content: string): boolean => {
+    if (!content || content.length < 500) return false;
+    
+    const trimmed = content.trim();
+    
+    // Check for obvious truncation indicators
+    const truncationPatterns = [
+      /\.\.\.$/,                    // Ends with ...
+      /…$/,                          // Ends with ellipsis character
+      /\.\.$/,                       // Ends with ..
+      /[a-z]$/i,                     // Ends with a letter (mid-word)
+      /,$/,                          // Ends with comma
+      /:$/,                          // Ends with colon
+      /\d+\.$/,                      // Ends with number and period (numbered list)
+      /bytes truncated/i,            // Explicit truncation message
+      /content truncated/i,
+      /\[truncated\]/i,
+    ];
+    
+    for (const pattern of truncationPatterns) {
+      if (pattern.test(trimmed)) return true;
+    }
+    
+    // Check if response is very long (might have more)
+    if (content.length > 4000) return true;
+    
+    return false;
+  };
+
+  // Get a fun Continue button text
+  const getContinueButtonText = (): string => {
+    const options = [
+      '🐷 Keep Going!',
+      '🐷 Oink for More!',
+      '📖 Tell me more!',
+      '🚀 Don\'t stop now!',
+      '✨ Continue the magic!',
+      '🎯 What else?',
+      '💡 More wisdom please!',
+      '🔥 Keep it coming!',
+    ];
+    return options[Math.floor(Math.random() * options.length)];
+  };
+
+  // Handle Continue button click
+  const handleContinue = async (_messageId: string) => {
+    if (isLoading) return;
+    
+    const continueMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: 'Please continue where you left off.',
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, continueMessage]);
+    setIsLoading(true);
+
+    const statusMessageId = (Date.now() + 1).toString();
+    const statusMessage: Message = {
+      id: statusMessageId,
+      role: 'assistant',
+      content: '🐷 Continuing...',
+      timestamp: new Date(),
+      isStreaming: true,
+    };
+    setMessages((prev) => [...prev, statusMessage]);
+
+    try {
+      const response = await fetch(`${API_URL}/moe-chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: 'Please continue where you left off. Pick up exactly where you stopped.',
+          task_id: currentTaskId,
+          conversation_id: currentConversationId,
+          thought_id: currentThoughtId,
+          history: messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
+          files: [],
+          dont_train_on_me: dontTrainOnMe,
+          user_id: user?.id,
+          was_continued: true,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === statusMessageId
+            ? {
+                ...msg,
+                content: data.message,
+                moeMetadata: data.moeMetadata,
+                isStreaming: false,
+              }
+            : msg
+        )
+      );
+      
+      if (autoSpeak && data.message) {
+        setTimeout(() => {
+          speakText(data.message);
+        }, 100);
+      }
+
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error:', error);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === statusMessageId
+            ? {
+                ...msg,
+                content: `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                isStreaming: false,
+              }
+            : msg
+        )
+      );
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -493,6 +663,13 @@ function App() {
           >
             {darkMode ? '☀️' : '🌙'}
           </button>
+          <button 
+            className={`training-toggle-mini ${dontTrainOnMe ? 'active' : ''}`}
+            onClick={() => handleDontTrainToggle(!dontTrainOnMe)}
+            title={dontTrainOnMe ? 'Training Disabled - Click to Enable' : 'Training Enabled - Click to Disable'}
+          >
+            🐍
+          </button>
           <div className="status-indicator">
             <span className="status-dot online"></span>
             Online
@@ -547,6 +724,101 @@ function App() {
                       })()}
                     </div>
                   )}
+                  {/* Base64 Document Download */}
+                  {message.role === 'assistant' && (() => {
+                    // Detect base64 encoded documents in the response
+                    const base64Patterns = [
+                      // Pattern for "Base64 encoded document: <base64>"
+                      /(?:base64[\s_-]*(?:encoded)?[\s_-]*(?:document|file|content)?[:\s]+)([A-Za-z0-9+/=]{100,})/gi,
+                      // Pattern for code blocks with base64
+                      /```(?:base64)?\n?([A-Za-z0-9+/=]{100,})\n?```/g,
+                      // Pattern for data URLs
+                      /data:(?:application\/(?:pdf|vnd\.openxmlformats-officedocument\.wordprocessingml\.document|msword)|text\/plain);base64,([A-Za-z0-9+/=]+)/g,
+                    ];
+                    
+                    const documents: { base64: string; type: string; name: string }[] = [];
+                    
+                    for (const pattern of base64Patterns) {
+                      const matches = message.content.matchAll(pattern);
+                      for (const match of matches) {
+                        const base64 = match[1] || match[0];
+                        if (base64.length > 100) {
+                          // Try to detect document type from base64 header
+                          let type = 'application/octet-stream';
+                          let ext = 'bin';
+                          let name = 'document';
+                          
+                          // Check for common file signatures
+                          try {
+                            const decoded = atob(base64.substring(0, 20));
+                            if (decoded.startsWith('PK')) {
+                              // DOCX, XLSX, PPTX are all ZIP-based
+                              if (message.content.toLowerCase().includes('docx') || message.content.toLowerCase().includes('word')) {
+                                type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+                                ext = 'docx';
+                                name = 'document';
+                              } else if (message.content.toLowerCase().includes('xlsx') || message.content.toLowerCase().includes('excel')) {
+                                type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+                                ext = 'xlsx';
+                                name = 'spreadsheet';
+                              } else {
+                                type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+                                ext = 'docx';
+                                name = 'document';
+                              }
+                            } else if (decoded.startsWith('%PDF')) {
+                              type = 'application/pdf';
+                              ext = 'pdf';
+                              name = 'document';
+                            }
+                          } catch {
+                            // If decoding fails, keep defaults
+                          }
+                          
+                          documents.push({ base64, type, name: `morgus-${name}-${Date.now()}.${ext}` });
+                        }
+                      }
+                    }
+                    
+                    if (documents.length === 0) return null;
+                    
+                    return (
+                      <div className="document-download-buttons">
+                        <div className="document-download-header">📄 Documents Ready for Download</div>
+                        {documents.map((doc, i) => (
+                          <button
+                            key={i}
+                            className="download-document-btn"
+                            onClick={() => {
+                              try {
+                                const byteCharacters = atob(doc.base64);
+                                const byteNumbers = new Array(byteCharacters.length);
+                                for (let j = 0; j < byteCharacters.length; j++) {
+                                  byteNumbers[j] = byteCharacters.charCodeAt(j);
+                                }
+                                const byteArray = new Uint8Array(byteNumbers);
+                                const blob = new Blob([byteArray], { type: doc.type });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = doc.name;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(url);
+                              } catch (err) {
+                                console.error('Failed to download document:', err);
+                                alert('Failed to decode document. The base64 data may be corrupted.');
+                              }
+                            }}
+                            title="Download document"
+                          >
+                            📥 Download {doc.name.includes('.docx') ? 'Word Document' : doc.name.includes('.pdf') ? 'PDF' : doc.name.includes('.xlsx') ? 'Excel' : 'Document'} {documents.length > 1 ? `${i + 1}` : ''}
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <div className="message-actions">
                   <div className="message-time">{formatTime(message.timestamp)}</div>
@@ -624,6 +896,16 @@ function App() {
                       )}
                     </div>
                   )}
+                  {/* Continue Button for truncated responses */}
+                  {message.role === 'assistant' && !message.isStreaming && isResponseTruncated(message.content) && (
+                    <button 
+                      className="continue-button"
+                      onClick={() => handleContinue(message.id)}
+                      disabled={isLoading}
+                    >
+                      {getContinueButtonText()}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -661,12 +943,29 @@ function App() {
               📎
             </button>
             <textarea
+              ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyPress={(e) => {
+                // Don't submit if autocomplete is visible and Enter is pressed
+                if (showMorgyAutocomplete && e.key === 'Enter') {
+                  return;
+                }
+                handleKeyPress(e);
+              }}
               placeholder="Message Morgus..."
               rows={1}
               disabled={isLoading}
+            />
+            <MorgyAutocomplete
+              inputValue={input}
+              onSelect={(newValue) => {
+                setInput(newValue);
+                textareaRef.current?.focus();
+              }}
+              inputRef={textareaRef}
+              isVisible={showMorgyAutocomplete}
+              onVisibilityChange={setShowMorgyAutocomplete}
             />
             <VoiceInput
               onTranscript={(text) => setInput(text)}
@@ -741,6 +1040,10 @@ function App() {
         onActivateMorgy={(id) => setActiveMorgys(prev => [...prev, id])}
         onDeactivateMorgy={(id) => setActiveMorgys(prev => prev.filter(m => m !== id))}
         activeMorgys={activeMorgys}
+        onMentionMorgy={(handle, _fullName) => {
+          // Insert the @ mention into the chat input
+          setInput(prev => prev ? `${prev} ${handle} ` : `${handle} `);
+        }}
       />
 
       {/* Settings Panel */}
@@ -749,6 +1052,27 @@ function App() {
         onClose={() => setShowSettings(false)}
         darkMode={darkMode}
         onDarkModeChange={setDarkMode}
+        dontTrainOnMe={dontTrainOnMe}
+        onDontTrainChange={handleDontTrainToggle}
+        user={user}
+        profile={profile}
+        onLogout={async () => {
+          console.log('[App] Logout handler called');
+          try {
+            await signOut();
+            console.log('[App] signOut completed');
+          } catch (e) {
+            console.error('[App] signOut error:', e);
+          }
+          setShowSettings(false);
+          // Force a full page reload to clear all state
+          console.log('[App] Redirecting to /login');
+          window.location.href = '/login';
+        }}
+        onNavigate={(path) => {
+          setShowSettings(false);
+          navigate(path);
+        }}
       />
     </div>
   );

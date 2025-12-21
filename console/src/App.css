@@ -11,24 +11,41 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow: hidden;
+  /* overflow: hidden; - Removed to allow scrolling on admin/account pages */
 }
 
 .app {
   height: 100vh;
   width: 100vw;
   display: flex;
+  overflow: hidden;
   background: linear-gradient(135deg, 
-    #fef3c7 0%,
-    #fde68a 15%,
-    #d9f99d 30%,
-    #fed7aa 50%,
-    #fbcfe8 70%,
-    #e9d5ff 85%,
-    #bfdbfe 100%
+    #e0f7ff 0%,
+    #d0fff0 15%,
+    #e8ffcc 30%,
+    #fffacd 50%,
+    #ffe4f0 70%,
+    #f0e0ff 85%,
+    #e0f0ff 100%
   );
   background-size: 400% 400%;
   animation: gradientShift 12s ease infinite;
+}
+
+/* Neon glow overlay */
+.app::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(ellipse at 20% 20%, rgba(0, 255, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(255, 0, 255, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(0, 255, 128, 0.08) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 @keyframes gradientShift {
@@ -940,6 +957,148 @@ body {
   background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
 }
 
+/* Document download buttons (Base64) */
+.document-download-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(0, 128, 0, 0.1), rgba(0, 200, 100, 0.1));
+  border: 2px dashed rgba(0, 200, 100, 0.4);
+  border-radius: 12px;
+}
+
+.document-download-header {
+  font-weight: 600;
+  color: #059669;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.download-document-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+.download-document-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.download-document-btn:active {
+  transform: translateY(0);
+}
+
+/* Continue button for truncated responses */
+.continue-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  margin-top: 16px;
+  background: linear-gradient(135deg, #ff6b9d 0%, #c44569 50%, #ff6b9d 100%);
+  background-size: 200% 200%;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 4px 15px rgba(255, 107, 157, 0.4),
+    0 0 20px rgba(255, 107, 157, 0.2);
+  animation: continueGlow 2s ease-in-out infinite;
+}
+
+.continue-button:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 
+    0 8px 25px rgba(255, 107, 157, 0.5),
+    0 0 30px rgba(255, 107, 157, 0.4);
+  animation: continueGlowHover 0.5s ease-in-out infinite;
+}
+
+.continue-button:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+.continue-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  animation: none;
+}
+
+@keyframes continueGlow {
+  0%, 100% {
+    background-position: 0% 50%;
+    box-shadow: 
+      0 4px 15px rgba(255, 107, 157, 0.4),
+      0 0 20px rgba(255, 107, 157, 0.2);
+  }
+  50% {
+    background-position: 100% 50%;
+    box-shadow: 
+      0 4px 20px rgba(196, 69, 105, 0.5),
+      0 0 25px rgba(255, 107, 157, 0.3);
+  }
+}
+
+@keyframes continueGlowHover {
+  0%, 100% {
+    box-shadow: 
+      0 8px 25px rgba(255, 107, 157, 0.5),
+      0 0 30px rgba(255, 107, 157, 0.4);
+  }
+  50% {
+    box-shadow: 
+      0 8px 30px rgba(255, 107, 157, 0.7),
+      0 0 40px rgba(255, 107, 157, 0.5);
+  }
+}
+
+/* Dark mode Continue button */
+.dark-mode .continue-button {
+  background: linear-gradient(135deg, #00d4ff 0%, #00ff88 50%, #00d4ff 100%);
+  background-size: 200% 200%;
+  box-shadow: 
+    0 4px 15px rgba(0, 212, 255, 0.4),
+    0 0 20px rgba(0, 255, 136, 0.2);
+}
+
+.dark-mode .continue-button:hover {
+  box-shadow: 
+    0 8px 25px rgba(0, 212, 255, 0.5),
+    0 0 30px rgba(0, 255, 136, 0.4);
+}
+
+@keyframes darkContinueGlow {
+  0%, 100% {
+    box-shadow: 
+      0 4px 15px rgba(0, 212, 255, 0.4),
+      0 0 20px rgba(0, 255, 136, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 4px 20px rgba(0, 212, 255, 0.6),
+      0 0 25px rgba(0, 255, 136, 0.4);
+  }
+}
+
 .status-indicator {
   display: flex;
   align-items: center;
@@ -1447,6 +1606,64 @@ body {
 
 .dark-mode-toggle:active {
   transform: translateY(0);
+}
+
+/* Mini Training Toggle (Don't Train on Me) */
+.training-toggle-mini {
+  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  border: 2px solid #ffd700;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+  position: relative;
+}
+
+.training-toggle-mini:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.5), 0 0 30px rgba(255, 215, 0, 0.3);
+  border-color: #ffea00;
+}
+
+.training-toggle-mini.active {
+  background: linear-gradient(135deg, #1a1a00 0%, #2a2a00 100%);
+  border-color: #ffea00;
+  box-shadow: 
+    0 0 10px rgba(255, 234, 0, 0.6),
+    0 0 20px rgba(255, 234, 0, 0.4),
+    0 0 40px rgba(255, 234, 0, 0.2),
+    inset 0 0 15px rgba(255, 234, 0, 0.1);
+  animation: neonPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes neonPulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 10px rgba(255, 234, 0, 0.6),
+      0 0 20px rgba(255, 234, 0, 0.4),
+      0 0 40px rgba(255, 234, 0, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 0 15px rgba(255, 234, 0, 0.8),
+      0 0 30px rgba(255, 234, 0, 0.5),
+      0 0 60px rgba(255, 234, 0, 0.3);
+  }
+}
+
+.training-toggle-mini:active {
+  transform: translateY(0);
+}
+
+/* Dark mode training toggle */
+.dark-mode .training-toggle-mini {
+  background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+}
+
+.dark-mode .training-toggle-mini.active {
+  background: linear-gradient(135deg, #0a0a00 0%, #1a1a00 100%);
 }
 
 /* Polished UI Improvements */

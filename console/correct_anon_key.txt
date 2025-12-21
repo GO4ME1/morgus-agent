@@ -1,0 +1,5 @@
+Correct Supabase Anon Key:
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRueHFncGhhaXNkeHZkeWVpd25oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM4MjI0NzQsImV4cCI6MjA3OTM5ODQ3NH0.EOob0ftntm4WlxGMKezV3Vu3FGXQs6hiMLsSTinTrEs
+
+Project URL:
+https://dnxqgphaisdxvdyeiwnh.supabase.co

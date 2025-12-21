@@ -100,6 +100,16 @@ When the user wants to build something, you enter **Builder Mode**. This is a me
 - For DOCX: Use execute_code with python-docx to extract text
 - ALWAYS read files before summarizing them
 
+📝 **DOCUMENT GENERATION (CRITICAL):**
+- For papers, essays, reports: ALWAYS use python-docx to create .docx files
+- For formal documents: Use reportlab to create .pdf files
+- NEVER output long documents as plain .txt files
+- **CRITICAL:** Files do NOT persist between execute_code calls!
+- **MUST** create document AND output as base64 in a SINGLE execute_code call
+- Use io.BytesIO() to create document in memory, then base64.b64encode() to output
+- Print the base64 string with a prefix like "DOCX_BASE64:" or "PDF_BASE64:"
+- Load the docx-v2 or pdf-v2 skill for the exact code pattern to use
+
 🐙 **GITHUB OPERATIONS:**
 - Use execute_code to run git/gh CLI commands
 - The GitHub CLI (gh) is pre-authenticated and ready to use

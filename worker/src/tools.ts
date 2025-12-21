@@ -728,6 +728,15 @@ export class ToolRegistry {
     // Skills tools - for self-improving agent
     this.registerSkillsTools();
     
+    // Sally's social media tools - for posting to socials
+    this.registerSocialMediaTools();
+    
+    // Bill's marketing video tools - for conversion-focused videos
+    this.registerMarketingVideoTools();
+    
+    // Prof. Hogsworth's educational tools - for teaching and explaining
+    this.registerEducationalTools();
+    
     // MCP tools - for connecting to external MCP servers
     this.registerMCPTools();
   }
@@ -763,6 +772,36 @@ export class ToolRegistry {
     const { listSkillsTool, loadSkillTool } = require('./tools/skills-tool');
     this.register(listSkillsTool);
     this.register(loadSkillTool);
+  }
+
+  /**
+   * Register Sally's social media tools
+   */
+  private registerSocialMediaTools() {
+    const { socialMediaTools } = require('./tools/social-media-tools');
+    for (const tool of socialMediaTools) {
+      this.register(tool);
+    }
+  }
+
+  /**
+   * Register Bill's marketing video tools
+   */
+  private registerMarketingVideoTools() {
+    const { marketingVideoTools } = require('./tools/marketing-video-tools');
+    for (const tool of marketingVideoTools) {
+      this.register(tool);
+    }
+  }
+
+  /**
+   * Register Prof. Hogsworth's educational tools
+   */
+  private registerEducationalTools() {
+    const { educationalTools } = require('./tools/educational-tools');
+    for (const tool of educationalTools) {
+      this.register(tool);
+    }
   }
 
   /**

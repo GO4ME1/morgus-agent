@@ -1,0 +1,318 @@
+/* Pricing Page Styles for Morgus - Light Neon Theme */
+
+.pricing-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, 
+    #e0f7ff 0%,
+    #d0fff0 15%,
+    #e8ffcc 30%,
+    #fffacd 50%,
+    #ffe4f0 70%,
+    #f0e0ff 85%,
+    #e0f0ff 100%
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 12s ease infinite;
+  padding: 60px 20px;
+  position: relative;
+}
+
+.pricing-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(ellipse at 20% 20%, rgba(0, 255, 255, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(255, 0, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(0, 255, 128, 0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.pricing-header {
+  text-align: center;
+  margin-bottom: 50px;
+  position: relative;
+  z-index: 1;
+}
+
+.pricing-header h1 {
+  font-size: 48px;
+  margin: 0 0 16px 0;
+  background: linear-gradient(135deg, #ff0080, #ff8800, #00ff88, #00ffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 40px rgba(255, 0, 128, 0.3);
+}
+
+.pricing-header p {
+  color: #333;
+  font-size: 18px;
+  margin: 0;
+  font-weight: 500;
+}
+
+.pricing-error {
+  max-width: 600px;
+  margin: 0 auto 30px;
+  background: rgba(255, 100, 100, 0.2);
+  border: 2px solid rgba(255, 100, 100, 0.5);
+  color: #cc0000;
+  padding: 12px 16px;
+  border-radius: 12px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.pricing-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 32px;
+  border: 2px solid rgba(0, 255, 255, 0.3);
+  position: relative;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.pricing-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15),
+              0 0 40px rgba(0, 255, 255, 0.2);
+}
+
+.pricing-card.highlight {
+  border-color: #00ffff;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1),
+              0 0 50px rgba(0, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.pricing-card.current {
+  border-color: #00ff88;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1),
+              0 0 40px rgba(0, 255, 128, 0.3);
+}
+
+.pricing-badge {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #00ffff, #00ff88);
+  color: #000;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  box-shadow: 0 4px 20px rgba(0, 255, 255, 0.4);
+}
+
+.current-badge {
+  position: absolute;
+  top: -14px;
+  right: 16px;
+  background: linear-gradient(135deg, #64ff96, #00cc66);
+  color: #000;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(0, 255, 128, 0.4);
+}
+
+.pricing-card h2 {
+  color: #1a1a2e;
+  font-size: 26px;
+  margin: 0 0 16px 0;
+}
+
+.pricing-price {
+  margin-bottom: 16px;
+}
+
+.pricing-price .price {
+  font-size: 52px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ff0080, #ff8800);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.pricing-price .period {
+  color: #666;
+  font-size: 16px;
+  margin-left: 8px;
+}
+
+.pricing-description {
+  color: #555;
+  font-size: 14px;
+  margin: 0 0 24px 0;
+}
+
+.pricing-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 32px 0;
+}
+
+.pricing-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #333;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.pricing-features .check {
+  color: #00cc66;
+  font-weight: bold;
+  flex-shrink: 0;
+  text-shadow: 0 0 10px rgba(0, 255, 128, 0.5);
+}
+
+.pricing-button {
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.pricing-button.primary {
+  background: linear-gradient(135deg, #00ffff, #00ff88);
+  color: #000;
+  box-shadow: 0 4px 20px rgba(0, 255, 255, 0.4);
+}
+
+.pricing-button.primary:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 40px rgba(0, 255, 255, 0.5),
+              0 0 60px rgba(0, 255, 255, 0.3);
+}
+
+.pricing-button.secondary {
+  background: rgba(255, 0, 255, 0.1);
+  color: #ff0080;
+  border: 2px solid rgba(255, 0, 255, 0.3);
+}
+
+.pricing-button.secondary:hover:not(:disabled) {
+  background: rgba(255, 0, 255, 0.2);
+  border-color: rgba(255, 0, 255, 0.5);
+  box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+}
+
+.pricing-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* FAQ Section */
+.pricing-faq {
+  max-width: 800px;
+  margin: 80px auto 0;
+  position: relative;
+  z-index: 1;
+}
+
+.pricing-faq h2 {
+  font-size: 36px;
+  text-align: center;
+  margin-bottom: 40px;
+  background: linear-gradient(135deg, #ff0080, #00ffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.faq-item {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.faq-item h3 {
+  color: #1a1a2e;
+  font-size: 18px;
+  margin: 0 0 12px 0;
+}
+
+.faq-item p {
+  color: #555;
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Footer */
+.pricing-footer {
+  text-align: center;
+  margin-top: 60px;
+  padding-top: 40px;
+  border-top: 1px solid rgba(0, 255, 255, 0.2);
+  position: relative;
+  z-index: 1;
+}
+
+.pricing-footer p {
+  color: #555;
+  font-size: 14px;
+}
+
+.pricing-footer a {
+  color: #00cccc;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.pricing-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .pricing-header h1 {
+    font-size: 32px;
+  }
+
+  .pricing-grid {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+  }
+
+  .pricing-price .price {
+    font-size: 40px;
+  }
+}

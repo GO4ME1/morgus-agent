@@ -2,10 +2,16 @@ import { createClient } from '@supabase/supabase-js';
 import { AutonomousAgent } from './agent';
 import { handleThoughtsAPI } from './thoughts-api';
 import { MOEEndpoint } from './moe/endpoint';
+import { handleStripeWebhook, StripeService } from './stripe';
+import { handleUsageAPI } from './usage-api';
+import { handlePromoAPI } from './promo-api';
+import { handleReferralAPI } from './referral-api';
+import { handleAdminAPI } from './admin-api';
 
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_KEY: string;
+  SUPABASE_SERVICE_KEY: string;
   OPENAI_API_KEY: string;
   E2B_API_KEY: string;
   OPENROUTER_API_KEY: string;
@@ -14,6 +20,9 @@ interface Env {
   GEMINI_API_KEY?: string;
   ELEVENLABS_API_KEY?: string;
   ELEVENLABS_VOICE_ID?: string;
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_PUBLISHABLE_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
 }
 
 interface ChatMessage {
@@ -54,9 +63,131 @@ export default {
         });
       }
 
+      // Stripe webhook endpoint
+      if (path === '/stripe-webhook' && request.method === 'POST') {
+        if (!env.STRIPE_SECRET_KEY || !env.STRIPE_WEBHOOK_SECRET) {
+          return new Response('Stripe not configured', { status: 500 });
+        }
+        return handleStripeWebhook(request, {
+          STRIPE_SECRET_KEY: env.STRIPE_SECRET_KEY,
+          STRIPE_WEBHOOK_SECRET: env.STRIPE_WEBHOOK_SECRET,
+          STRIPE_PUBLISHABLE_KEY: env.STRIPE_PUBLISHABLE_KEY || '',
+          SUPABASE_URL: env.SUPABASE_URL,
+          SUPABASE_SERVICE_KEY: env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY,
+        });
+      }
+
+      // Stripe checkout session endpoint
+      if (path === '/api/checkout' && request.method === 'POST') {
+        if (!env.STRIPE_SECRET_KEY) {
+          return new Response(JSON.stringify({ error: 'Stripe not configured' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        
+        const body = await request.json() as {
+          userId: string;
+          email: string;
+          planId: 'daily' | 'weekly' | 'monthly';
+          successUrl: string;
+          cancelUrl: string;
+        };
+        
+        const stripeService = new StripeService({
+          STRIPE_SECRET_KEY: env.STRIPE_SECRET_KEY,
+          STRIPE_WEBHOOK_SECRET: env.STRIPE_WEBHOOK_SECRET || '',
+          STRIPE_PUBLISHABLE_KEY: env.STRIPE_PUBLISHABLE_KEY || '',
+          SUPABASE_URL: env.SUPABASE_URL,
+          SUPABASE_SERVICE_KEY: env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY,
+        });
+        
+        try {
+          const session = await stripeService.createCheckoutSession(
+            body.userId,
+            body.email,
+            body.planId,
+            body.successUrl,
+            body.cancelUrl
+          );
+          return new Response(JSON.stringify(session), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } catch (err: any) {
+          return new Response(JSON.stringify({ error: err.message }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+
+      // Stripe billing portal endpoint
+      if (path === '/api/billing-portal' && request.method === 'POST') {
+        if (!env.STRIPE_SECRET_KEY) {
+          return new Response(JSON.stringify({ error: 'Stripe not configured' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        
+        const body = await request.json() as { userId: string; returnUrl: string };
+        
+        const stripeService = new StripeService({
+          STRIPE_SECRET_KEY: env.STRIPE_SECRET_KEY,
+          STRIPE_WEBHOOK_SECRET: env.STRIPE_WEBHOOK_SECRET || '',
+          STRIPE_PUBLISHABLE_KEY: env.STRIPE_PUBLISHABLE_KEY || '',
+          SUPABASE_URL: env.SUPABASE_URL,
+          SUPABASE_SERVICE_KEY: env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY,
+        });
+        
+        try {
+          const url = await stripeService.createPortalSession(body.userId, body.returnUrl);
+          return new Response(JSON.stringify({ url }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } catch (err: any) {
+          return new Response(JSON.stringify({ error: err.message }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+
       // Thoughts API routing
       if (path.startsWith('/api/thoughts')) {
         return handleThoughtsAPI(request, env);
+      }
+
+      // Usage API routing
+      if (path.startsWith('/api/usage') || path.startsWith('/api/subscription')) {
+        return handleUsageAPI(request, {
+          SUPABASE_URL: env.SUPABASE_URL,
+          SUPABASE_SERVICE_KEY: env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY,
+        });
+      }
+
+      // Promo code API routing
+      if (path.startsWith('/api/promo') || path.startsWith('/api/wallet')) {
+        return handlePromoAPI(request, {
+          SUPABASE_URL: env.SUPABASE_URL,
+          SUPABASE_SERVICE_KEY: env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY,
+        });
+      }
+
+      // Referral API routing
+      if (path.startsWith('/api/referral')) {
+        return handleReferralAPI(request, {
+          SUPABASE_URL: env.SUPABASE_URL,
+          SUPABASE_SERVICE_KEY: env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY,
+        });
+      }
+
+      // Admin API routing
+      if (path.startsWith('/api/admin') || (path.startsWith('/api/promo') && (path.includes('/list') || path.includes('/create') || path.includes('/toggle') || request.method === 'DELETE'))) {
+        return handleAdminAPI(request, {
+          SUPABASE_URL: env.SUPABASE_URL,
+          SUPABASE_SERVICE_KEY: env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY,
+        });
       }
       
       // Stats API routing
