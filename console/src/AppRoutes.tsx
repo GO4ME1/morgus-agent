@@ -10,6 +10,7 @@ import { Account } from './pages/Account';
 import { Admin } from './pages/Admin';
 import { Terms } from './pages/Terms';
 import { Privacy } from './pages/Privacy';
+import { Landing } from './pages/Landing';
 import App from './App';
 import './LoadingScreen.css';
 import { useEffect, useState } from 'react';
@@ -127,6 +128,9 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 export function AppRoutes() {
   return (
     <Routes>
+      {/* Landing page */}
+      <Route path="/landing" element={<Landing />} />
+      
       {/* Public routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />

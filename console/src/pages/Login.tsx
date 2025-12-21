@@ -52,7 +52,7 @@ export function Login() {
       <div className="auth-card">
         <div className="auth-header">
           <div className="auth-logo">
-            <span className="logo-icon">🐷</span>
+            <img src="/bill-avatar-large.png" alt="Bill" className="logo-icon-img" />
             <span className="logo-text">Morgus</span>
           </div>
           <h1>Welcome back!</h1>

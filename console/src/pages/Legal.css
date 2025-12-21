@@ -72,6 +72,14 @@
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
 }
 
+.legal-logo .logo-icon-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  filter: drop-shadow(0 4px 12px rgba(0, 188, 212, 0.4));
+}
+
 .legal-logo .logo-text {
   font-size: 32px;
   font-weight: 700;

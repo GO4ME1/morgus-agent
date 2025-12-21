@@ -10,7 +10,7 @@ export function Terms() {
         
         <div className="legal-header">
           <div className="legal-logo">
-            <span className="logo-icon">🐷</span>
+            <img src="/bill-avatar-large.png" alt="Bill" className="logo-icon-img" />
             <span className="logo-text">Morgus</span>
           </div>
           <h1>Terms of Service</h1>

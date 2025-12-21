@@ -73,6 +73,27 @@
   filter: drop-shadow(0 0 10px rgba(0, 255, 128, 0.5));
 }
 
+.auth-logo .logo-icon-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.6))
+          drop-shadow(0 0 30px rgba(255, 0, 255, 0.4));
+  animation: billGlow 3s ease-in-out infinite;
+}
+
+@keyframes billGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.6))
+            drop-shadow(0 0 30px rgba(255, 0, 255, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 25px rgba(0, 255, 255, 0.8))
+            drop-shadow(0 0 50px rgba(255, 0, 255, 0.6));
+  }
+}
+
 .auth-logo .logo-text {
   font-size: 32px;
   font-weight: 800;

@@ -187,7 +187,7 @@ export function Account() {
               {profile.avatar_url ? (
                 <img src={profile.avatar_url} alt="Avatar" />
               ) : (
-                <span>🐷</span>
+                <img src="/bill-avatar-large.png" alt="Bill" />
               )}
             </div>
             <div className="profile-details">
