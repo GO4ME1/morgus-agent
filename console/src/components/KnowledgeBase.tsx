@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
+import { processDocument, processFileUpload } from '../lib/document-processor';
 import './KnowledgeBase.css';
 
 interface KnowledgeDocument {
@@ -34,7 +35,15 @@ export function KnowledgeBase({ isOpen, onClose }: KnowledgeBaseProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [processingStatus, setProcessingStatus] = useState<string>('');
+  const [openaiKey, setOpenaiKey] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load OpenAI key from localStorage
+  useEffect(() => {
+    const savedKey = localStorage.getItem('morgus_openai_key');
+    if (savedKey) setOpenaiKey(savedKey);
+  }, []);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -73,10 +82,13 @@ export function KnowledgeBase({ isOpen, onClose }: KnowledgeBaseProps) {
     setError(null);
     setSuccess(null);
 
+    let successCount = 0;
+    let failCount = 0;
+
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        setUploadProgress(Math.round(((i + 0.5) / files.length) * 100));
+        setProcessingStatus(`Processing file ${i + 1}/${files.length}: ${file.name}`);
 
         // Create document record
         const { data: doc, error: docError } = await supabase
@@ -87,41 +99,61 @@ export function KnowledgeBase({ isOpen, onClose }: KnowledgeBaseProps) {
             source_type: 'upload',
             file_type: file.type || getFileExtension(file.name),
             file_size: file.size,
-            status: 'pending',
+            status: 'processing',
           })
           .select()
           .single();
 
-        if (docError) throw docError;
-
-        // Upload file to Supabase Storage
-        const filePath = `${user.id}/${doc.id}/${file.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from('knowledge-files')
-          .upload(filePath, file);
-
-        if (uploadError) {
-          // Update document status to failed
-          await supabase
-            .from('knowledge_documents')
-            .update({ status: 'failed', error_message: uploadError.message })
-            .eq('id', doc.id);
-          throw uploadError;
+        if (docError) {
+          failCount++;
+          continue;
         }
 
-        // Update document with file path and trigger processing
-        await supabase
-          .from('knowledge_documents')
-          .update({ 
-            source_url: filePath,
-            status: 'processing'
-          })
-          .eq('id', doc.id);
+        // Process file with embeddings if OpenAI key is available
+        if (openaiKey) {
+          try {
+            const result = await processFileUpload(
+              file,
+              doc.id,
+              user.id,
+              openaiKey,
+              (progress, status) => {
+                setUploadProgress(Math.round((i / files.length) * 100 + (progress / files.length)));
+                setProcessingStatus(status);
+              }
+            );
+
+            if (result.success) {
+              successCount++;
+            } else {
+              failCount++;
+            }
+          } catch (err) {
+            console.error('Error processing file:', err);
+            failCount++;
+          }
+        } else {
+          // No API key - mark as pending
+          await supabase
+            .from('knowledge_documents')
+            .update({ status: 'pending' })
+            .eq('id', doc.id);
+          successCount++;
+        }
 
         setUploadProgress(Math.round(((i + 1) / files.length) * 100));
       }
 
-      setSuccess(`Successfully uploaded ${files.length} file(s)`);
+      if (successCount > 0) {
+        if (openaiKey) {
+          setSuccess(`Processed ${successCount} file(s) successfully!${failCount > 0 ? ` ${failCount} failed.` : ''}`);
+        } else {
+          setSuccess(`Uploaded ${successCount} file(s). Add an OpenAI API key to enable semantic search.`);
+        }
+      } else {
+        setError('All files failed to process.');
+      }
+
       loadDocuments();
       setActiveTab('documents');
     } catch (err) {
@@ -130,6 +162,7 @@ export function KnowledgeBase({ isOpen, onClose }: KnowledgeBaseProps) {
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
+      setProcessingStatus('');
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -174,21 +207,45 @@ export function KnowledgeBase({ isOpen, onClose }: KnowledgeBaseProps) {
     setIsUploading(true);
     setError(null);
     setSuccess(null);
+    setProcessingStatus('Creating document...');
 
     try {
-      const { error } = await supabase
+      // Create document record
+      const { data: doc, error: docError } = await supabase
         .from('knowledge_documents')
         .insert({
           user_id: user.id,
           title: textTitle,
           source_type: 'text',
           content: textInput,
-          status: 'pending',
-        });
+          status: 'processing',
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (docError) throw docError;
 
-      setSuccess('Text added successfully. Processing will begin shortly.');
+      // Process with embeddings if OpenAI key is available
+      if (openaiKey) {
+        const result = await processDocument(
+          doc.id,
+          user.id,
+          textInput,
+          textTitle,
+          openaiKey,
+          (progress, status) => setProcessingStatus(`${progress}% - ${status}`)
+        );
+
+        if (result.success) {
+          setSuccess(`Text processed successfully! Created ${result.chunkCount} searchable chunks.`);
+        } else {
+          setError(`Processing failed: ${result.error}`);
+        }
+      } else {
+        // No API key - just mark as pending
+        setSuccess('Text added. Add an OpenAI API key in settings to enable semantic search.');
+      }
+
       setTextInput('');
       setTextTitle('');
       loadDocuments();
@@ -198,6 +255,7 @@ export function KnowledgeBase({ isOpen, onClose }: KnowledgeBaseProps) {
       setError('Failed to add text. Please try again.');
     } finally {
       setIsUploading(false);
+      setProcessingStatus('');
     }
   };
 
@@ -453,10 +511,56 @@ export function KnowledgeBase({ isOpen, onClose }: KnowledgeBaseProps) {
           </div>
         )}
 
+        {/* Processing Status */}
+        {processingStatus && (
+          <div className="kb-processing-status">
+            <div className="processing-spinner"></div>
+            <span>{processingStatus}</span>
+          </div>
+        )}
+
+        {/* OpenAI API Key Section */}
+        <div className="kb-api-key-section">
+          <div className="api-key-header">
+            <span>🔑 OpenAI API Key</span>
+            <span className={`api-status ${openaiKey ? 'connected' : 'disconnected'}`}>
+              {openaiKey ? '✅ Connected' : '⚠️ Not Set'}
+            </span>
+          </div>
+          <div className="api-key-input-group">
+            <input
+              type="password"
+              placeholder="sk-..."
+              value={openaiKey}
+              onChange={e => {
+                setOpenaiKey(e.target.value);
+                localStorage.setItem('morgus_openai_key', e.target.value);
+              }}
+            />
+            {openaiKey && (
+              <button
+                className="clear-key-btn"
+                onClick={() => {
+                  setOpenaiKey('');
+                  localStorage.removeItem('morgus_openai_key');
+                }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <p className="api-key-hint">
+            Required for generating embeddings. Your key is stored locally and never sent to our servers.
+          </p>
+        </div>
+
         <div className="kb-footer">
           <div className="kb-stats">
             <span>📊 {documents.length} documents</span>
             <span>📦 {documents.reduce((sum, d) => sum + (d.chunk_count || 0), 0)} total chunks</span>
+            <span className={`kb-ready ${documents.filter(d => d.status === 'completed').length > 0 ? 'active' : ''}`}>
+              🔍 {documents.filter(d => d.status === 'completed').length} ready for search
+            </span>
           </div>
           <p className="kb-hint">
             💡 Documents are automatically chunked and embedded for semantic search during Deep Research.
