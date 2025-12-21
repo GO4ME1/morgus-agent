@@ -1,0 +1,19 @@
+{
+  "name": "morgus-document-processor",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker for processing documents and generating embeddings for Morgus Knowledge Base",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240117.0",
+    "typescript": "^5.3.3",
+    "wrangler": "^3.22.4"
+  }
+}
