@@ -20,12 +20,24 @@ export function Login() {
     setLoading(true);
 
     try {
+      console.log('[Login] Starting sign in...');
       const { error } = await signIn(email, password);
       
       if (error) {
-        setError(error.message);
+        console.error('[Login] Sign in error:', error.message);
+        // Provide more user-friendly error messages
+        let errorMessage = error.message;
+        if (errorMessage.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please try again.';
+        } else if (errorMessage.includes('Email not confirmed')) {
+          errorMessage = 'Please check your email and confirm your account before signing in.';
+        } else if (errorMessage.includes('timed out')) {
+          errorMessage = 'Connection timed out. Please check your internet connection and try again.';
+        }
+        setError(errorMessage);
         setLoading(false);
       } else {
+        console.log('[Login] Sign in successful, navigating...');
         // Small delay to allow auth state to update, then navigate
         setTimeout(() => {
           navigate(redirect);
