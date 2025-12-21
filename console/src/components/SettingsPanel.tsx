@@ -252,6 +252,39 @@ export function SettingsPanel({ isOpen, onClose, darkMode, onDarkModeChange, don
                       🚪 Log Out
                     </button>
                   </div>
+                  
+                  {/* Refer a Friend Section */}
+                  <div className="referral-section">
+                    <div className="referral-header">
+                      <span className="referral-icon">🎁</span>
+                      <span className="referral-title">Refer a Friend</span>
+                    </div>
+                    <p className="referral-description">Share your code and both get a free day pass when they sign up!</p>
+                    <div className="referral-code-box">
+                      <span className="referral-code">{user?.email?.split('@')[0]?.toUpperCase().slice(0, 8) || 'MORGUS'}</span>
+                      <button 
+                        className="copy-code-btn"
+                        onClick={() => {
+                          const code = user?.email?.split('@')[0]?.toUpperCase().slice(0, 8) || 'MORGUS';
+                          navigator.clipboard.writeText(code);
+                          alert('Referral code copied!');
+                        }}
+                      >
+                        📋 Copy
+                      </button>
+                    </div>
+                    <button 
+                      className="share-link-btn"
+                      onClick={() => {
+                        const code = user?.email?.split('@')[0]?.toUpperCase().slice(0, 8) || 'MORGUS';
+                        const shareUrl = `https://morgus-console.pages.dev/signup?ref=${code}`;
+                        navigator.clipboard.writeText(shareUrl);
+                        alert('Share link copied!');
+                      }}
+                    >
+                      🔗 Copy Share Link
+                    </button>
+                  </div>
                 </div>
               )}
               {!user && (

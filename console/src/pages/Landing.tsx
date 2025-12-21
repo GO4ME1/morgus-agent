@@ -71,13 +71,13 @@ export function Landing() {
         ))}
       </div>
 
-      {/* Giant Metal Doors */}
+      {/* Giant Metal Doors - Vertical (Top/Bottom) */}
       <div className={`doors-container ${doorState}`}>
-        {/* Left Door */}
-        <div className="door door-left">
+        {/* Top Door */}
+        <div className="door door-top">
           <div className="door-panel">
             <div className="door-rivets">
-              {Array.from({ length: 8 }).map((_, i) => (
+              {Array.from({ length: 12 }).map((_, i) => (
                 <div key={i} className="rivet" />
               ))}
             </div>
@@ -87,11 +87,11 @@ export function Landing() {
           </div>
         </div>
 
-        {/* Right Door */}
-        <div className="door door-right">
+        {/* Bottom Door */}
+        <div className="door door-bottom">
           <div className="door-panel">
             <div className="door-rivets">
-              {Array.from({ length: 8 }).map((_, i) => (
+              {Array.from({ length: 12 }).map((_, i) => (
                 <div key={i} className="rivet" />
               ))}
             </div>
@@ -101,7 +101,7 @@ export function Landing() {
           </div>
         </div>
 
-        {/* Center seam glow */}
+        {/* Center seam glow - horizontal */}
         <div className="door-seam" />
       </div>
 

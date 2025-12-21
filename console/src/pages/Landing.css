@@ -73,7 +73,7 @@
   }
 }
 
-/* Giant Metal Doors */
+/* Giant Metal Doors - VERTICAL (top/bottom) */
 .doors-container {
   position: fixed;
   top: 0;
@@ -81,65 +81,66 @@
   width: 100%;
   height: 100%;
   display: flex;
+  flex-direction: column;
   z-index: 100;
   pointer-events: none;
 }
 
 .door {
-  width: 50%;
-  height: 100%;
+  width: 100%;
+  height: 50%;
   transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Default state: doors are open (off-screen) */
-.door-left {
-  transform: translateX(-100%);
+.door-top {
+  transform: translateY(-100%);
 }
 
-.door-right {
-  transform: translateX(100%);
+.door-bottom {
+  transform: translateY(100%);
 }
 
 /* Open state: doors off-screen */
-.doors-container.open .door-left {
-  transform: translateX(-100%);
+.doors-container.open .door-top {
+  transform: translateY(-100%);
 }
 
-.doors-container.open .door-right {
-  transform: translateX(100%);
+.doors-container.open .door-bottom {
+  transform: translateY(100%);
 }
 
 /* Closing state: doors slide in to center */
-.doors-container.closing .door-left {
-  transform: translateX(0);
+.doors-container.closing .door-top {
+  transform: translateY(0);
 }
 
-.doors-container.closing .door-right {
-  transform: translateX(0);
+.doors-container.closing .door-bottom {
+  transform: translateY(0);
 }
 
 /* Closed state: doors at center */
-.doors-container.closed .door-left {
-  transform: translateX(0);
+.doors-container.closed .door-top {
+  transform: translateY(0);
 }
 
-.doors-container.closed .door-right {
-  transform: translateX(0);
+.doors-container.closed .door-bottom {
+  transform: translateY(0);
 }
 
 /* Opening state: doors slide back out */
-.doors-container.opening .door-left {
-  transform: translateX(-100%);
+.doors-container.opening .door-top {
+  transform: translateY(-100%);
 }
 
-.doors-container.opening .door-right {
-  transform: translateX(100%);
+.doors-container.opening .door-bottom {
+  transform: translateY(100%);
 }
 
 .door-panel {
   width: 100%;
   height: 100%;
-  background: linear-gradient(180deg,
+  background: linear-gradient(90deg,
     #2a2a4a 0%,
     #1a1a3a 20%,
     #0f0f2a 50%,
@@ -151,35 +152,35 @@
   overflow: hidden;
 }
 
-.door-left .door-panel {
-  border-right: 8px solid #00ffff;
-  box-shadow: inset -20px 0 60px rgba(0, 255, 255, 0.3),
+.door-top .door-panel {
+  border-bottom: 8px solid #00ffff;
+  box-shadow: inset 0 -20px 60px rgba(0, 255, 255, 0.3),
               inset 0 0 100px rgba(0, 0, 0, 0.5);
 }
 
-.door-right .door-panel {
-  border-left: 8px solid #ff00ff;
-  box-shadow: inset 20px 0 60px rgba(255, 0, 255, 0.3),
+.door-bottom .door-panel {
+  border-top: 8px solid #ff00ff;
+  box-shadow: inset 0 20px 60px rgba(255, 0, 255, 0.3),
               inset 0 0 100px rgba(0, 0, 0, 0.5);
 }
 
-/* Door rivets */
+/* Door rivets - now horizontal */
 .door-rivets {
   position: absolute;
-  top: 0;
-  height: 100%;
+  left: 0;
+  width: 100%;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: space-around;
-  padding: 40px 0;
+  padding: 0 40px;
 }
 
-.door-left .door-rivets {
-  right: 30px;
+.door-top .door-rivets {
+  bottom: 30px;
 }
 
-.door-right .door-rivets {
-  left: 30px;
+.door-bottom .door-rivets {
+  top: 30px;
 }
 
 .rivet {
@@ -191,13 +192,13 @@
               inset 0 -2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Door stripes */
+/* Door stripes - now vertical */
 .door-stripe {
   position: absolute;
-  height: 100%;
-  width: 40px;
+  width: 100%;
+  height: 40px;
   background: repeating-linear-gradient(
-    0deg,
+    90deg,
     transparent,
     transparent 30px,
     rgba(255, 200, 0, 0.3) 30px,
@@ -205,18 +206,18 @@
   );
 }
 
-.door-left .door-stripe:nth-child(2) { left: 60px; }
-.door-left .door-stripe:nth-child(3) { left: 120px; }
-.door-right .door-stripe:nth-child(2) { right: 60px; }
-.door-right .door-stripe:nth-child(3) { right: 120px; }
+.door-top .door-stripe:nth-child(2) { bottom: 60px; }
+.door-top .door-stripe:nth-child(3) { bottom: 120px; }
+.door-bottom .door-stripe:nth-child(2) { top: 60px; }
+.door-bottom .door-stripe:nth-child(3) { top: 120px; }
 
 /* Door glow effect */
 .door-glow {
   position: absolute;
-  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, 
+  background: linear-gradient(180deg, 
     transparent 0%,
     rgba(0, 255, 255, 0.1) 50%,
     transparent 100%
@@ -229,15 +230,15 @@
   50% { opacity: 1; }
 }
 
-/* Center seam */
+/* Center seam - now horizontal */
 .door-seam {
   position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 100%;
-  background: linear-gradient(180deg,
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg,
     #00ffff 0%,
     #ff00ff 50%,
     #00ffff 100%
@@ -279,10 +280,10 @@
   transform: scale(1.1);
 }
 
-/* Bill Container */
+/* Bill Container - BIGGER */
 .bill-container {
   position: relative;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .bill-glow {
@@ -290,8 +291,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 400px;
-  height: 400px;
+  width: 600px;
+  height: 600px;
   background: radial-gradient(circle,
     rgba(0, 255, 255, 0.4) 0%,
     rgba(255, 0, 255, 0.2) 40%,
@@ -312,50 +313,51 @@
   }
 }
 
+/* Bill image - MUCH BIGGER */
 .bill-image {
-  width: 300px;
-  height: 300px;
+  width: 420px;
+  height: 420px;
   object-fit: cover;
-  border-radius: 20px;
-  border: 4px solid transparent;
+  border-radius: 24px;
+  border: 5px solid transparent;
   background: linear-gradient(#0a0a1a, #0a0a1a) padding-box,
               linear-gradient(135deg, #00ffff, #ff00ff, #00ff88) border-box;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
-              0 0 40px rgba(0, 255, 255, 0.3),
-              0 0 80px rgba(255, 0, 255, 0.2);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6),
+              0 0 60px rgba(0, 255, 255, 0.4),
+              0 0 120px rgba(255, 0, 255, 0.3);
   animation: bill-float 4s ease-in-out infinite;
 }
 
 @keyframes bill-float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-15px); }
+  50% { transform: translateY(-20px); }
 }
 
 .bill-reflection {
   position: absolute;
-  bottom: -60px;
+  bottom: -80px;
   left: 50%;
   transform: translateX(-50%) scaleY(-0.3);
-  width: 300px;
-  height: 100px;
+  width: 420px;
+  height: 140px;
   background: linear-gradient(180deg,
     rgba(0, 255, 255, 0.2) 0%,
     transparent 100%
   );
-  filter: blur(10px);
+  filter: blur(15px);
   opacity: 0.5;
 }
 
 /* Landing Text */
 .landing-text {
-  max-width: 600px;
+  max-width: 700px;
 }
 
 .landing-title {
-  font-size: 72px;
+  font-size: 80px;
   font-weight: 900;
   margin: 0 0 10px 0;
-  letter-spacing: 4px;
+  letter-spacing: 6px;
 }
 
 .title-morgus {
@@ -376,16 +378,16 @@
 }
 
 .landing-tagline {
-  font-size: 24px;
+  font-size: 26px;
   color: rgba(255, 255, 255, 0.9);
-  margin: 0 0 15px 0;
+  margin: 0 0 12px 0;
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
 }
 
 .landing-subtitle {
-  font-size: 16px;
+  font-size: 17px;
   color: rgba(255, 255, 255, 0.6);
-  margin: 0 0 40px 0;
+  margin: 0 0 35px 0;
   line-height: 1.6;
 }
 
@@ -395,8 +397,8 @@
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  padding: 18px 40px;
-  font-size: 18px;
+  padding: 20px 50px;
+  font-size: 20px;
   font-weight: 700;
   color: #000;
   background: linear-gradient(135deg, #00ffff, #00ff88);
@@ -425,7 +427,7 @@
 }
 
 .button-icon {
-  font-size: 24px;
+  font-size: 28px;
   animation: rocket-shake 0.5s ease-in-out infinite;
 }
 
@@ -539,21 +541,21 @@
 /* Responsive */
 @media (max-width: 768px) {
   .bill-image {
-    width: 200px;
-    height: 200px;
-  }
-
-  .bill-glow {
     width: 280px;
     height: 280px;
   }
 
+  .bill-glow {
+    width: 380px;
+    height: 380px;
+  }
+
   .landing-title {
-    font-size: 48px;
+    font-size: 52px;
   }
 
   .landing-tagline {
-    font-size: 18px;
+    font-size: 20px;
   }
 
   .landing-subtitle {
@@ -562,8 +564,8 @@
   }
 
   .enter-button {
-    padding: 14px 30px;
-    font-size: 16px;
+    padding: 16px 36px;
+    font-size: 17px;
   }
 
   .neon-corner {
@@ -578,11 +580,11 @@
 
 @media (max-width: 480px) {
   .landing-title {
-    font-size: 36px;
+    font-size: 40px;
   }
 
   .bill-image {
-    width: 180px;
-    height: 180px;
+    width: 220px;
+    height: 220px;
   }
 }
