@@ -230,6 +230,9 @@ export function SettingsPanel({ isOpen, onClose, darkMode, onDarkModeChange, don
                     <button className="account-btn" onClick={() => onNavigate?.('/account')}>
                       ⚙️ My Account
                     </button>
+                    <button className="account-btn knowledge-base-btn" onClick={() => onNavigate?.('/knowledge-base')}>
+                      📚 Knowledge Base
+                    </button>
                     <button className="account-btn" onClick={() => onNavigate?.('/pricing')}>
                       ⭐ Upgrade Plan
                     </button>

@@ -11,6 +11,7 @@ import { Admin } from './pages/Admin';
 import { Terms } from './pages/Terms';
 import { Privacy } from './pages/Privacy';
 import { Landing } from './pages/Landing';
+import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
 import App from './App';
 import './LoadingScreen.css';
 import { useEffect, useState } from 'react';
@@ -144,6 +145,12 @@ export function AppRoutes() {
       <Route path="/account" element={
         <ProtectedRoute>
           <Account />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/knowledge-base" element={
+        <ProtectedRoute>
+          <KnowledgeBasePage />
         </ProtectedRoute>
       } />
       
