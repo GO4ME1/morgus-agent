@@ -977,7 +977,7 @@ function App() {
               </div>
             </div>
           ))}
-          {isLoading && <ThinkingIndicator toolName={currentTool} />}
+          {isLoading && <ThinkingIndicator toolName={currentTool} isDeepResearch={deepResearchMode} />}
           <div ref={messagesEndRef} />
         </div>
 

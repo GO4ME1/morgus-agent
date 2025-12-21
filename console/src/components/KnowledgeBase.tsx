@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
-import { processDocument, processFileUpload } from '../lib/document-processor';
+// Document processing is now handled by the backend worker
 import './KnowledgeBase.css';
 
 interface KnowledgeDocument {
@@ -36,14 +36,21 @@ export function KnowledgeBase({ isOpen, onClose }: KnowledgeBaseProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [processingStatus, setProcessingStatus] = useState<string>('');
-  const [openaiKey, setOpenaiKey] = useState<string>('');
+  const WORKER_URL = 'https://morgus-document-processor.morgan-426.workers.dev';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load OpenAI key from localStorage
-  useEffect(() => {
-    const savedKey = localStorage.getItem('morgus_openai_key');
-    if (savedKey) setOpenaiKey(savedKey);
-  }, []);
+  // Trigger backend worker to process a document
+  const triggerProcessing = async (documentId: string) => {
+    try {
+      await fetch(`${WORKER_URL}/process`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ document_id: documentId }),
+      });
+    } catch (err) {
+      console.log('Worker trigger failed, will process on schedule:', err);
+    }
+  };
 
   useEffect(() => {
     if (isOpen && user) {
@@ -109,47 +116,29 @@ export function KnowledgeBase({ isOpen, onClose }: KnowledgeBaseProps) {
           continue;
         }
 
-        // Process file with embeddings if OpenAI key is available
-        if (openaiKey) {
-          try {
-            const result = await processFileUpload(
-              file,
-              doc.id,
-              user.id,
-              openaiKey,
-              (progress, status) => {
-                setUploadProgress(Math.round((i / files.length) * 100 + (progress / files.length)));
-                setProcessingStatus(status);
-              }
-            );
+        // Store file content and trigger backend processing
+        const reader = new FileReader();
+        const content = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsText(file);
+        });
 
-            if (result.success) {
-              successCount++;
-            } else {
-              failCount++;
-            }
-          } catch (err) {
-            console.error('Error processing file:', err);
-            failCount++;
-          }
-        } else {
-          // No API key - mark as pending
-          await supabase
-            .from('knowledge_documents')
-            .update({ status: 'pending' })
-            .eq('id', doc.id);
-          successCount++;
-        }
+        // Update document with content
+        await supabase
+          .from('knowledge_documents')
+          .update({ content, status: 'pending' })
+          .eq('id', doc.id);
+
+        // Trigger backend worker to process
+        triggerProcessing(doc.id);
+        successCount++;
 
         setUploadProgress(Math.round(((i + 1) / files.length) * 100));
       }
 
       if (successCount > 0) {
-        if (openaiKey) {
-          setSuccess(`Processed ${successCount} file(s) successfully!${failCount > 0 ? ` ${failCount} failed.` : ''}`);
-        } else {
-          setSuccess(`Uploaded ${successCount} file(s). Add an OpenAI API key to enable semantic search.`);
-        }
+        setSuccess(`Uploaded ${successCount} file(s)! Processing in background...${failCount > 0 ? ` ${failCount} failed.` : ''}`);
       } else {
         setError('All files failed to process.');
       }
@@ -225,26 +214,9 @@ export function KnowledgeBase({ isOpen, onClose }: KnowledgeBaseProps) {
 
       if (docError) throw docError;
 
-      // Process with embeddings if OpenAI key is available
-      if (openaiKey) {
-        const result = await processDocument(
-          doc.id,
-          user.id,
-          textInput,
-          textTitle,
-          openaiKey,
-          (progress, status) => setProcessingStatus(`${progress}% - ${status}`)
-        );
-
-        if (result.success) {
-          setSuccess(`Text processed successfully! Created ${result.chunkCount} searchable chunks.`);
-        } else {
-          setError(`Processing failed: ${result.error}`);
-        }
-      } else {
-        // No API key - just mark as pending
-        setSuccess('Text added. Add an OpenAI API key in settings to enable semantic search.');
-      }
+      // Trigger backend worker to process
+      triggerProcessing(doc.id);
+      setSuccess('Text added! Processing in background...');
 
       setTextInput('');
       setTextTitle('');
@@ -519,38 +491,14 @@ export function KnowledgeBase({ isOpen, onClose }: KnowledgeBaseProps) {
           </div>
         )}
 
-        {/* OpenAI API Key Section */}
-        <div className="kb-api-key-section">
-          <div className="api-key-header">
-            <span>🔑 OpenAI API Key</span>
-            <span className={`api-status ${openaiKey ? 'connected' : 'disconnected'}`}>
-              {openaiKey ? '✅ Connected' : '⚠️ Not Set'}
-            </span>
+        {/* Backend Processing Info */}
+        <div className="kb-processing-info">
+          <div className="processing-info-header">
+            <span>⚡ Automatic Processing</span>
+            <span className="processing-status-badge">✅ Enabled</span>
           </div>
-          <div className="api-key-input-group">
-            <input
-              type="password"
-              placeholder="sk-..."
-              value={openaiKey}
-              onChange={e => {
-                setOpenaiKey(e.target.value);
-                localStorage.setItem('morgus_openai_key', e.target.value);
-              }}
-            />
-            {openaiKey && (
-              <button
-                className="clear-key-btn"
-                onClick={() => {
-                  setOpenaiKey('');
-                  localStorage.removeItem('morgus_openai_key');
-                }}
-              >
-                Clear
-              </button>
-            )}
-          </div>
-          <p className="api-key-hint">
-            Required for generating embeddings. Your key is stored locally and never sent to our servers.
+          <p className="processing-info-hint">
+            Documents are automatically processed in the background. No API key required!
           </p>
         </div>
 

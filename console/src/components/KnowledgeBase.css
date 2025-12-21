@@ -868,3 +868,40 @@
   background: linear-gradient(135deg, rgba(0, 200, 255, 0.15), rgba(200, 0, 255, 0.15));
   color: #0088cc;
 }
+
+
+/* Backend Processing Info */
+.kb-processing-info {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 255, 136, 0.1));
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 24px;
+}
+
+.processing-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.processing-info-header span:first-child {
+  font-weight: 600;
+  color: #00d4ff;
+}
+
+.processing-status-badge {
+  background: rgba(0, 255, 136, 0.2);
+  color: #00ff88;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.processing-info-hint {
+  font-size: 13px;
+  color: #aaa;
+  margin: 0;
+}

@@ -301,6 +301,23 @@ async function processDocument(
   }
 }
 
+// CORS headers for cross-origin requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+function jsonResponse(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      ...corsHeaders,
+    },
+  });
+}
+
 /**
  * Main worker handler
  */
@@ -351,11 +368,14 @@ export default {
   ): Promise<Response> {
     const url = new URL(request.url);
 
+    // Handle CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
+    }
+
     // Health check
     if (url.pathname === '/health') {
-      return new Response(JSON.stringify({ status: 'ok' }), {
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ status: 'ok' });
     }
 
     // Manual trigger to process a specific document
@@ -365,10 +385,7 @@ export default {
         const documentId = body.document_id;
 
         if (!documentId) {
-          return new Response(
-            JSON.stringify({ error: 'document_id required' }),
-            { status: 400, headers: { 'Content-Type': 'application/json' } }
-          );
+          return jsonResponse({ error: 'document_id required' }, 400);
         }
 
         const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY);
@@ -381,25 +398,16 @@ export default {
           .single();
 
         if (error || !doc) {
-          return new Response(
-            JSON.stringify({ error: 'Document not found' }),
-            { status: 404, headers: { 'Content-Type': 'application/json' } }
-          );
+          return jsonResponse({ error: 'Document not found' }, 404);
         }
 
         // Process the document
         await processDocument(doc as KnowledgeDocument, supabase, env.OPENAI_API_KEY);
 
-        return new Response(
-          JSON.stringify({ success: true, message: 'Document processed' }),
-          { headers: { 'Content-Type': 'application/json' } }
-        );
+        return jsonResponse({ success: true, message: 'Document processed' });
 
       } catch (error) {
-        return new Response(
-          JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-          { status: 500, headers: { 'Content-Type': 'application/json' } }
-        );
+        return jsonResponse({ error: error instanceof Error ? error.message : 'Unknown error' }, 500);
       }
     }
 
@@ -415,17 +423,11 @@ export default {
         .limit(10);
 
       if (error) {
-        return new Response(
-          JSON.stringify({ error: error.message }),
-          { status: 500, headers: { 'Content-Type': 'application/json' } }
-        );
+        return jsonResponse({ error: error.message }, 500);
       }
 
       if (!documents || documents.length === 0) {
-        return new Response(
-          JSON.stringify({ message: 'No pending documents' }),
-          { headers: { 'Content-Type': 'application/json' } }
-        );
+        return jsonResponse({ message: 'No pending documents' });
       }
 
       // Process documents
@@ -433,12 +435,9 @@ export default {
         await processDocument(doc as KnowledgeDocument, supabase, env.OPENAI_API_KEY);
       }
 
-      return new Response(
-        JSON.stringify({ success: true, processed: documents.length }),
-        { headers: { 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ success: true, processed: documents.length });
     }
 
-    return new Response('Not found', { status: 404 });
+    return jsonResponse({ error: 'Not found' }, 404);
   },
 };
