@@ -26,7 +26,7 @@ interface SettingsPanelProps {
   onDarkModeChange: (enabled: boolean) => void;
   dontTrainOnMe?: boolean;
   onDontTrainChange?: (enabled: boolean) => void;
-  user?: { email?: string } | null;
+  user?: { id?: string; email?: string } | null;
   profile?: { display_name?: string | null; subscription_tier?: string; is_admin?: boolean; dont_train_on_me?: boolean } | null;
   onLogout?: () => void;
   onNavigate?: (path: string) => void;
@@ -370,7 +370,7 @@ export function SettingsPanel({ isOpen, onClose, darkMode, onDarkModeChange, don
           {activeTab === 'mcp' && (
             <div className="mcp-settings">
               <MCPServerBrowser 
-                userId={user?.email ? undefined : undefined}
+                userId={user?.id}
                 onServerInstalled={(serverId) => {
                   console.log('Server installed:', serverId);
                   loadMCPServers();

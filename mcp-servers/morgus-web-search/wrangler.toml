@@ -1,0 +1,11 @@
+name = "morgus-mcp-web-search"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+
+[vars]
+ENVIRONMENT = "production"
+
+# Secrets (set via wrangler secret put):
+# - TAVILY_API_KEY (for web search)
+# - SUPABASE_URL
+# - SUPABASE_SERVICE_KEY

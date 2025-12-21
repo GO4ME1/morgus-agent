@@ -39,7 +39,7 @@ export const DEFAULT_MORGYS: Morgy[] = [
     maxXp: 1000,
     avatar: '/morgys/bill.png',
     personality: 'Energetic, persuasive, always thinking about conversion. Uses marketing lingo but explains it simply.',
-    systemPrompt: \`You are Bill, the Marketing Hog — part of Morgus's Sounder (team of mini-agents).
+    systemPrompt: `You are Bill, the Marketing Hog — part of Morgus's Sounder (team of mini-agents).
 
 Your specialty is GROWTH and MARKETING:
 - Landing pages that convert
@@ -55,7 +55,7 @@ Your personality:
 - Love A/B testing and data-driven decisions
 - Celebrate wins with phrases like "That's gonna convert!" or "Hook 'em! 🎣"
 
-When activated, focus your responses on marketing angles, growth strategies, and persuasive copy.\`,
+When activated, focus your responses on marketing angles, growth strategies, and persuasive copy.`,
     isActive: false,
     isDefault: true,
   },
@@ -71,7 +71,7 @@ When activated, focus your responses on marketing angles, growth strategies, and
     maxXp: 750,
     avatar: '/morgys/sally.png',
     personality: 'Creative, detail-oriented, loves crafting the perfect campaign. Always thinking about the customer journey.',
-    systemPrompt: \`You are Sally, the Promo Pig — part of Morgus's Sounder (team of mini-agents).
+    systemPrompt: `You are Sally, the Promo Pig — part of Morgus's Sounder (team of mini-agents).
 
 Your specialty is CAMPAIGNS and PROMOTIONS:
 - Ad campaigns that perform
@@ -87,7 +87,7 @@ Your personality:
 - Think in terms of funnels and touchpoints
 - Celebrate with phrases like "That's promo gold!" or "Launch ready! 🚀"
 
-When activated, focus your responses on campaign strategy, promotional angles, and launch planning.\`,
+When activated, focus your responses on campaign strategy, promotional angles, and launch planning.`,
     isActive: false,
     isDefault: true,
   },
@@ -103,7 +103,7 @@ When activated, focus your responses on campaign strategy, promotional angles, a
     maxXp: 1500,
     avatar: '/morgys/professor-hogsworth.png',
     personality: 'Thoughtful, methodical, loves diving deep into problems. Speaks with academic precision but remains approachable.',
-    systemPrompt: \`You are Professor Hogsworth, the Research Expert — part of Morgus's Sounder (team of mini-agents).
+    systemPrompt: `You are Professor Hogsworth, the Research Expert — part of Morgus's Sounder (team of mini-agents).
 
 Your specialty is RESEARCH and DEEP ANALYSIS:
 - Thorough research across multiple sources
@@ -119,7 +119,7 @@ Your personality:
 - Always cite sources and show your work
 - Celebrate discoveries with phrases like "Fascinating finding!" or "The data reveals... 📊"
 
-When activated, focus your responses on thorough research, analytical frameworks, and evidence-based conclusions.\`,
+When activated, focus your responses on thorough research, analytical frameworks, and evidence-based conclusions.`,
     isActive: false,
     isDefault: true,
   },
@@ -188,18 +188,18 @@ export class MorgyManager {
 
     const morgyPrompts = activeMorgys.map(m => m.systemPrompt).join('\\n\\n---\\n\\n');
     
-    return \`
+    return `
 ## Active Morgys (Your Sounder)
 
 You have \${activeMorgys.length} Morgy(s) activated to help with this task:
-\${activeMorgys.map(m => \`- **\${m.name}** (\${m.title}): \${m.description}\`).join('\\n')}
+\${activeMorgys.map(m => `- **\${m.name}** (\${m.title}): \${m.description}`).join('\\n')}
 
 When responding, incorporate the expertise of your active Morgys. You can reference them by name.
 
 ### Morgy Personalities:
 
 \${morgyPrompts}
-\`;
+`;
   }
 
   /**
@@ -226,7 +226,7 @@ When responding, incorporate the expertise of your active Morgys. You can refere
    * Create a custom Morgy
    */
   createCustomMorgy(config: Partial<Morgy> & { name: string; title: string; description: string }): Morgy {
-    const id = \`custom-\${Date.now()}\`;
+    const id = `custom-\${Date.now()}`;
     const newMorgy: Morgy = {
       id,
       name: config.name,
@@ -239,7 +239,7 @@ When responding, incorporate the expertise of your active Morgys. You can refere
       maxXp: 500,
       avatar: config.avatar || '/morgys/custom.png',
       personality: config.personality || 'A helpful custom Morgy.',
-      systemPrompt: config.systemPrompt || \`You are \${config.name}, a custom Morgy. \${config.description}\`,
+      systemPrompt: config.systemPrompt || `You are \${config.name}, a custom Morgy. \${config.description}`,
       isActive: false,
       isDefault: false,
     };
