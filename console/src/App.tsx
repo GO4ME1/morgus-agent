@@ -13,6 +13,8 @@ import { SettingsPanel } from './components/SettingsPanel';
 import MorgyPen from './components/MorgyPen';
 import { MorgyAutocomplete } from './components/MorgyAutocomplete';
 import { DeepResearchPanel } from './components/DeepResearchPanel';
+import { runDeepResearch } from './lib/research-orchestrator';
+import type { ResearchSession, ResearchStep } from './lib/research-orchestrator';
 import './App.css';
 
 // Configure marked for inline rendering
@@ -86,8 +88,10 @@ function App() {
   const [activeMorgys, setActiveMorgys] = useState<string[]>([]);
   const [showMorgyAutocomplete, setShowMorgyAutocomplete] = useState(false);
   const [deepResearchMode, setDeepResearchMode] = useState(false);
-  const [currentResearchSessionId, _setCurrentResearchSessionId] = useState<string | null>(null);
+  const [currentResearchSessionId, setCurrentResearchSessionId] = useState<string | null>(null);
   const [showResearchPanel, setShowResearchPanel] = useState(false);
+  const [_researchSession, setResearchSession] = useState<ResearchSession | null>(null);
+  const [_researchSteps, setResearchSteps] = useState<ResearchStep[]>([]);
   const [dontTrainOnMe, setDontTrainOnMe] = useState(() => {
     const saved = localStorage.getItem('morgus_dont_train');
     return saved === 'true';
@@ -292,6 +296,82 @@ function App() {
     }
   };
 
+  // Helper function for normal MOE request (used when deep research is not needed)
+  const handleNormalMOERequest = async (userInput: string, filesToUpload: File[], statusMessageId: string) => {
+    try {
+      // Upload files if any
+      let fileUrls: string[] = [];
+      if (filesToUpload.length > 0) {
+        const formData = new FormData();
+        filesToUpload.forEach(file => formData.append('files', file));
+        
+        const uploadResponse = await fetch(`${API_URL}/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          fileUrls = uploadData.urls || [];
+        }
+      }
+      
+      // Use MOE endpoint for model competition
+      const response = await fetch(`${API_URL}/moe-chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userInput || (fileUrls.length > 0 ? 'Please analyze these files' : ''),
+          task_id: currentTaskId,
+          conversation_id: currentConversationId,
+          thought_id: currentThoughtId,
+          history: messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
+          files: fileUrls,
+          dont_train_on_me: dontTrainOnMe,
+          user_id: user?.id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === statusMessageId
+            ? {
+                ...msg,
+                content: data.message,
+                moeMetadata: data.moeMetadata,
+                isStreaming: false,
+              }
+            : msg
+        )
+      );
+      
+      if (autoSpeak && data.message) {
+        setTimeout(() => speakText(data.message), 100);
+      }
+
+      loadTasks();
+    } catch (error) {
+      console.error('Error:', error);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === statusMessageId
+            ? {
+                ...msg,
+                content: `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                isStreaming: false,
+              }
+            : msg
+        )
+      );
+    }
+  };
+
   const handleSend = async () => {
     if ((!input.trim() && uploadedFiles.length === 0) || isLoading) return;
 
@@ -315,96 +395,79 @@ function App() {
     const statusMessage: Message = {
       id: statusMessageId,
       role: 'assistant',
-      content: '🤖 Starting...',
+      content: deepResearchMode ? '🧠 Starting Deep Research...' : '🤖 Starting...',
       timestamp: new Date(),
       isStreaming: true,
     };
     setMessages((prev) => [...prev, statusMessage]);
 
-    try {
-      // Upload files if any
-      let fileUrls: string[] = [];
-      if (filesToUpload.length > 0) {
-        const formData = new FormData();
-        filesToUpload.forEach(file => formData.append('files', file));
+    // If Deep Research Mode is enabled, use the research orchestrator
+    if (deepResearchMode && user?.id) {
+      try {
+        setShowResearchPanel(true);
         
-        const uploadResponse = await fetch(`${API_URL}/upload`, {
-          method: 'POST',
-          body: formData,
-        });
-        
-        if (uploadResponse.ok) {
-          const uploadData = await uploadResponse.json();
-          fileUrls = uploadData.urls || [];
-          console.log('[FRONTEND] Upload response:', { fileCount: fileUrls.length, urlLengths: fileUrls.map(u => u.length) });
+        const result = await runDeepResearch(
+          user.id,
+          userInput,
+          `${API_URL}/moe-chat`, // API endpoint
+          '', // API key (handled by backend)
+          import.meta.env.VITE_OPENAI_API_KEY, // For RAG embeddings
+          (session, steps) => {
+            // Progress callback
+            setResearchSession(session);
+            setResearchSteps(steps);
+            setCurrentResearchSessionId(session.id);
+            
+            // Update status message with progress
+            const progress = session.completed_steps > 0 
+              ? `(${session.completed_steps}/${session.total_steps} steps)`
+              : '';
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === statusMessageId
+                  ? {
+                      ...msg,
+                      content: `🧠 Deep Research in progress ${progress}...`,
+                    }
+                  : msg
+              )
+            );
+          }
+        );
+
+        if (result) {
+          // Deep research completed successfully
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === statusMessageId
+                ? {
+                    ...msg,
+                    content: result.answer,
+                    isStreaming: false,
+                  }
+                : msg
+            )
+          );
+          setResearchSession(result.session);
         } else {
-          console.error('[FRONTEND] Upload failed:', uploadResponse.status, await uploadResponse.text());
+          // Deep research not needed or failed, fall back to normal MOE
+          await handleNormalMOERequest(userInput, filesToUpload, statusMessageId);
         }
+        
+        setIsLoading(false);
+        return;
+      } catch (error) {
+        console.error('Deep research error:', error);
+        // Fall back to normal MOE on error
+        await handleNormalMOERequest(userInput, filesToUpload, statusMessageId);
+        setIsLoading(false);
+        return;
       }
-
-      console.log('[FRONTEND] Sending to MOE with', fileUrls.length, 'files');
-      
-      // Use MOE endpoint for model competition
-      const response = await fetch(`${API_URL}/moe-chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userInput || (fileUrls.length > 0 ? 'Please analyze these files' : ''),
-          task_id: currentTaskId,
-          conversation_id: currentConversationId,
-          thought_id: currentThoughtId,
-          history: messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
-          files: fileUrls,
-          dont_train_on_me: dontTrainOnMe,
-          user_id: user?.id,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // MOE returns JSON response with competition results
-      const data = await response.json();
-      
-      // Update message with MOE response
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === statusMessageId
-            ? {
-                ...msg,
-                content: data.message,
-                moeMetadata: data.moeMetadata, // Store MOE competition data
-                isStreaming: false,
-              }
-            : msg
-        )
-      );
-      
-      // Auto-speak if enabled
-      if (autoSpeak && data.message) {
-        setTimeout(() => {
-          speakText(data.message);
-        }, 100);
-      }
-
-      setIsLoading(false);
-      loadTasks();
-    } catch (error) {
-      console.error('Error:', error);
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === statusMessageId
-            ? {
-                ...msg,
-                content: `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                isStreaming: false,
-              }
-            : msg
-        )
-      );
-      setIsLoading(false);
     }
+
+    // Normal MOE request flow
+    await handleNormalMOERequest(userInput, filesToUpload, statusMessageId);
+    setIsLoading(false);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
