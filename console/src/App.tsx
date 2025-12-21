@@ -12,6 +12,7 @@ import { BrowserView } from './components/BrowserView';
 import { SettingsPanel } from './components/SettingsPanel';
 import MorgyPen from './components/MorgyPen';
 import { MorgyAutocomplete } from './components/MorgyAutocomplete';
+import { DeepResearchPanel } from './components/DeepResearchPanel';
 import './App.css';
 
 // Configure marked for inline rendering
@@ -84,6 +85,9 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [activeMorgys, setActiveMorgys] = useState<string[]>([]);
   const [showMorgyAutocomplete, setShowMorgyAutocomplete] = useState(false);
+  const [deepResearchMode, setDeepResearchMode] = useState(false);
+  const [currentResearchSessionId, _setCurrentResearchSessionId] = useState<string | null>(null);
+  const [showResearchPanel, setShowResearchPanel] = useState(false);
   const [dontTrainOnMe, setDontTrainOnMe] = useState(() => {
     const saved = localStorage.getItem('morgus_dont_train');
     return saved === 'true';
@@ -935,6 +939,19 @@ function App() {
               style={{ display: 'none' }}
             />
             <button
+              className={`deep-research-toggle ${deepResearchMode ? 'active' : ''}`}
+              onClick={() => {
+                setDeepResearchMode(!deepResearchMode);
+                if (!deepResearchMode) {
+                  setShowResearchPanel(true);
+                }
+              }}
+              disabled={isLoading}
+              title={deepResearchMode ? 'Deep Research Mode ON - Click to disable' : 'Enable Deep Research Mode'}
+            >
+              🧠
+            </button>
+            <button
               className="attach-button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isLoading}
@@ -1044,6 +1061,13 @@ function App() {
           // Insert the @ mention into the chat input
           setInput(prev => prev ? `${prev} ${handle} ` : `${handle} `);
         }}
+      />
+
+      {/* Deep Research Panel */}
+      <DeepResearchPanel
+        sessionId={currentResearchSessionId}
+        isActive={showResearchPanel}
+        onClose={() => setShowResearchPanel(false)}
       />
 
       {/* Settings Panel */}
