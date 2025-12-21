@@ -97,7 +97,7 @@ export function MCPServerBrowser({ userId, onServerInstalled, onServerUninstalle
       const { data, error } = await supabase
         .from('mcp_server_categories')
         .select('name')
-        .order('display_order');
+        .order('sort_order');
 
       if (error) throw error;
       setCategories(['all', ...(data?.map(c => c.name) || [])]);
