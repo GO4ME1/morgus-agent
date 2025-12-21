@@ -830,3 +830,104 @@
   background: rgba(0, 136, 170, 0.1);
   border-color: #0088aa;
 }
+
+:root:not(.dark) .account-btn.admin:hover {
+  background: rgba(184, 134, 11, 0.1);
+  border-color: #b8860b;
+}
+
+/* Fix form inputs in light mode */
+:root:not(.dark) .add-server-form input {
+  background: #fff;
+  border-color: #ddd;
+  color: #333;
+}
+
+:root:not(.dark) .add-server-form input:focus {
+  border-color: #0088aa;
+}
+
+/* Fix toggle switch in light mode */
+:root:not(.dark) .toggle-switch .slider {
+  background-color: #ccc;
+}
+
+/* Fix plan badge in light mode */
+:root:not(.dark) .plan-badge {
+  background: #e0e0e0;
+  color: #333;
+}
+
+/* Fix bulk actions in light mode */
+:root:not(.dark) .bulk-actions button {
+  background: #fff;
+  color: #333;
+  border-color: #ddd;
+}
+
+:root:not(.dark) .bulk-actions button:hover {
+  background: #f0f0f0;
+  border-color: #0088aa;
+}
+
+/* Fix empty state in light mode */
+:root:not(.dark) .empty-state {
+  color: #666;
+}
+
+/* Fix mcp info text in light mode */
+:root:not(.dark) .mcp-info p {
+  color: #555;
+}
+
+/* Fix skills header text in light mode */
+:root:not(.dark) .skills-header p {
+  color: #555;
+}
+
+/* Manual Server Section */
+.manual-server-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.manual-server-section h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+  color: var(--text-primary, #fff);
+}
+
+.manual-hint {
+  font-size: 0.8rem;
+  opacity: 0.6;
+  margin: 0 0 1rem 0;
+  color: var(--text-secondary, #888);
+}
+
+.custom-servers-section {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.custom-servers-section h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  color: var(--text-primary, #fff);
+}
+
+/* Light mode overrides for manual section */
+:root:not(.dark) .manual-server-section,
+:root:not(.dark) .custom-servers-section {
+  border-top-color: rgba(0, 0, 0, 0.1);
+}
+
+:root:not(.dark) .manual-server-section h4,
+:root:not(.dark) .custom-servers-section h4 {
+  color: #1a1a2e;
+}
+
+:root:not(.dark) .manual-hint {
+  color: #666;
+}

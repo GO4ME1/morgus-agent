@@ -1,5 +1,5 @@
 // Login Page for Morgus
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import './Auth.css';
@@ -31,8 +31,8 @@ export function Login() {
           errorMessage = 'Invalid email or password. Please try again.';
         } else if (errorMessage.includes('Email not confirmed')) {
           errorMessage = 'Please check your email and confirm your account before signing in.';
-        } else if (errorMessage.includes('timed out')) {
-          errorMessage = 'Connection timed out. Please check your internet connection and try again.';
+        } else if (errorMessage.includes('fetch') || errorMessage.includes('network')) {
+          errorMessage = 'Network error. Please check your connection and try again.';
         }
         setError(errorMessage);
         setLoading(false);

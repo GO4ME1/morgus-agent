@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import './SettingsPanel.css';
+import { MCPServerBrowser } from './MCPServerBrowser';
+import './MCPServerBrowser.css';
 
 interface MCPServer {
   id: string;
@@ -364,68 +366,80 @@ export function SettingsPanel({ isOpen, onClose, darkMode, onDarkModeChange, don
 
           {activeTab === 'mcp' && (
             <div className="mcp-settings">
-              <div className="mcp-info">
-                <p>Connect to MCP (Model Context Protocol) servers to extend Morgus with custom tools and integrations.</p>
+              <MCPServerBrowser 
+                userId={user?.email ? undefined : undefined}
+                onServerInstalled={(serverId) => {
+                  console.log('Server installed:', serverId);
+                  loadMCPServers();
+                }}
+                onServerUninstalled={(serverId) => {
+                  console.log('Server uninstalled:', serverId);
+                  loadMCPServers();
+                }}
+              />
+              
+              {/* Manual Server Addition (Advanced) */}
+              <div className="manual-server-section">
+                <h4>🔧 Add Custom Server</h4>
+                <p className="manual-hint">For advanced users: manually connect to a custom MCP server</p>
+                <div className="add-server-form">
+                  <input
+                    type="text"
+                    placeholder="Server Name (e.g., My Database)"
+                    value={newServerName}
+                    onChange={(e) => setNewServerName(e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Server URL (e.g., http://localhost:3000)"
+                    value={newServerUrl}
+                    onChange={(e) => setNewServerUrl(e.target.value)}
+                  />
+                  <button 
+                    onClick={addMCPServer}
+                    disabled={isAddingServer || !newServerUrl || !newServerName}
+                  >
+                    {isAddingServer ? 'Connecting...' : '+ Add Server'}
+                  </button>
+                </div>
               </div>
 
-              <div className="add-server-form">
-                <input
-                  type="text"
-                  placeholder="Server Name (e.g., My Database)"
-                  value={newServerName}
-                  onChange={(e) => setNewServerName(e.target.value)}
-                />
-                <input
-                  type="text"
-                  placeholder="Server URL (e.g., http://localhost:3000)"
-                  value={newServerUrl}
-                  onChange={(e) => setNewServerUrl(e.target.value)}
-                />
-                <button 
-                  onClick={addMCPServer}
-                  disabled={isAddingServer || !newServerUrl || !newServerName}
-                >
-                  {isAddingServer ? 'Connecting...' : '+ Add Server'}
-                </button>
-              </div>
-
-              <div className="servers-list">
-                {mcpServers.length === 0 ? (
-                  <div className="empty-state">
-                    <p>No MCP servers connected yet.</p>
-                    <p className="hint">Add a server above to extend Morgus's capabilities.</p>
+              {/* Custom Servers List */}
+              {mcpServers.length > 0 && (
+                <div className="custom-servers-section">
+                  <h4>📦 Custom Servers</h4>
+                  <div className="servers-list">
+                    {mcpServers.map(server => (
+                      <div key={server.id} className={`server-item ${server.status}`}>
+                        <div className="server-info">
+                          <span className="server-name">{server.name}</span>
+                          <span className="server-url">{server.url}</span>
+                          <span className={`status-badge ${server.status}`}>
+                            {server.status === 'connected' ? '🟢 Connected' : 
+                             server.status === 'error' ? '🔴 Error' : '⚪ Disconnected'}
+                          </span>
+                        </div>
+                        <div className="server-actions">
+                          <label className="toggle-switch">
+                            <input 
+                              type="checkbox" 
+                              checked={server.enabled}
+                              onChange={() => toggleMCPServer(server.id)}
+                            />
+                            <span className="slider"></span>
+                          </label>
+                          <button 
+                            className="remove-btn"
+                            onClick={() => removeMCPServer(server.id)}
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ) : (
-                  mcpServers.map(server => (
-                    <div key={server.id} className={`server-item ${server.status}`}>
-                      <div className="server-info">
-                        <span className="server-name">{server.name}</span>
-                        <span className="server-url">{server.url}</span>
-                        <span className={`status-badge ${server.status}`}>
-                          {server.status === 'connected' ? '🟢 Connected' : 
-                           server.status === 'error' ? '🔴 Error' : '⚪ Disconnected'}
-                        </span>
-                      </div>
-                      <div className="server-actions">
-                        <label className="toggle-switch">
-                          <input 
-                            type="checkbox" 
-                            checked={server.enabled}
-                            onChange={() => toggleMCPServer(server.id)}
-                          />
-                          <span className="slider"></span>
-                        </label>
-                        <button 
-                          className="remove-btn"
-                          onClick={() => removeMCPServer(server.id)}
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                </div>
+              )}
             </div>
           )}
 
