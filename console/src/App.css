@@ -1940,3 +1940,141 @@ button {
   font-size: 12px;
   line-height: 1.4;
 }
+
+/* MCP Tools Indicator */
+.mcp-tools-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  font-size: 16px;
+  background: linear-gradient(135deg, rgba(0, 255, 128, 0.2), rgba(0, 255, 255, 0.2));
+  border-radius: 8px;
+  margin-right: 4px;
+  cursor: help;
+  animation: mcpPulse 2s ease-in-out infinite;
+}
+
+@keyframes mcpPulse {
+  0%, 100% { 
+    box-shadow: 0 0 5px rgba(0, 255, 128, 0.3);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 15px rgba(0, 255, 128, 0.6);
+    transform: scale(1.05);
+  }
+}
+
+/* MCP Tool Calls Display */
+.mcp-tool-calls {
+  background: linear-gradient(135deg, rgba(0, 100, 200, 0.1), rgba(0, 200, 150, 0.1));
+  border: 1px solid rgba(0, 150, 200, 0.3);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.tool-calls-header {
+  font-weight: 600;
+  color: #0066cc;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.tool-call {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  border-left: 3px solid #ccc;
+  transition: all 0.3s ease;
+}
+
+.tool-call.executing {
+  border-left-color: #ffa500;
+  background: rgba(255, 165, 0, 0.1);
+  animation: toolExecuting 1s ease-in-out infinite;
+}
+
+@keyframes toolExecuting {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.tool-call.success {
+  border-left-color: #00cc66;
+  background: rgba(0, 204, 102, 0.1);
+}
+
+.tool-call.error {
+  border-left-color: #cc3333;
+  background: rgba(204, 51, 51, 0.1);
+}
+
+.tool-call-name {
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 12px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tool-call-result {
+  margin-top: 8px;
+}
+
+.tool-call-result summary {
+  cursor: pointer;
+  color: #0066cc;
+  font-size: 12px;
+  user-select: none;
+}
+
+.tool-call-result summary:hover {
+  text-decoration: underline;
+}
+
+.tool-call-result pre {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  font-size: 11px;
+  overflow-x: auto;
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Dark mode support for MCP */
+@media (prefers-color-scheme: dark) {
+  .mcp-tool-calls {
+    background: linear-gradient(135deg, rgba(0, 100, 200, 0.2), rgba(0, 200, 150, 0.2));
+    border-color: rgba(0, 150, 200, 0.5);
+  }
+  
+  .tool-calls-header {
+    color: #66ccff;
+  }
+  
+  .tool-call {
+    background: rgba(30, 30, 40, 0.8);
+  }
+  
+  .tool-call-name {
+    color: #e0e0e0;
+  }
+  
+  .tool-call-result summary {
+    color: #66ccff;
+  }
+  
+  .tool-call-result pre {
+    background: rgba(0, 0, 0, 0.3);
+    color: #e0e0e0;
+  }
+}

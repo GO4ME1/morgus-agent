@@ -15,6 +15,8 @@ import { MorgyAutocomplete } from './components/MorgyAutocomplete';
 import { DeepResearchPanel } from './components/DeepResearchPanel';
 import { runDeepResearch } from './lib/research-orchestrator';
 import type { ResearchSession, ResearchStep } from './lib/research-orchestrator';
+import { getMCPClient } from './lib/mcp-client';
+import type { MCPClient, MCPToolResult } from './lib/mcp-client';
 import './App.css';
 
 // Configure marked for inline rendering
@@ -49,6 +51,13 @@ interface Message {
     totalLatency: number;
     totalCost: number;
   };
+  toolCalls?: {
+    server: string;
+    tool: string;
+    arguments: Record<string, unknown>;
+    result?: MCPToolResult;
+    isExecuting?: boolean;
+  }[];
 }
 
 interface Task {
@@ -92,6 +101,8 @@ function App() {
   const [showResearchPanel, setShowResearchPanel] = useState(false);
   const [_researchSession, setResearchSession] = useState<ResearchSession | null>(null);
   const [_researchSteps, setResearchSteps] = useState<ResearchStep[]>([]);
+  const [mcpClient, setMcpClient] = useState<MCPClient | null>(null);
+  const [mcpToolsAvailable, setMcpToolsAvailable] = useState(false);
   const [dontTrainOnMe, setDontTrainOnMe] = useState(() => {
     const saved = localStorage.getItem('morgus_dont_train');
     return saved === 'true';
@@ -138,6 +149,27 @@ function App() {
   useEffect(() => {
     loadTasks();
   }, []);
+
+  // Initialize MCP client when user is authenticated
+  useEffect(() => {
+    const initMCP = async () => {
+      if (user) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            const client = await getMCPClient(user.id, session.access_token);
+            setMcpClient(client);
+            const tools = client.getAvailableTools();
+            setMcpToolsAvailable(tools.length > 0);
+            console.log(`[MCP] Initialized with ${tools.length} tools available`);
+          }
+        } catch (err) {
+          console.error('[MCP] Failed to initialize:', err);
+        }
+      }
+    };
+    initMCP();
+  }, [user]);
 
   // Poll audio playing state
   useEffect(() => {
@@ -315,6 +347,13 @@ function App() {
           fileUrls = uploadData.urls || [];
         }
       }
+
+      // Get MCP tools system prompt if available
+      let mcpToolsPrompt = '';
+      if (mcpClient && mcpToolsAvailable) {
+        mcpToolsPrompt = mcpClient.getToolsForPrompt();
+        console.log('[MCP] Adding tools to system prompt:', mcpToolsPrompt.substring(0, 200) + '...');
+      }
       
       // Use MOE endpoint for model competition
       const response = await fetch(`${API_URL}/moe-chat`, {
@@ -329,6 +368,7 @@ function App() {
           files: fileUrls,
           dont_train_on_me: dontTrainOnMe,
           user_id: user?.id,
+          mcp_tools_prompt: mcpToolsPrompt, // Include MCP tools in system prompt
         }),
       });
 
@@ -337,22 +377,108 @@ function App() {
       }
 
       const data = await response.json();
+      let finalContent = data.message;
+      let toolCalls: NonNullable<Message['toolCalls']> = [];
+
+      // Check if the LLM response contains MCP tool calls
+      if (mcpClient && data.message) {
+        const parsedCalls = mcpClient.parseToolCalls(data.message);
+        
+        if (parsedCalls.length > 0) {
+          console.log('[MCP] Found tool calls:', parsedCalls);
+          
+          // Update message to show tool execution
+          toolCalls = parsedCalls.map(call => ({
+            server: call.serverName,
+            tool: call.toolName,
+            arguments: call.arguments,
+            isExecuting: true,
+          }));
+          
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === statusMessageId
+                ? {
+                    ...msg,
+                    content: '🔧 Executing MCP tools...',
+                    toolCalls,
+                  }
+                : msg
+            )
+          );
+
+          // Execute each tool call
+          const toolResults: MCPToolResult[] = [];
+          for (let i = 0; i < parsedCalls.length; i++) {
+            const call = parsedCalls[i];
+            console.log(`[MCP] Executing ${call.serverName}/${call.toolName}...`);
+            
+            const result = await mcpClient.callTool(call);
+            toolResults.push(result);
+            
+            // Update the specific tool call with its result
+            toolCalls = toolCalls.map((tc, idx) =>
+              idx === i ? { ...tc, result, isExecuting: false } : tc
+            );
+            
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === statusMessageId
+                  ? { ...msg, toolCalls: [...toolCalls] }
+                  : msg
+              )
+            );
+          }
+
+          // Send tool results back to LLM for synthesis
+          const toolResultsText = toolResults.map((r, i) => {
+            const call = parsedCalls[i];
+            if (r.success) {
+              return `Tool ${call.serverName}/${call.toolName} returned:\n${JSON.stringify(r.content, null, 2)}`;
+            } else {
+              return `Tool ${call.serverName}/${call.toolName} failed: ${r.error}`;
+            }
+          }).join('\n\n');
+
+          // Make a follow-up request with tool results
+          const synthesisResponse = await fetch(`${API_URL}/moe-chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: `Based on the following tool results, please provide a helpful response to the user's original question: "${userInput}"\n\n${toolResultsText}`,
+              task_id: currentTaskId,
+              conversation_id: currentConversationId,
+              thought_id: currentThoughtId,
+              history: messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
+              dont_train_on_me: dontTrainOnMe,
+              user_id: user?.id,
+              is_tool_synthesis: true, // Flag to skip tool prompt in synthesis
+            }),
+          });
+
+          if (synthesisResponse.ok) {
+            const synthesisData = await synthesisResponse.json();
+            finalContent = synthesisData.message;
+          }
+        }
+      }
       
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === statusMessageId
             ? {
                 ...msg,
-                content: data.message,
+                content: finalContent,
                 moeMetadata: data.moeMetadata,
+                toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
                 isStreaming: false,
               }
             : msg
         )
       );
       
-      if (autoSpeak && data.message) {
-        setTimeout(() => speakText(data.message), 100);
+      if (autoSpeak && finalContent) {
+        setTimeout(() => speakText(finalContent), 100);
       }
 
       loadTasks();
@@ -754,6 +880,26 @@ function App() {
                 {message.moeMetadata && (
                   <MOEHeader metadata={message.moeMetadata} />
                 )}
+                {/* MCP Tool Calls Display */}
+                {message.toolCalls && message.toolCalls.length > 0 && (
+                  <div className="mcp-tool-calls">
+                    <div className="tool-calls-header">🔌 MCP Tools Used</div>
+                    {message.toolCalls.map((tc, i) => (
+                      <div key={i} className={`tool-call ${tc.isExecuting ? 'executing' : tc.result?.success ? 'success' : 'error'}`}>
+                        <div className="tool-call-name">
+                          {tc.isExecuting ? '⏳' : tc.result?.success ? '✅' : '❌'}
+                          {tc.server}/{tc.tool}
+                        </div>
+                        {tc.result && !tc.isExecuting && (
+                          <details className="tool-call-result">
+                            <summary>{tc.result.success ? 'View Result' : 'View Error'}</summary>
+                            <pre>{JSON.stringify(tc.result.content || tc.result.error, null, 2)}</pre>
+                          </details>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className="message-text">
                   <div dangerouslySetInnerHTML={{ __html: marked.parse(message.content) }} />
                   {message.attachments && message.attachments.length > 0 && (
@@ -1014,6 +1160,14 @@ function App() {
             >
               🧠
             </button>
+            {mcpToolsAvailable && (
+              <span
+                className="mcp-tools-indicator"
+                title={`MCP Tools Active: ${mcpClient?.getAvailableTools().length || 0} tools available`}
+              >
+                🔌
+              </span>
+            )}
             <button
               className="attach-button"
               onClick={() => fileInputRef.current?.click()}

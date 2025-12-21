@@ -33,6 +33,10 @@ interface ChatMessage {
   stream?: boolean;
   history?: Array<{role: string, content: string}>;
   files?: string[]; // Base64 data URLs for images/PDFs
+  mcp_tools_prompt?: string; // MCP tools system prompt to include
+  is_tool_synthesis?: boolean; // Flag to skip MCP tools in synthesis requests
+  user_id?: string;
+  dont_train_on_me?: boolean;
 }
 
 export default {
@@ -432,7 +436,19 @@ export default {
             console.log('[MOE-CHAT] Enhanced message length:', userMessage.length);
           }
           
-          const messages = (body.history || []).concat([{
+          // Build messages array with optional MCP tools system prompt
+          let messages: Array<{role: string, content: string}> = [];
+          
+          // Add MCP tools system prompt if available and not a synthesis request
+          if (body.mcp_tools_prompt && !body.is_tool_synthesis) {
+            messages.push({
+              role: 'system',
+              content: `You are Morgus, an intelligent AI assistant. You have access to MCP (Model Context Protocol) tools that extend your capabilities.${body.mcp_tools_prompt}`
+            });
+            console.log('[MOE-CHAT] Added MCP tools to system prompt');
+          }
+          
+          messages = messages.concat(body.history || []).concat([{
             role: 'user',
             content: userMessage
           }]);
