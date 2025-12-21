@@ -28,9 +28,9 @@ interface MCPServer {
 interface MCPServerInstall {
   id: string;
   server_id: string;
-  enabled: boolean;
+  is_enabled: boolean;
   config: Record<string, unknown>;
-  status: string;
+  health_status: string;
   last_health_check?: string;
   created_at: string;
 }
@@ -127,9 +127,9 @@ export function MCPServerBrowser({ userId, onServerInstalled, onServerUninstalle
         .insert({
           user_id: userId,
           server_id: server.id,
-          enabled: true,
+          is_enabled: true,
           config: server.install_config_template || {},
-          status: 'pending'
+          health_status: 'pending'
         });
 
       if (error) throw error;
@@ -176,7 +176,7 @@ export function MCPServerBrowser({ userId, onServerInstalled, onServerUninstalle
     try {
       const { error } = await supabase
         .from('mcp_server_installs')
-        .update({ enabled })
+        .update({ is_enabled: enabled })
         .eq('user_id', userId)
         .eq('server_id', serverId);
 
@@ -392,7 +392,7 @@ export function MCPServerBrowser({ userId, onServerInstalled, onServerUninstalle
               {installedServerDetails.map(server => {
                 const install = installedServers.find(i => i.server_id === server.id);
                 return (
-                  <div key={server.id} className={`installed-item ${install?.enabled ? 'enabled' : 'disabled'}`}>
+                  <div key={server.id} className={`installed-item ${install?.is_enabled ? 'enabled' : 'disabled'}`}>
                     <div className="installed-icon">
                       {server.icon_url ? (
                         <img src={server.icon_url} alt={server.display_name} />
@@ -404,9 +404,9 @@ export function MCPServerBrowser({ userId, onServerInstalled, onServerUninstalle
                       <h4>{server.display_name}</h4>
                       <p>{server.description}</p>
                       <div className="installed-meta">
-                        <span className={`status ${install?.status}`}>
-                          {install?.status === 'connected' ? '🟢' : install?.status === 'error' ? '🔴' : '🟡'} 
-                          {install?.status || 'pending'}
+                        <span className={`status ${install?.health_status}`}>
+                          {install?.health_status === 'connected' ? '🟢' : install?.health_status === 'error' ? '🔴' : '🟡'} 
+                          {install?.health_status || 'pending'}
                         </span>
                         <span className="version">v{server.version}</span>
                       </div>
@@ -415,7 +415,7 @@ export function MCPServerBrowser({ userId, onServerInstalled, onServerUninstalle
                       <label className="toggle-switch">
                         <input 
                           type="checkbox" 
-                          checked={install?.enabled || false}
+                          checked={install?.is_enabled || false}
                           onChange={(e) => toggleServerEnabled(server.id, e.target.checked)}
                         />
                         <span className="slider"></span>
