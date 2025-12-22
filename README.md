@@ -148,12 +148,33 @@ GITHUB_TOKEN=ghp_...
 
 1. Clone the repository
 2. Set up environment variables
-3. Initialize Supabase database schema
+3. Initialize Supabase database schema (see below)
 4. Build Docker sandbox image
 5. Start orchestrator service
 6. Deploy console to Cloudflare Pages
 
 Detailed setup instructions are in the [Installation Guide](docs/installation.md).
+
+### Database Migrations
+
+Morgus V2 requires several database migrations to set up the memory system. Apply these migrations in order:
+
+1. **Monetization Schema** (`worker/database/monetization-schema.sql`)
+   - Day passes, promo codes, Morgy companions, and billing tables
+
+2. **Memory System** (`worker/database/002_memory_system.sql`)
+   - Experiences, workflows, knowledge docs, notebooks, and Morgy training tables
+
+**To apply a migration:**
+1. Go to your Supabase project SQL Editor: `https://supabase.com/dashboard/project/YOUR_PROJECT_ID/sql/new`
+2. Copy the contents of the migration file
+3. Paste into the SQL Editor
+4. Click "Run"
+
+**Note:** The `002_memory_system.sql` migration includes:
+- Vector embeddings for RAG (requires pgvector extension)
+- Row-level security policies
+- Helper functions for knowledge search and Morgy training
 
 ## Usage
 
