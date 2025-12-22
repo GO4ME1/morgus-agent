@@ -3,7 +3,7 @@ import { marked } from 'marked';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { useAuth } from './lib/auth';
-import { ThoughtsPanel } from './components/ThoughtsPanel';
+import { NotebooksPanel } from './components/NotebooksPanel';
 import { VoiceInput, speakText, stopSpeaking } from './components/VoiceInput';
 import { MOEHeader } from './components/MOEHeader';
 import { MOELeaderboard } from './components/MOELeaderboard';
@@ -778,11 +778,10 @@ function App() {
           </button>
         </div>
 
-        <ThoughtsPanel
-          currentThoughtId={currentThoughtId}
-          onThoughtChange={setCurrentThoughtId}
-          onThoughtCreate={() => {
-            // Will be handled by ThoughtsPanel internally
+        <NotebooksPanel
+          userId={user?.id || null}
+          onNotebookSelect={(notebookId) => {
+            console.log('Notebook selected:', notebookId);
           }}
         />
 
