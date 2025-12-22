@@ -19,12 +19,25 @@ Morgus is designed to **deliver results** – producing running applications or 
 
 ## Architecture
 
-The system consists of several modular components:
+Morgus V2 is built on a **four-block architecture** that provides a robust and scalable framework for autonomous agent systems. This architecture is inspired by academic research on advanced AI agents and consists of four interconnected blocks: **Perception**, **Reasoning**, **Memory**, and **Execution**.
 
-### LLM Orchestrator
-The core controller that leverages a large language model to drive the task workflow. It interprets user goals, breaks them into sub-tasks, and executes them autonomously using chain-of-thought reasoning.
+### The Four-Block Model
 
-### Tool System
+| Architectural Block | Morgus Implementation |
+| :--- | :--- |
+| **Perception** | Browser interaction tools (Browserbase), screenshot analysis, HTML/DOM parsing, and API integration. |
+| **Reasoning** | Mixture-of-Experts (MOE) model for high-level planning, the DPPM (Decompose, Plan in Parallel, Merge) workflow, and the reflection mechanism. |
+| **Memory** | Supabase for long-term memory (RAG, workflow memory, user profiles, NotebookLM-generated notebooks) and a smart context window for short-term memory. |
+| **Execution** | The full suite of tools available to Morgus, including the code sandbox, browser, social media APIs, and GitHub integration. |
+
+For a detailed explanation of the architecture, see [MORGUS_ARCHITECTURE.md](MORGUS_ARCHITECTURE.md).
+
+### Core Components
+
+#### LLM Orchestrator
+The core controller that leverages a large language model to drive the task workflow. It interprets user goals, breaks them into sub-tasks using the DPPM (Decompose, Plan in Parallel, Merge) workflow, and executes them autonomously.
+
+#### Tool System
 A comprehensive set of callable functions that allow the AI to perform actions:
 - **File System**: read, write, modify, list files
 - **Shell Execution**: run commands with safety controls
@@ -32,28 +45,43 @@ A comprehensive set of callable functions that allow the AI to perform actions:
 - **Web Search**: fetch information from the internet
 - **Cloudflare Deploy**: publish to Pages/Workers
 - **Supabase**: database operations and backend functions
+- **NotebookLM**: structured knowledge synthesis and diagram generation
 - **User Interaction**: notifications and queries
 
-### Sandbox Environment
+#### Sandbox Environment
 Docker-based isolated execution environment with:
 - Pre-installed runtimes (Node.js, Python, etc.)
 - Security controls (command whitelisting, file access restrictions)
 - Resource limits (CPU, memory, disk, timeout)
 - Network filtering for safe external access
 
-### Model Router
+#### Model Router
 Abstraction layer that routes requests to different AI models based on task requirements, supporting multiple providers and specialized models for different phases.
 
-### Memory and Knowledge Base
+#### Memory and Knowledge Base
 - **Short-term memory**: Current task context and conversation
 - **Long-term memory**: Supabase PostgreSQL with pgvector for embeddings
+- **Notebooks**: NotebookLM-generated structured knowledge with diagrams and infographics
+- **Workflows**: Reusable procedures learned from past tasks
+- **Experiences**: Trajectories and reflections from completed tasks
 - **Task history**: Complete audit trail of all actions and decisions
 
-### Web Console
+#### Multi-Agent System (Morgys)
+Specialized AI agents ("Morgys") that work alongside the main Morgus agent:
+- **Bill**: Marketing & Distribution Expert
+- **Sally**: Promotions & Influencer Outreach Expert
+- **Dev Morgy**: Coding & DevOps Expert
+- **Research Morgy**: Deep Research & RAG Expert
+
+Each Morgy can be trained on specific notebooks to enhance their domain expertise.
+
+#### Web Console
 React-based dashboard hosted on Cloudflare Pages featuring:
 - Task submission and monitoring
 - Real-time progress updates
 - Phase timeline visualization
+- Notebooks viewer with interactive diagrams
+- Morgy Pen for agent management
 - Artifact and output display
 - User interaction interface
 
