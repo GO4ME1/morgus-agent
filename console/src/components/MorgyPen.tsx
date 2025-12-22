@@ -23,6 +23,7 @@ interface MorgyPenProps {
   onActivateMorgy: (morgyId: string) => void;
   onDeactivateMorgy: (morgyId: string) => void;
   onMentionMorgy?: (handle: string, fullName: string) => void;
+  onClose?: () => void;
 }
 
 const DEFAULT_MORGYS: Morgy[] = [
@@ -78,7 +79,8 @@ const MorgyPen: React.FC<MorgyPenProps> = ({
   activeMorgys, 
   onActivateMorgy,
   onDeactivateMorgy,
-  onMentionMorgy
+  onMentionMorgy,
+  onClose
 }) => {
   const [morgys] = useState<Morgy[]>(DEFAULT_MORGYS);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -111,6 +113,11 @@ const MorgyPen: React.FC<MorgyPenProps> = ({
       <div className="morgy-pen-header">
         <span className="morgy-pen-icon">🐷</span>
         <span className="morgy-pen-title">Morgy Pen</span>
+        {onClose && (
+          <button className="morgy-pen-close" onClick={onClose} aria-label="Close">
+            ×
+          </button>
+        )}
         <span className="morgy-pen-menu">⋮</span>
       </div>
 

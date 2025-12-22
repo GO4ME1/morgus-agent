@@ -424,3 +424,84 @@
 .morgy-grid::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 255, 255, 0.5);
 }
+
+/* Close Button */
+.morgy-pen-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 28px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+  margin-right: 8px;
+}
+
+.morgy-pen-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .morgy-pen {
+    width: 100%;
+    z-index: 1001;
+    border-right: none;
+  }
+
+  .morgy-pen-header {
+    padding: 14px 16px;
+  }
+
+  .morgy-pen-close {
+    width: 44px;
+    height: 44px;
+    font-size: 32px;
+  }
+
+  .morgy-pen-menu {
+    display: none;
+  }
+
+  .morgy-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .morgy-card {
+    padding: 14px;
+  }
+
+  .morgy-card-header {
+    gap: 10px;
+  }
+
+  .morgy-avatar {
+    width: 50px;
+    height: 50px;
+  }
+
+  .morgy-name {
+    font-size: 16px;
+  }
+
+  .morgy-title {
+    font-size: 12px;
+  }
+
+  .morgy-specialty {
+    font-size: 12px;
+  }
+
+  .morgy-tools {
+    font-size: 11px;
+  }
+}

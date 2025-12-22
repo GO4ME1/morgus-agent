@@ -2135,6 +2135,29 @@ button {
 
 /* Enhanced Mobile Styles */
 @media (max-width: 768px) {
+  /* Hide desktop-only elements on mobile */
+  .model-rankings-button,
+  .status-indicator,
+  .dark-mode-toggle,
+  .training-toggle-mini {
+    display: none !important;
+  }
+
+  /* Mobile header - simplified */
+  .chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px !important;
+    gap: 8px;
+  }
+
+  .chat-header h2 {
+    font-size: 16px !important;
+    flex: 1;
+    text-align: center;
+    margin: 0 !important;
+  }
   /* Header and Logo */
   .sidebar-header {
     padding: 12px 16px;

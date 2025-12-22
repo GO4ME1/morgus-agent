@@ -1291,6 +1291,7 @@ function App() {
           // Insert the @ mention into the chat input
           setInput(prev => prev ? `${prev} ${handle} ` : `${handle} `);
         }}
+        onClose={() => setShowSidebar(true)}
       />
 
       {/* Deep Research Panel */}
