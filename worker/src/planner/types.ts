@@ -2,7 +2,7 @@
  * Type definitions for the DPPM (Decompose, Plan in Parallel, Merge) workflow
  */
 
-export type MorgyType = 'research' | 'dev' | 'bill' | 'sally' | 'main';
+export type ModelType = 'gpt-4o-mini' | 'claude-3-haiku' | 'gemini-pro-1.5' | 'mistral-7b' | 'deepseek-r1t2' | 'kat-coder-pro' | 'auto';
 export type Complexity = 'low' | 'medium' | 'high';
 export type Likelihood = 'low' | 'medium' | 'high';
 export type Impact = 'low' | 'medium' | 'high';
@@ -14,7 +14,7 @@ export interface Subtask {
   id: string;
   title: string;
   description: string;
-  assignedMorgy: MorgyType;
+  assignedModel: ModelType;
   estimatedComplexity: Complexity;
   dependencies: string[]; // IDs of subtasks that must complete first
 }
@@ -46,7 +46,7 @@ export interface AlternativeApproach {
 
 export interface MiniPlan {
   subtaskId: string;
-  morgy: string;
+  model: string;
   approach: string;
   steps: PlanStep[];
   estimatedDuration: number; // minutes

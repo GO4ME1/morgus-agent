@@ -5,12 +5,12 @@
  * that can be planned independently by specialized Morgys.
  */
 
-import type { DecomposedTask, Subtask, Dependency, MorgyType, Complexity } from './types';
+import type { DecomposedTask, Subtask, Dependency, ModelType, Complexity } from './types';
 
 export interface DecomposeOptions {
   maxSubtasks?: number; // Default: 7
   minSubtasks?: number; // Default: 3
-  preferredMorgys?: MorgyType[];
+  preferredModels?: ModelType[];
 }
 
 /**
@@ -40,11 +40,13 @@ export async function decompose(
 function buildDecomposePrompt(goal: string, minSubtasks: number, maxSubtasks: number): string {
   return `You are Morgus, an advanced AI agent with a team of specialized Morgy assistants. You need to decompose a complex goal into ${minSubtasks}-${maxSubtasks} manageable subtasks.
 
-**Your Team:**
-- **Research Morgy**: Deep research, competitor analysis, data gathering, RAG queries
-- **Dev Morgy**: Coding, DevOps, deployment, technical implementation
-- **Bill Morgy**: Marketing, copywriting, branding, design
-- **Sally Morgy**: Promotions, influencer outreach, social media, distribution
+**Your MOE (Mixture of Experts) Models:**
+- **GPT-4o Mini**: Fast, general-purpose, good at reasoning and planning
+- **Claude 3 Haiku**: Excellent at analysis, writing, and following instructions
+- **Gemini Pro 1.5**: Strong at research, data processing, and multi-modal tasks
+- **Mistral 7B**: Fast, efficient, good at code and technical tasks
+- **DeepSeek R1T2**: Specialized in deep reasoning and complex problem-solving
+- **KAT-Coder-Pro**: Optimized for coding and development tasks
 
 **Goal:** ${goal}
 
@@ -53,7 +55,7 @@ function buildDecomposePrompt(goal: string, minSubtasks: number, maxSubtasks: nu
 2. Each subtask should be:
    - Independent enough to be planned separately
    - Specific and actionable
-   - Assigned to the most appropriate Morgy
+   - Assigned to the most appropriate model from your MOE
 3. Identify dependencies between subtasks
 4. Estimate complexity for each subtask (low/medium/high)
 
@@ -65,7 +67,7 @@ function buildDecomposePrompt(goal: string, minSubtasks: number, maxSubtasks: nu
       "id": "subtask-1",
       "title": "Brief title",
       "description": "Detailed description of what needs to be done",
-      "assignedMorgy": "research|dev|bill|sally|main",
+      "assignedModel": "gpt-4o-mini|claude-3-haiku|gemini-pro-1.5|mistral-7b|deepseek-r1t2|kat-coder-pro|auto",
       "estimatedComplexity": "low|medium|high",
       "dependencies": []
     }
@@ -82,7 +84,7 @@ function buildDecomposePrompt(goal: string, minSubtasks: number, maxSubtasks: nu
 Think step-by-step:
 1. What are the major components of this goal?
 2. What needs to happen first? (dependencies)
-3. Which Morgy is best suited for each component?
+3. Which model is best suited for each component?
 4. How complex is each subtask?
 
 Now decompose the goal:`;
@@ -260,19 +262,19 @@ export function getExecutionOrder(decomposed: DecomposedTask): string[][] {
 }
 
 /**
- * Get subtasks by Morgy type
+ * Get subtasks by model type
  */
-export function getSubtasksByMorgy(decomposed: DecomposedTask): Map<MorgyType, Subtask[]> {
-  const byMorgy = new Map<MorgyType, Subtask[]>();
+export function getSubtasksByModel(decomposed: DecomposedTask): Map<ModelType, Subtask[]> {
+  const byModel = new Map<ModelType, Subtask[]>();
   
   for (const subtask of decomposed.subtasks) {
-    if (!byMorgy.has(subtask.assignedMorgy)) {
-      byMorgy.set(subtask.assignedMorgy, []);
+    if (!byModel.has(subtask.assignedModel)) {
+      byModel.set(subtask.assignedModel, []);
     }
-    byMorgy.get(subtask.assignedMorgy)!.push(subtask);
+    byModel.get(subtask.assignedModel)!.push(subtask);
   }
   
-  return byMorgy;
+  return byModel;
 }
 
 /**

@@ -17,7 +17,7 @@ The **Decompose, Plan in Parallel, Merge (DPPM)** workflow is an advanced planni
 ┌───────────────────┐
 │   DECOMPOSE       │  Break down into 3-7 subtasks
 │   Main Planner    │  Identify dependencies
-└─────────┬─────────┘  Assign to specialists
+└─────────┬─────────┘  Assign to best MOE model
           │
           ├──────────┬──────────┬──────────┐
           ▼          ▼          ▼          ▼
@@ -29,7 +29,7 @@ The **Decompose, Plan in Parallel, Merge (DPPM)** workflow is an advanced planni
          ▼           ▼           ▼           ▼
     ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
     │  PLAN   │ │  PLAN   │ │  PLAN   │ │  PLAN   │
-    │ (Morgy) │ │ (Morgy) │ │ (Morgy) │ │ (Morgy) │
+    │  (MOE)  │ │  (MOE)  │ │  (MOE)  │ │  (MOE)  │
     └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘
          │           │           │           │
          └───────────┴───────────┴───────────┘
@@ -81,7 +81,7 @@ interface Subtask {
   id: string;
   title: string;
   description: string;
-  assignedMorgy: 'research' | 'dev' | 'bill' | 'sally' | 'main';
+  assignedModel: 'gpt-4o-mini' | 'claude-3-haiku' | 'gemini-pro-1.5' | 'mistral-7b' | 'deepseek-r1t2' | 'kat-coder-pro' | 'auto';
   estimatedComplexity: 'low' | 'medium' | 'high';
   dependencies: string[]; // IDs of subtasks that must complete first
 }
@@ -96,22 +96,22 @@ interface Dependency {
 **Goal:** "Build and launch a landing page for my AI startup"
 
 **Decomposed Subtasks:**
-1. **Research & Strategy** (Research Morgy)
+1. **Research & Strategy** (Gemini Pro 1.5)
    - Analyze competitor landing pages
    - Identify key messaging points
    - Define target audience
 
-2. **Design & Copywriting** (Bill Morgy)
+2. **Design & Copywriting** (Claude 3 Haiku)
    - Create wireframe and design mockup
    - Write compelling copy
    - Design call-to-action elements
 
-3. **Development** (Dev Morgy)
+3. **Development** (KAT-Coder-Pro)
    - Build responsive HTML/CSS/JS
    - Integrate analytics
    - Optimize for performance
 
-4. **Deployment & Distribution** (Sally Morgy)
+4. **Deployment & Distribution** (GPT-4o Mini)
    - Deploy to Cloudflare Pages
    - Set up custom domain
    - Submit to directories
@@ -136,7 +136,7 @@ Generate detailed mini-plans for each subtask simultaneously, leveraging special
 ```typescript
 interface MiniPlan {
   subtaskId: string;
-  morgy: string;
+  model: string;
   approach: string;
   steps: PlanStep[];
   estimatedDuration: number; // minutes
@@ -161,13 +161,13 @@ interface AlternativeApproach {
 ```
 
 ### Example
-**Subtask:** "Development" (Dev Morgy)
+**Subtask:** "Development" (KAT-Coder-Pro)
 
 **Mini-Plan:**
 ```json
 {
   "subtaskId": "dev-001",
-  "morgy": "dev",
+  "model": "kat-coder-pro",
   "approach": "Use Vite + React + TailwindCSS for fast development",
   "steps": [
     {
@@ -428,23 +428,19 @@ CREATE TABLE workflows (
 ## Integration with Morgus
 
 ### 1. Planner Module
-**File:** `worker/src/planner/dppm.ts`
+**File:** `worker/src/planner/### `dppm.ts`
 
 Implements the DPPM workflow:
-- `decompose(goal: string): DecomposedTask`
-- `planInParallel(subtasks: Subtask[]): MiniPlan[]`
-- `merge(miniPlans: MiniPlan[]): MergedPlan`
-- `preFlightReflection(plan: MergedPlan): PreFlightReflection`
-- `execute(plan: MergedPlan): ExecutionResult`
-- `postExecutionReflection(result: ExecutionResult): PostExecutionReflection`
+- `decompose(goal: string, llmCall, options)` - Decompose a goal into subtasks
+- `planInParallel(subtasks, context, llmCall)` - Plan all subtasks in parallel
+- `mergePlans(miniPlans, subtasks, goal, executionOrder)` - Merge mini-plans into unified plan
+- `preFlightReflection(plan, llmCall)` - "Devil's Advocate" risk analysis
+- `postExecutionReflection(plan, result, llmCall)` - Learn from execution ### MOE Router
+**File:** `worker/src/moe/service.ts`
 
-### 2. Morgy Router
-**File:** `worker/src/morgys/router.ts`
-
-Routes subtasks to appropriate Morgys:
-- `routeSubtask(subtask: Subtask): string` - Returns Morgy ID
-- `callMorgy(morgyId: string, subtask: Subtask): MiniPlan` - Invokes Morgy for planning
-
+Routes subtasks to appropriate models:
+- `decompose` function assigns the best model for each subtask
+- `planInParallel` calls the assigned model for planning
 ### 3. Experience Store
 **File:** `worker/src/memory/experience-store.ts`
 
@@ -456,12 +452,12 @@ Manages experiences and workflows:
 
 ## Benefits of DPPM
 
-1. **Better Plans**: Multiple perspectives lead to more robust solutions
+1. **Better Plans**: Multiple model perspectives lead to more robust solutions
 2. **Faster Planning**: Parallel planning reduces time to first action
 3. **Graceful Failure Recovery**: Pre-flight reflection catches issues early
 4. **Continuous Learning**: Post-execution reflection builds knowledge over time
 5. **Reusable Patterns**: Successful plans become workflows for future use
-6. **Specialized Expertise**: Morgys focus on their strengths
+6. **Specialized Expertise**: MOE models focus on their strengths
 
 ## Next Steps
 

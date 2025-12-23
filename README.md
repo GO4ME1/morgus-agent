@@ -210,7 +210,7 @@ For detailed implementation notes, see [PHASE_1_COMPLETE.md](PHASE_1_COMPLETE.md
 
 **Status:** Complete (awaiting database migration and integration)
 
-Phase 2 implements the Decompose, Plan in Parallel, Merge (DPPM) workflow with reflection mechanisms for continuous learning.
+Phase 2 implements the Decompose, Plan in Parallel, Merge (DPPM) workflow with reflection mechanisms for continuous learning. This has been refactored to use your MOE (Mixture of Experts) system with 6 models instead of the Morgy concept.
 
 **Completed:**
 - ✅ DPPM workflow specification ([DPPM_SPECIFICATION.md](DPPM_SPECIFICATION.md))
@@ -223,12 +223,12 @@ Phase 2 implements the Decompose, Plan in Parallel, Merge (DPPM) workflow with r
 **Remaining Tasks:**
 1. Apply database migration (same as Phase 1)
 2. Integrate DPPM into main orchestrator
-3. Implement Morgy-specific system prompts
+3. Implement MOE-specific system prompts
 4. Test with real tasks
 
 **Key Features:**
 - **Intelligent Decomposition**: Breaks complex goals into 3-7 manageable subtasks
-- **Parallel Planning**: Leverages specialized Morgy expertise simultaneously
+- **Parallel Planning**: Leverages specialized MOE models simultaneously
 - **Risk Mitigation**: "Devil's Advocate" pre-flight reflection identifies and patches vulnerabilities
 - **Continuous Learning**: Post-execution reflection captures lessons learned
 - **Workflow Reuse**: Successful plans are saved as reusable workflows

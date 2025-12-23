@@ -42,10 +42,10 @@ export async function planInParallel(
 async function planSubtask(
   subtask: Subtask,
   context: PlanningContext,
-  llmCall: (prompt: string, morgy: string) => Promise<string>
+  llmCall: (prompt: string, model: string) => Promise<string>
 ): Promise<MiniPlan> {
   const prompt = buildPlanningPrompt(subtask, context);
-  const response = await llmCall(prompt, subtask.assignedMorgy);
+  const response = await llmCall(prompt, subtask.assignedModel);
   
   return parsePlanningResponse(response, subtask);
 }
@@ -54,17 +54,19 @@ async function planSubtask(
  * Build the planning prompt for a subtask
  */
 function buildPlanningPrompt(subtask: Subtask, context: PlanningContext): string {
-  const morgyPersonalities: Record<string, string> = {
-    research: `You are Research Morgy, an expert in deep research, competitor analysis, and data gathering. You excel at finding information, analyzing trends, and synthesizing insights.`,
-    dev: `You are Dev Morgy, a coding and DevOps expert. You excel at building applications, writing clean code, deploying services, and solving technical challenges.`,
-    bill: `You are Bill Morgy, a marketing and branding expert. You excel at copywriting, design, creating compelling narratives, and building brand identity.`,
-    sally: `You are Sally Morgy, a promotions and distribution expert. You excel at social media marketing, influencer outreach, viral campaigns, and getting products in front of audiences.`,
-    main: `You are the Main Morgus planner, a generalist who can handle any task with expertise across all domains.`
+  const modelCapabilities: Record<string, string> = {
+    'gpt-4o-mini': `You are using GPT-4o Mini, a fast and capable model excellent at reasoning, planning, and general-purpose tasks. You excel at breaking down problems and creating structured plans.`,
+    'claude-3-haiku': `You are using Claude 3 Haiku, a model with exceptional analytical and writing capabilities. You excel at following instructions precisely, analyzing complex information, and producing clear, well-structured outputs.`,
+    'gemini-pro-1.5': `You are using Gemini Pro 1.5, a powerful model strong at research, data processing, and multi-modal understanding. You excel at gathering information, synthesizing insights, and handling complex data.`,
+    'mistral-7b': `You are using Mistral 7B, a fast and efficient model particularly good at code generation and technical tasks. You excel at writing clean, efficient code and solving technical challenges.`,
+    'deepseek-r1t2': `You are using DeepSeek R1T2, a model specialized in deep reasoning and complex problem-solving. You excel at analyzing intricate problems and devising sophisticated solutions.`,
+    'kat-coder-pro': `You are using KAT-Coder-Pro, a model optimized specifically for coding and development tasks. You excel at software development, debugging, and technical implementation.`,
+    'auto': `You are using the MOE system's automatic model selection. You have access to all model capabilities and will leverage the best approach for this task.`
   };
   
-  const personality = morgyPersonalities[subtask.assignedMorgy] || morgyPersonalities.main;
+  const capability = modelCapabilities[subtask.assignedModel] || modelCapabilities['auto'];
   
-  return `${personality}
+  return `${capability}
 
 **Overall Goal:** ${context.goal}
 
@@ -143,8 +145,8 @@ function parsePlanningResponse(response: string, subtask: Subtask): MiniPlan {
     const parsed = JSON.parse(jsonStr.trim());
     
     return {
-      subtaskId: subtask.id,
-      morgy: subtask.assignedMorgy,
+    subtaskId: subtask.id,
+    model: subtask.assignedModel,
       approach: parsed.approach || '',
       steps: parsed.steps || [],
       estimatedDuration: parsed.estimatedDuration || 30,

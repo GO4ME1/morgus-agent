@@ -154,19 +154,19 @@ Complete usage guide for the DPPM module:
 ┌───────────────────┐
 │   DECOMPOSE       │  Break down into 3-7 subtasks
 │   Main Planner    │  Identify dependencies
-└─────────┬─────────┘  Assign to specialists
+└─────────┬─────────┘  Assign to best MOE model
           │
           ├──────────┬──────────┬──────────┐
           ▼          ▼          ▼          ▼
     ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
-    │ Research│ │   Dev   │ │  Bill   │ │  Sally  │
-    │  Morgy  │ │  Morgy  │ │  Morgy  │ │  Morgy  │
+    │ Subtask │ │ Subtask │ │ Subtask │ │ Subtask │
+    │    1    │ │    2    │ │    3    │ │    4    │
     └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘
          │           │           │           │
          ▼           ▼           ▼           ▼
     ┌─────────────────────────────────────────────┐
     │          PLAN IN PARALLEL                    │
-    │   Each Morgy creates detailed mini-plan      │
+    │   Each subtask routed to best MOE model      │
     └─────────────────┬───────────────────────────┘
                       │
                       ▼
@@ -198,29 +198,28 @@ Complete usage guide for the DPPM module:
             │   (Optional)      │  save for reuse
             └───────────────────┘
 ```
-
-## Example Workflow
+### Example Workflow
 
 **Goal:** "Build and launch a landing page for my AI startup"
 
 ### Decompose Phase
 ```
-Subtask 1: Research & Strategy (Research Morgy)
+Subtask 1: Research & Strategy (Gemini Pro 1.5)
   - Analyze competitor landing pages
   - Identify key messaging points
   - Define target audience
 
-Subtask 2: Design & Copywriting (Bill Morgy)
+Subtask 2: Design & Copywriting (Claude 3 Haiku)
   - Create wireframe and design mockup
   - Write compelling copy
   - Design call-to-action elements
 
-Subtask 3: Development (Dev Morgy)
+Subtask 3: Development (KAT-Coder-Pro)
   - Build responsive HTML/CSS/JS
   - Integrate analytics
   - Optimize for performance
 
-Subtask 4: Deployment & Distribution (Sally Morgy)
+Subtask 4: Deployment & Distribution (GPT-4o Mini)
   - Deploy to Cloudflare Pages
   - Set up custom domain
   - Submit to directories
@@ -229,7 +228,7 @@ Dependencies: 1 → 2 → 3 → 4
 ```
 
 ### Plan in Parallel Phase
-Each Morgy creates a detailed mini-plan with steps, tools, risks, and alternatives.
+Each subtask is routed to the best MOE model, which creates a detailed mini-plan.
 
 ### Merge Phase
 ```
@@ -277,12 +276,12 @@ Workflow Candidate: Yes
 
 ## Benefits of DPPM
 
-1. **Better Plans**: Multiple Morgy perspectives lead to more robust solutions
+1. **Better Plans**: Multiple model perspectives lead to more robust solutions
 2. **Faster Planning**: Parallel planning reduces time to first action
 3. **Graceful Failure Recovery**: Pre-flight reflection catches issues early
 4. **Continuous Learning**: Post-execution reflection builds knowledge over time
 5. **Reusable Patterns**: Successful plans become workflows for future use
-6. **Specialized Expertise**: Morgys focus on their strengths
+6. **Specialized Expertise**: MOE models focus on their strengths
 7. **Adaptive Execution**: Fallback strategies enable recovery from failures
 8. **Knowledge Compounding**: Each task makes Morgus smarter
 
@@ -343,12 +342,14 @@ Replace the existing planner with DPPM in the main Morgus agent loop.
 - Replace planning logic with `executeDPPM`
 - Add reflection after execution
 
-### 3. Implement Morgy-Specific System Prompts
-Create specialized system prompts for each Morgy type to enhance their expertise:
-- Research Morgy: Deep research, data analysis, competitor analysis
-- Dev Morgy: Coding, DevOps, technical implementation
-- Bill Morgy: Marketing, copywriting, branding
-- Sally Morgy: Promotions, influencer outreach, distribution
+### 3. Implement MOE-Specific System Prompts
+Create specialized system prompts for each model to enhance their expertise:
+- GPT-4o Mini: General-purpose reasoning and planning
+- Claude 3 Haiku: Analysis, writing, and instruction following
+- Gemini Pro 1.5: Research, data processing, and multi-modal tasks
+- Mistral 7B: Code generation and technical tasks
+- DeepSeek R1T2: Deep reasoning and complex problem-solving
+- KAT-Coder-Pro: Coding and development tasks and software development
 
 ### 4. Test with Real Tasks
 Run DPPM on real-world tasks:
