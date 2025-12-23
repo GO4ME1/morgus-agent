@@ -2389,7 +2389,7 @@ button {
   }
 }
 
-/* Mobile Styles - Fixed Header and Input Overlap */
+/* Mobile Styles - Comprehensive Compact Design */
 @media (max-width: 768px) {
   .sidebar {
     position: fixed;
@@ -2407,55 +2407,142 @@ button {
 
   .sidebar-toggle {
     display: block !important;
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-    padding: 0;
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 18px !important;
+    padding: 0 !important;
   }
 
   .main-content {
     width: 100%;
   }
 
-  /* --- Header Fix --- */
+  /* --- Compact Header --- */
   .chat-header {
-    padding: 12px 16px; /* Reduced padding */
-    flex-wrap: wrap; /* Allow items to wrap */
-    align-items: center;
-    gap: 8px;
+    padding: 8px 12px !important;
+    min-height: 50px !important;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+  }
+
+  .logo, .logo-container {
+    gap: 6px !important;
+  }
+
+  .logo img {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .logo h1,
+  .logo-text {
+    font-size: 14px !important;
+    margin: 0 !important;
   }
 
   .chat-header h2 {
-    font-size: 18px; /* Reduced font size */
-    flex: 1; /* Allow title to take remaining space */
-    order: 1; /* Place title second */
-    margin-bottom: 0;
+    font-size: 14px !important;
+    margin: 0 !important;
   }
 
+  /* Hide Model Rankings on mobile */
   .moe-leaderboard-box {
-    order: 3; /* Place leaderboard third, below the title */
-    width: 100%; /* Take full width */
-    margin-top: 8px; /* Separate from the title/toggle row */
-    padding: 6px 8px;
+    display: none !important;
   }
 
-  /* --- Chat Area Fix --- */
-  .chat-messages, .messages-container {
-    padding: 16px;
-    gap: 12px;
+  /* Hide unnecessary header buttons */
+  .header-actions button:not(.settings-btn):not(.sidebar-toggle) {
+    display: none !important;
+  }
+
+  .settings-btn {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 18px !important;
+    padding: 0 !important;
+  }
+
+  /* --- Compact Messages --- */
+  .chat-messages,
+  .messages-container {
+    padding: 12px !important;
+    gap: 10px !important;
   }
 
   .message {
-    max-width: 95%;
+    max-width: 85% !important;
+    padding: 10px 12px !important;
+    font-size: 14px !important;
+    margin: 6px 0 !important;
   }
 
-  /* --- Input Area Fix --- */
-  .chat-input-container, .input-container {
-    padding: 12px 16px 16px; /* Reduced padding */
+  .message-content {
+    font-size: 14px !important;
+    line-height: 1.4 !important;
   }
 
-  .chat-input-wrapper, .input-wrapper {
-    max-width: 100%;
-    padding: 4px; /* Reduced padding */
+  .message-content p {
+    font-size: 14px !important;
+    margin: 6px 0 !important;
+  }
+
+  .message-avatar {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 14px !important;
+  }
+
+  /* --- Compact Input Area --- */
+  .chat-input-container,
+  .input-container {
+    padding: 8px 12px 12px !important;
+    background: var(--bg-primary) !important;
+  }
+
+  .chat-input-wrapper,
+  .input-wrapper {
+    max-width: 100% !important;
+    padding: 6px !important;
+    gap: 6px !important;
+  }
+
+  .input-wrapper input,
+  .input-wrapper textarea {
+    font-size: 15px !important;
+    padding: 8px 10px !important;
+    min-height: 38px !important;
+  }
+
+  .input-wrapper button {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 16px !important;
+    padding: 0 !important;
+  }
+
+  .input-wrapper button svg,
+  .input-wrapper button img {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  /* Send button */
+  .send-btn,
+  button[type="submit"] {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 18px !important;
+  }
+
+  /* File upload button */
+  .file-upload-btn {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  /* Voice input button */
+  .voice-btn {
+    width: 36px !important;
+    height: 36px !important;
   }
 }

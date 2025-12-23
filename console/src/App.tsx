@@ -86,7 +86,7 @@ function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showSidebar, setShowSidebar] = useState(window.innerWidth > 768);
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
-  const [currentThoughtId, setCurrentThoughtId] = useState<string | null>(null);
+  const [currentThoughtId] = useState<string | null>(null);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isListening, setIsListening] = useState(false);
