@@ -82,3 +82,40 @@
   width: fit-content;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
+@media (max-width: 768px) {
+  .moe-leaderboard-box {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 8px;
+    width: 100%;
+    border-radius: 0; /* Full width on mobile */
+    margin: 0;
+  }
+
+  .leaderboard-title {
+    margin-bottom: 4px;
+    font-size: 0.9rem;
+  }
+
+  .leaderboard-grid {
+    width: 100%;
+    overflow-x: auto; /* Enable horizontal scroll for the grid */
+    white-space: nowrap; /* Prevent wrapping of the rows */
+    padding-bottom: 8px; /* Space for scrollbar */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  }
+
+  .leaderboard-row {
+    display: inline-flex; /* Keep rows inline for horizontal scroll */
+    flex-shrink: 0; /* Prevent rows from shrinking */
+    padding: 8px 12px;
+  }
+
+  .model-name-short {
+    font-size: 0.8rem;
+  }
+
+  .win-rate-badge {
+    font-size: 0.7rem;
+  }
+}

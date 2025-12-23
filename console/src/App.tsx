@@ -84,7 +84,7 @@ function App() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(window.innerWidth > 768);
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const [currentThoughtId, setCurrentThoughtId] = useState<string | null>(null);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
@@ -95,6 +95,13 @@ function App() {
   const [currentTool] = useState<string | undefined>(); // TODO: Track tool usage from backend
   const [darkMode, setDarkMode] = useState(false); // Default to light mode
   const [showSettings, setShowSettings] = useState(false);
+
+  // Close sidebar on mobile when navigating
+  useEffect(() => {
+    if (window.innerWidth <= 768 && showSidebar) {
+      setShowSidebar(false);
+    }
+  }, [location.pathname]);
   const [activeMorgys, setActiveMorgys] = useState<string[]>([]);
   const [showMorgyAutocomplete, setShowMorgyAutocomplete] = useState(false);
   const [deepResearchMode, setDeepResearchMode] = useState(false);
@@ -740,7 +747,7 @@ function App() {
   return (
     <div className={`app ${darkMode ? 'dark-mode' : 'light-mode'}`}>
       {/* Sidebar */}
-      <div className={`sidebar ${showSidebar ? 'show' : 'hide'}`}>
+      <div className={`sidebar ${showSidebar ? 'open' : ''}`}>
         <div className="sidebar-header">
           <div className="logo">
             <div className="logo-icon">M</div>
@@ -837,9 +844,15 @@ function App() {
       {/* Main Content */}
       <div className="main-content">
         <div className="chat-header">
-          <button className="sidebar-toggle" onClick={() => setShowSidebar(!showSidebar)}>
-            ☰
+          <button 
+            className="sidebar-toggle" 
+            onClick={() => setShowSidebar(!showSidebar)}
+            aria-label="Toggle Sidebar"
+          >
+            {showSidebar ? '✕' : '☰'}
           </button>
+          
+          
           <h2>Morgus AI Agent</h2>
           <MOELeaderboard />
           <button 

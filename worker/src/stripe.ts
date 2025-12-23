@@ -267,6 +267,7 @@ export class StripeService {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24);
 
+      // Update profiles table
       await fetch(
         `${this.supabaseUrl}/rest/v1/profiles?id=eq.${userId}`,
         {
@@ -282,6 +283,29 @@ export class StripeService {
             subscription_tier: 'daily',
             subscription_started_at: new Date().toISOString(),
             subscription_ends_at: expiresAt.toISOString(),
+            day_pass_balance: 1,
+            day_pass_expires_at: expiresAt.toISOString(),
+          }),
+        }
+      );
+
+      // Create subscription record
+      await fetch(
+        `${this.supabaseUrl}/rest/v1/subscriptions`,
+        {
+          method: 'POST',
+          headers: {
+            'apikey': this.supabaseKey,
+            'Authorization': `Bearer ${this.supabaseKey}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal',
+          },
+          body: JSON.stringify({
+            user_id: userId,
+            plan_id: planId,
+            status: 'active',
+            started_at: new Date().toISOString(),
+            expires_at: expiresAt.toISOString(),
           }),
         }
       );
@@ -309,8 +333,9 @@ export class StripeService {
     if (priceAmount >= 7000) tier = 'monthly';
     else if (priceAmount <= 500) tier = 'daily';
 
-    const status = subscription.status === 'active' ? tier : 'cancelled';
+    const status = subscription.status === 'active' ? 'active' : subscription.status;
 
+    // Update profiles table
     await fetch(
       `${this.supabaseUrl}/rest/v1/profiles?id=eq.${userId}`,
       {
@@ -330,6 +355,31 @@ export class StripeService {
         }),
       }
     );
+
+    // Upsert subscription record
+    await fetch(
+      `${this.supabaseUrl}/rest/v1/subscriptions`,
+      {
+        method: 'POST',
+        headers: {
+          'apikey': this.supabaseKey,
+          'Authorization': `Bearer ${this.supabaseKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates',
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          plan_id: tier,
+          status: status,
+          stripe_subscription_id: subscription.id,
+          stripe_customer_id: customerId,
+          started_at: new Date(subscription.start_date * 1000).toISOString(),
+          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+          expires_at: new Date(subscription.current_period_end * 1000).toISOString(),
+        }),
+      }
+    );
   }
 
   private async handleSubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
@@ -339,6 +389,7 @@ export class StripeService {
 
     if (!userId) return;
 
+    // Update profiles table
     await fetch(
       `${this.supabaseUrl}/rest/v1/profiles?id=eq.${userId}`,
       {
@@ -352,6 +403,24 @@ export class StripeService {
         body: JSON.stringify({
           subscription_status: 'cancelled',
           stripe_subscription_id: null,
+        }),
+      }
+    );
+
+    // Update subscription record
+    await fetch(
+      `${this.supabaseUrl}/rest/v1/subscriptions?stripe_subscription_id=eq.${subscription.id}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'apikey': this.supabaseKey,
+          'Authorization': `Bearer ${this.supabaseKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify({
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
         }),
       }
     );

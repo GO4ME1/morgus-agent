@@ -15,13 +15,12 @@ const corsHeaders = {
 interface PromoCode {
   id: string;
   code: string;
-  reward_type: 'day_pass' | 'morgy' | 'skin' | 'discount';
-  reward_value: number;
+  type: 'day_pass' | 'discount' | 'trial';
+  value: number;
   max_uses: number;
   uses_count: number;
-  max_uses_per_user: number;
-  starts_at: string;
-  expires_at: string | null;
+  valid_from: string;
+  valid_until: string | null;
   is_active: boolean;
   description: string | null;
 }
