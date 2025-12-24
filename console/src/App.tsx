@@ -85,6 +85,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showSidebar, setShowSidebar] = useState(window.innerWidth > 768);
+  const [showMorgyPen, setShowMorgyPen] = useState(false);
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const [currentThoughtId] = useState<string | null>(null);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
@@ -846,10 +847,16 @@ function App() {
         <div className="chat-header">
           <button 
             className="sidebar-toggle" 
-            onClick={() => setShowSidebar(!showSidebar)}
-            aria-label="Toggle Sidebar"
+            onClick={() => {
+              if (window.innerWidth <= 768) {
+                setShowMorgyPen(!showMorgyPen);
+              } else {
+                setShowSidebar(!showSidebar);
+              }
+            }}
+            aria-label="Toggle Menu"
           >
-            {showSidebar ? '✕' : '☰'}
+            {(window.innerWidth <= 768 ? showMorgyPen : showSidebar) ? '✕' : '☰'}
           </button>
           
           
@@ -1283,7 +1290,7 @@ function App() {
 
       {/* Morgy Pen - shows when sidebar is collapsed */}
       <MorgyPen
-        isVisible={!showSidebar}
+        isVisible={showMorgyPen}
         onActivateMorgy={(id) => setActiveMorgys(prev => [...prev, id])}
         onDeactivateMorgy={(id) => setActiveMorgys(prev => prev.filter(m => m !== id))}
         activeMorgys={activeMorgys}
@@ -1291,7 +1298,7 @@ function App() {
           // Insert the @ mention into the chat input
           setInput(prev => prev ? `${prev} ${handle} ` : `${handle} `);
         }}
-        onClose={() => setShowSidebar(true)}
+        onClose={() => setShowMorgyPen(false)}
       />
 
       {/* Deep Research Panel */}
