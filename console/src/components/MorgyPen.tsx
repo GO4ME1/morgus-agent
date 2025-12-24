@@ -113,12 +113,9 @@ const MorgyPen: React.FC<MorgyPenProps> = ({
       <div className="morgy-pen-header">
         <span className="morgy-pen-icon">🐷</span>
         <span className="morgy-pen-title">Morgy Pen</span>
-        {onClose && (
-          <button className="morgy-pen-close" onClick={onClose} aria-label="Close">
-            ×
-          </button>
-        )}
-        <span className="morgy-pen-menu">⋮</span>
+        <button className="morgy-pen-close" onClick={onClose || (() => {})} aria-label="Close">
+          ×
+        </button>
       </div>
 
       {/* How to Call Section */}
