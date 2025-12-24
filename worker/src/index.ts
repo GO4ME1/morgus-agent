@@ -194,6 +194,12 @@ export default {
         });
       }
       
+      // Sandbox monitoring API routing
+      if (path.startsWith('/api/sandbox')) {
+        const { handleSandboxMonitoring } = await import('./sandbox/monitoring-api');
+        return handleSandboxMonitoring(request, env);
+      }
+      
       // Stats API routing
       if (path.startsWith('/api/stats')) {
         const { handleStatsAPI } = await import('./stats-api');

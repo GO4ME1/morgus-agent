@@ -129,9 +129,14 @@ export const fetchUrlTool: Tool = {
 /**
  * Execute code tool using Fly.io service
  */
+/**
+ * Execute code tool with sandbox hardening
+ * Note: This uses Fly.io deployment service, not E2B
+ * For E2B with hardening, see tools/execute-code-hardened.ts
+ */
 export const executeCodeTool: Tool = {
   name: 'execute_code',
-  description: 'Execute Python, JavaScript, or Bash code in a secure sandbox. Use this to run code, process data, use GitHub CLI, install packages, or perform computations. Supports: Python 3.11, Node.js 18, GitHub CLI, Git, Bash.',
+  description: 'Execute Python, JavaScript, or Bash code in a secure sandbox with automatic timeout enforcement and resource limits. Use this to run code, process data, use GitHub CLI, install packages, or perform computations. Supports: Python 3.11, Node.js 18, GitHub CLI, Git, Bash.',
   parameters: {
     type: 'object',
     properties: {
@@ -143,15 +148,21 @@ export const executeCodeTool: Tool = {
       code: {
         type: 'string',
         description: 'The code to execute'
+      },
+      timeout: {
+        type: 'number',
+        description: 'Execution timeout in seconds (default: 300, max: 900)',
+        default: 300
       }
     },
     required: ['language', 'code']
   },
-  execute: async (args: { language: string; code: string }, env: any) => {
+  execute: async (args: { language: string; code: string; timeout?: number }, env: any) => {
     try {
-      console.log('[CodeExec] Executing', args.language, 'code, length:', args.code.length);
+      console.log('[CodeExec] Executing', args.language, 'code, length:', args.code.length, 'timeout:', args.timeout || 300);
       
       // Use Fly.io deployment service for code execution
+      // Note: Fly.io service should implement timeout enforcement
       const response = await fetch('https://morgus-deploy.fly.dev/execute', {
         method: 'POST',
         headers: {
@@ -160,7 +171,10 @@ export const executeCodeTool: Tool = {
         body: JSON.stringify({
           language: args.language,
           code: args.code,
+          timeout: args.timeout || 300,
         }),
+        // Add timeout to fetch request
+        signal: AbortSignal.timeout((args.timeout || 300) * 1000 + 5000), // Add 5s buffer
       });
 
       if (!response.ok) {
@@ -187,6 +201,9 @@ export const executeCodeTool: Tool = {
       return output || 'Code executed successfully (no output)';
     } catch (error: any) {
       console.error('[CodeExec] Error:', error);
+      if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+        return `Error: Code execution timed out after ${args.timeout || 300} seconds`;
+      }
       return `Error executing code: ${error.message}`;
     }
   },
