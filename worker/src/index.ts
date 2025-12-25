@@ -217,47 +217,58 @@ export default {
             created_at: record.created_at,
           }));
           
-          // Send email alert via Resend (if configured)
-          const resendApiKey = (env as any).RESEND_API_KEY;
-          if (resendApiKey) {
-            try {
-              const emailResponse = await fetch('https://api.resend.com/emails', {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${resendApiKey}`,
-                  'Content-Type': 'application/json',
+          // Send email alert via Cloudflare MailChannels (free with Cloudflare Workers)
+          try {
+            const emailResponse = await fetch('https://api.mailchannels.net/tx/v1/send', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                personalizations: [
+                  {
+                    to: [{ email: 'lawyers@themorgus.com', name: 'Morgus Team' }],
+                  },
+                ],
+                from: {
+                  email: 'alerts@themorgus.com',
+                  name: 'Morgus Alerts',
                 },
-                body: JSON.stringify({
-                  from: 'Morgus Alerts <alerts@morgus.ai>',
-                  to: ['lawyers@go4me.ai'],
-                  subject: `[${(record.severity || 'ALERT').toUpperCase()}] Webhook Failure: ${record.event_type || 'Unknown Event'}`,
-                  html: `
-                    <h2>🚨 Webhook Alert</h2>
-                    <p><strong>Severity:</strong> ${record.severity || 'Unknown'}</p>
-                    <p><strong>Event Type:</strong> ${record.event_type || 'Unknown'}</p>
-                    <p><strong>Event ID:</strong> ${record.event_id || 'Unknown'}</p>
-                    <p><strong>Error:</strong> ${record.error_message || 'No error message'}</p>
-                    <p><strong>Time:</strong> ${record.created_at || new Date().toISOString()}</p>
-                    <hr>
-                    <p>View alerts in <a href="https://supabase.com/dashboard/project/dnxqgphaisdxvdyeiwnh/editor/webhook_alerts">Supabase Dashboard</a></p>
-                  `,
-                }),
-              });
-              
-              if (emailResponse.ok) {
-                console.log('✅ Alert email sent successfully');
-              } else {
-                const errorText = await emailResponse.text();
-                console.error('❌ Failed to send alert email:', errorText);
-              }
-            } catch (emailErr: any) {
-              console.error('❌ Email sending error:', emailErr.message);
+                subject: `[${(record.severity || 'ALERT').toUpperCase()}] Webhook Alert: ${record.event_type || 'Unknown Event'}`,
+                content: [
+                  {
+                    type: 'text/html',
+                    value: `
+                      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2 style="color: #e53e3e;">🚨 Webhook Alert</h2>
+                        <table style="width: 100%; border-collapse: collapse;">
+                          <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Severity:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${record.severity || 'Unknown'}</td></tr>
+                          <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Event Type:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${record.event_type || 'Unknown'}</td></tr>
+                          <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Event ID:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${record.event_id || 'Unknown'}</td></tr>
+                          <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Error:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${record.error_message || 'No error message'}</td></tr>
+                          <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Time:</strong></td><td style="padding: 8px; border-bottom: 1px solid #eee;">${record.created_at || new Date().toISOString()}</td></tr>
+                        </table>
+                        <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
+                        <p><a href="https://supabase.com/dashboard/project/dnxqgphaisdxvdyeiwnh/editor/webhook_alerts" style="color: #3182ce;">View all alerts in Supabase Dashboard</a></p>
+                        <p style="color: #718096; font-size: 12px;">This is an automated alert from Morgus monitoring system.</p>
+                      </div>
+                    `,
+                  },
+                ],
+              }),
+            });
+            
+            if (emailResponse.ok) {
+              console.log('✅ Alert email sent successfully via MailChannels');
+            } else {
+              const errorText = await emailResponse.text();
+              console.error('❌ Failed to send alert email:', emailResponse.status, errorText);
             }
-          } else {
-            console.log('⚠️ RESEND_API_KEY not configured - email not sent');
+          } catch (emailErr: any) {
+            console.error('❌ Email sending error:', emailErr.message);
           }
           
-          return new Response(JSON.stringify({ received: true, alert_logged: true }), {
+          return new Response(JSON.stringify({ received: true, alert_logged: true, email_sent: true }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         } catch (err: any) {
