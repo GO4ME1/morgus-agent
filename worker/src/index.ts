@@ -203,6 +203,72 @@ export default {
         }
       }
 
+      // Alert notification endpoint (called by Supabase Database Webhook)
+      if (path === '/api/alert-notification' && request.method === 'POST') {
+        try {
+          const payload = await request.json() as any;
+          const record = payload.record || payload;
+          
+          console.log('🚨 ALERT RECEIVED:', JSON.stringify({
+            event_id: record.event_id,
+            event_type: record.event_type,
+            severity: record.severity,
+            error_message: record.error_message,
+            created_at: record.created_at,
+          }));
+          
+          // Send email alert via Resend (if configured)
+          const resendApiKey = (env as any).RESEND_API_KEY;
+          if (resendApiKey) {
+            try {
+              const emailResponse = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${resendApiKey}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  from: 'Morgus Alerts <alerts@morgus.ai>',
+                  to: ['lawyers@go4me.ai'],
+                  subject: `[${(record.severity || 'ALERT').toUpperCase()}] Webhook Failure: ${record.event_type || 'Unknown Event'}`,
+                  html: `
+                    <h2>🚨 Webhook Alert</h2>
+                    <p><strong>Severity:</strong> ${record.severity || 'Unknown'}</p>
+                    <p><strong>Event Type:</strong> ${record.event_type || 'Unknown'}</p>
+                    <p><strong>Event ID:</strong> ${record.event_id || 'Unknown'}</p>
+                    <p><strong>Error:</strong> ${record.error_message || 'No error message'}</p>
+                    <p><strong>Time:</strong> ${record.created_at || new Date().toISOString()}</p>
+                    <hr>
+                    <p>View alerts in <a href="https://supabase.com/dashboard/project/dnxqgphaisdxvdyeiwnh/editor/webhook_alerts">Supabase Dashboard</a></p>
+                  `,
+                }),
+              });
+              
+              if (emailResponse.ok) {
+                console.log('✅ Alert email sent successfully');
+              } else {
+                const errorText = await emailResponse.text();
+                console.error('❌ Failed to send alert email:', errorText);
+              }
+            } catch (emailErr: any) {
+              console.error('❌ Email sending error:', emailErr.message);
+            }
+          } else {
+            console.log('⚠️ RESEND_API_KEY not configured - email not sent');
+          }
+          
+          return new Response(JSON.stringify({ received: true, alert_logged: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } catch (err: any) {
+          console.error('Alert notification error:', err.message);
+          return new Response(JSON.stringify({ error: err.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+
       // Stripe webhook endpoint
       if (path === '/stripe-webhook' && request.method === 'POST') {
         if (!env.STRIPE_SECRET_KEY || !env.STRIPE_WEBHOOK_SECRET) {
