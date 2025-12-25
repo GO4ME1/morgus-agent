@@ -754,13 +754,6 @@ function App() {
             <div className="logo-icon">M</div>
             <h1>Morgus</h1>
           </div>
-          <button 
-            className="morgy-pen-button"
-            onClick={() => setShowMorgyPen(!showMorgyPen)}
-            title="Open Morgy Pen"
-          >
-            🐷
-          </button>
           <button className="new-chat-button" onClick={async () => {
             // Create new conversation
             try {
@@ -853,17 +846,12 @@ function App() {
       <div className="main-content">
         <div className="chat-header">
           <button 
-            className="sidebar-toggle" 
-            onClick={() => {
-              if (window.innerWidth <= 768) {
-                setShowMorgyPen(!showMorgyPen);
-              } else {
-                setShowSidebar(!showSidebar);
-              }
-            }}
-            aria-label="Toggle Menu"
+            className="sidebar-toggle morgy-pen-toggle" 
+            onClick={() => setShowMorgyPen(!showMorgyPen)}
+            aria-label="Toggle Morgy Pen"
+            title={showMorgyPen ? 'Close Morgy Pen' : 'Open Morgy Pen'}
           >
-            {(window.innerWidth <= 768 ? showMorgyPen : showSidebar) ? '✕' : '☰'}
+            🐷
           </button>
           
           
