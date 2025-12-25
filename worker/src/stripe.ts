@@ -215,7 +215,8 @@ export class StripeService {
 
   // Verify and parse webhook event
   async verifyWebhook(payload: string, signature: string): Promise<Stripe.Event> {
-    return this.stripe.webhooks.constructEvent(
+    // Use constructEventAsync for Cloudflare Workers (SubtleCrypto compatibility)
+    return await this.stripe.webhooks.constructEventAsync(
       payload,
       signature,
       this.webhookSecret
