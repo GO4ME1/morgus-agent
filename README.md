@@ -306,3 +306,56 @@ Contributions are welcome! Please see [CONTRIBUTING.md](docs/CONTRIBUTING.md) fo
 Based on the OpenAI Coding Agent cookbook: https://cookbook.openai.com/examples/build_a_coding_agent_with_gpt-5.1
 
 Inspired by autonomous agent systems like Manus, AutoGPT, and LangChain.
+
+
+---
+
+# Morgus Console Deployment Guide
+
+This section documents the current production deployment and the development workflow for the Morgus Console.
+
+## Current Production Version
+
+- **Deployment ID:** `a645c17a`
+- **Commit:** `08a5ebc`
+- **Live URL:** [https://morgus-console.pages.dev](https://morgus-console.pages.dev)
+- **Preview URL:** [https://a645c17a.morgus-console.pages.dev](https://a645c17a.morgus-console.pages.dev)
+
+This version contains the final, stable build with both desktop and mobile features fully functional.
+
+### Features
+
+| Feature | Desktop | Mobile |
+| :--- | :---: | :---: |
+| **Pig Icon (Morgy Pen Toggle)** | ✅ | - |
+| **Morgy Pen Panel** | ✅ | - |
+| **Bottom Navigation Bar** | - | ✅ |
+| **Fullscreen Mobile Panels** | - | ✅ |
+| **Large Submit Button** | - | ✅ |
+| **Trophy Button (Leaderboard)** | ✅ | ✅ |
+
+## Development Workflow
+
+All future development must follow the **Desktop-First** strategy to ensure stability and prevent conflicting deployments. Please see [DEVELOPMENT_RULES.md](DEVELOPMENT_RULES.md) for the full process.
+
+## How to Deploy
+
+All production deployments are handled automatically by Cloudflare Pages when changes are pushed to the `main` branch. 
+
+### Redeploying the Current Version
+
+If you need to roll back to the current stable version (`a645c17a`), you can redeploy the files located in the `FINAL-WORKING-DEPLOYMENT-a645c17a/` directory.
+
+```bash
+# Navigate to the working deployment directory
+cd FINAL-WORKING-DEPLOYMENT-a645c17a/
+
+# Deploy to Cloudflare Pages
+export CLOUDFLARE_API_TOKEN="YOUR_API_TOKEN"
+npx wrangler@4.50.0 pages deploy . --project-name=morgus-console --branch=main
+```
+
+## File Structure
+
+- `/console`: Contains the React source code for the application.
+- `/FINAL-WORKING-DEPLOYMENT-a645c17a`: Contains the exact build files for the current production deployment. **DO NOT MODIFY** these files. They are a backup of the working version that was created by modifying the built files directly, not the source code. This is a temporary fix until the source code is updated.
