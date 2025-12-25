@@ -148,6 +148,61 @@ export default {
         }
       }
 
+      // Active alerts endpoint
+      if (path === '/api/alerts' && request.method === 'GET') {
+        try {
+          const alertsResponse = await fetch(
+            `${env.SUPABASE_URL}/rest/v1/rpc/get_active_alerts`,
+            {
+              method: 'POST',
+              headers: {
+                'apikey': env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY,
+                'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: '{}',
+            }
+          );
+          const alertsData = await alertsResponse.json();
+          return new Response(JSON.stringify(alertsData), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } catch (err: any) {
+          return new Response(JSON.stringify({ error: err.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+
+      // Acknowledge alert endpoint
+      if (path === '/api/alerts/acknowledge' && request.method === 'POST') {
+        try {
+          const body = await request.json() as { alertId: string; userId: string };
+          const ackResponse = await fetch(
+            `${env.SUPABASE_URL}/rest/v1/rpc/acknowledge_alert`,
+            {
+              method: 'POST',
+              headers: {
+                'apikey': env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY,
+                'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ alert_id: body.alertId, user_id: body.userId }),
+            }
+          );
+          const result = await ackResponse.json();
+          return new Response(JSON.stringify({ success: result }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } catch (err: any) {
+          return new Response(JSON.stringify({ error: err.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+
       // Stripe webhook endpoint
       if (path === '/stripe-webhook' && request.method === 'POST') {
         if (!env.STRIPE_SECRET_KEY || !env.STRIPE_WEBHOOK_SECRET) {
