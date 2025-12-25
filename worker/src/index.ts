@@ -67,6 +67,87 @@ export default {
         });
       }
 
+      // Webhook health monitoring endpoint
+      if (path === '/api/webhook-health' && request.method === 'GET') {
+        try {
+          const healthResponse = await fetch(
+            `${env.SUPABASE_URL}/rest/v1/rpc/get_system_health`,
+            {
+              method: 'POST',
+              headers: {
+                'apikey': env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY,
+                'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: '{}',
+            }
+          );
+          const healthData = await healthResponse.json();
+          return new Response(JSON.stringify(healthData), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } catch (err: any) {
+          return new Response(JSON.stringify({ error: err.message, status: 'error' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+
+      // Webhook stats endpoint
+      if (path === '/api/webhook-stats' && request.method === 'GET') {
+        try {
+          const statsResponse = await fetch(
+            `${env.SUPABASE_URL}/rest/v1/rpc/get_webhook_health_stats`,
+            {
+              method: 'POST',
+              headers: {
+                'apikey': env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY,
+                'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: '{}',
+            }
+          );
+          const statsData = await statsResponse.json();
+          return new Response(JSON.stringify(statsData), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } catch (err: any) {
+          return new Response(JSON.stringify({ error: err.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+
+      // Subscription stats endpoint
+      if (path === '/api/subscription-stats' && request.method === 'GET') {
+        try {
+          const statsResponse = await fetch(
+            `${env.SUPABASE_URL}/rest/v1/rpc/get_subscription_stats`,
+            {
+              method: 'POST',
+              headers: {
+                'apikey': env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY,
+                'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: '{}',
+            }
+          );
+          const statsData = await statsResponse.json();
+          return new Response(JSON.stringify(statsData), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } catch (err: any) {
+          return new Response(JSON.stringify({ error: err.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+
       // Stripe webhook endpoint
       if (path === '/stripe-webhook' && request.method === 'POST') {
         if (!env.STRIPE_SECRET_KEY || !env.STRIPE_WEBHOOK_SECRET) {
