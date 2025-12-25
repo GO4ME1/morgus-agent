@@ -328,6 +328,8 @@ export class StripeService {
       return;
     }
 
+    console.log('Processing subscription update for user:', userId, 'status:', subscription.status);
+
     // Determine plan from price
     const priceAmount = subscription.items.data[0]?.price.unit_amount || 0;
     let tier = 'weekly';
@@ -342,7 +344,8 @@ export class StripeService {
     const periodEnd = subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null;
 
     // Update profiles table
-    await fetch(
+    console.log('Updating profiles table for user:', userId, 'with status:', status, 'tier:', tier);
+    const profileResponse = await fetch(
       `${this.supabaseUrl}/rest/v1/profiles?id=eq.${userId}`,
       {
         method: 'PATCH',
@@ -361,9 +364,11 @@ export class StripeService {
         }),
       }
     );
+    console.log('Profile update response:', profileResponse.status, await profileResponse.text());
 
     // Upsert subscription record
-    await fetch(
+    console.log('Inserting subscription record for user:', userId);
+    const subscriptionResponse = await fetch(
       `${this.supabaseUrl}/rest/v1/subscriptions`,
       {
         method: 'POST',
@@ -386,6 +391,7 @@ export class StripeService {
         }),
       }
     );
+    console.log('Subscription insert response:', subscriptionResponse.status, await subscriptionResponse.text());
   }
 
   private async handleSubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
