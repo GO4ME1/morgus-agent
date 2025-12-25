@@ -754,6 +754,13 @@ function App() {
             <div className="logo-icon">M</div>
             <h1>Morgus</h1>
           </div>
+          <button 
+            className="morgy-pen-button"
+            onClick={() => setShowMorgyPen(!showMorgyPen)}
+            title="Open Morgy Pen"
+          >
+            🐷
+          </button>
           <button className="new-chat-button" onClick={async () => {
             // Create new conversation
             try {

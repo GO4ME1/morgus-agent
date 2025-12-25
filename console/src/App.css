@@ -1273,6 +1273,32 @@ body {
   margin-top: 8px;
 }
 
+/* Morgy Pen Button in Sidebar */
+.morgy-pen-button {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #ff00ff 0%, #00ffff 100%);
+  border: none;
+  border-radius: 12px;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 0, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.morgy-pen-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 25px rgba(255, 0, 255, 0.6), 0 0 40px rgba(0, 255, 255, 0.4);
+}
+
+.morgy-pen-button:active {
+  transform: scale(0.95);
+}
+
 /* New Chat Button */
 .new-chat-button {
   width: 100%;
