@@ -336,6 +336,11 @@ export class StripeService {
 
     const status = subscription.status === 'active' ? 'active' : subscription.status;
 
+    // Safely convert timestamps (some may be null or undefined)
+    const startDate = subscription.start_date ? new Date(subscription.start_date * 1000).toISOString() : new Date().toISOString();
+    const periodStart = subscription.current_period_start ? new Date(subscription.current_period_start * 1000).toISOString() : new Date().toISOString();
+    const periodEnd = subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null;
+
     // Update profiles table
     await fetch(
       `${this.supabaseUrl}/rest/v1/profiles?id=eq.${userId}`,
@@ -351,8 +356,8 @@ export class StripeService {
           subscription_status: status,
           subscription_tier: tier,
           stripe_subscription_id: subscription.id,
-          subscription_started_at: new Date(subscription.start_date * 1000).toISOString(),
-          subscription_ends_at: new Date(subscription.current_period_end * 1000).toISOString(),
+          subscription_started_at: startDate,
+          subscription_ends_at: periodEnd,
         }),
       }
     );
@@ -374,10 +379,10 @@ export class StripeService {
           status: status,
           stripe_subscription_id: subscription.id,
           stripe_customer_id: customerId,
-          started_at: new Date(subscription.start_date * 1000).toISOString(),
-          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-          expires_at: new Date(subscription.current_period_end * 1000).toISOString(),
+          started_at: startDate,
+          current_period_start: periodStart,
+          current_period_end: periodEnd,
+          expires_at: periodEnd,
         }),
       }
     );
