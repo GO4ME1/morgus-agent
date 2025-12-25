@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Morgus" />
+    <meta name="application-name" content="Morgus" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="msapplication-TileColor" content="#0f172a" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Morgus - AI Agent Forge. Create, customize, and chat with AI agents. Build your own Morgys with unique personalities and capabilities." />
+    <meta name="keywords" content="AI, chatbot, agent, Morgus, Morgy, artificial intelligence, chat" />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Morgus – AI Agent Forge" />
+    <meta property="og:description" content="Create, customize, and chat with AI agents. Build your own Morgys!" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/icons/morgus-512.png" />
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/morgus-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/morgus-512.png" />
+    <link rel="apple-touch-icon" href="/icons/morgus-192.png" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    
+    <title>Morgus – AI Agent Forge</title>
+    <script type="module" crossorigin src="/assets/index-BRKYYCjF.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-C4HCTuVC.css">
+    <style>
+      /* Hide MOE leaderboard on mobile welcome screen */
+      .mobile-moe-leaderboard {
+        display: none !important;
+      }
+      
+      /* Larger submit button on mobile */
+      @media (max-width: 768px) {
+        .send-button, button[class*="send"] {
+          width: 60px !important;
+          height: 60px !important;
+          min-width: 60px !important;
+          min-height: 60px !important;
+          font-size: 28px !important;
+          padding: 0 !important;
+        }
+        /* Target the gradient send button specifically */
+        .input-actions button:last-child {
+          width: 60px !important;
+          height: 60px !important;
+          min-width: 60px !important;
+          min-height: 60px !important;
+          font-size: 28px !important;
+        }
+      }
+      
+      /* MOE Modal */
+      .moe-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        padding: 20px;
+      }
+      
+      .moe-modal-content {
+        background: linear-gradient(135deg, #fef3c7 0%, #fce7f3 50%, #ddd6fe 100%);
+        border-radius: 24px;
+        padding: 28px;
+        max-width: 500px;
+        width: 100%;
+        max-height: 80vh;
+        overflow-y: auto;
+        position: relative;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+      
+      .moe-modal-content h2 {
+        background: linear-gradient(135deg, #f59e0b, #ec4899, #8b5cf6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-size: 28px;
+        font-weight: bold;
+        margin-bottom: 20px;
+      }
+      
+      .moe-modal-close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(255, 255, 255, 0.8);
+        border: none;
+        font-size: 32px;
+        cursor: pointer;
+        color: #333;
+        padding: 4px 12px;
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+      
+      .moe-modal-close:hover {
+        background: rgba(255, 255, 255, 1);
+        transform: scale(1.1);
+      }
+    </style>
+    <script>
+      // Wait for page to load
+      window.addEventListener('load', function() {
+        // Intercept trophy button clicks
+        document.addEventListener('click', function(e) {
+          const target = e.target.closest('.mobile-moe-mini');
+          if (target) {
+            e.preventDefault();
+            e.stopPropagation();
+            showMOEModal();
+          }
+        }, true);
+        
+        function showMOEModal() {
+          // Create modal
+          const overlay = document.createElement('div');
+          overlay.className = 'moe-modal-overlay';
+          overlay.onclick = function() { document.body.removeChild(overlay); };
+          
+          const content = document.createElement('div');
+          content.className = 'moe-modal-content';
+          content.onclick = function(e) { e.stopPropagation(); };
+          
+          const closeBtn = document.createElement('button');
+          closeBtn.className = 'moe-modal-close';
+          closeBtn.innerHTML = '×';
+          closeBtn.onclick = function() { document.body.removeChild(overlay); };
+          
+          const title = document.createElement('h2');
+          title.innerHTML = '🏆 Model Rankings';
+          title.style.marginBottom = '20px';
+          
+          const loading = document.createElement('div');
+          loading.innerHTML = 'Loading...';
+          
+          content.appendChild(closeBtn);
+          content.appendChild(title);
+          content.appendChild(loading);
+          overlay.appendChild(content);
+          document.body.appendChild(overlay);
+          
+          // Fetch leaderboard data
+          fetch('https://morgus-orchestrator.morgan-426.workers.dev/api/stats/leaderboard')
+            .then(r => r.json())
+            .then(data => {
+              loading.remove();
+              const stats = data.stats || [];
+              stats.slice(0, 10).forEach((stat, i) => {
+                const row = document.createElement('div');
+                row.style.cssText = 'padding: 12px; margin: 8px 0; background: #f5f5f5; border-radius: 12px; display: flex; align-items: center; gap: 12px;';
+                const badge = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1);
+                row.innerHTML = `<span style="font-size: 24px; min-width: 40px;">${badge}</span><div style="flex: 1;"><div style="font-weight: bold;">${stat.model_name.split('/').pop()}</div><div style="font-size: 12px; color: #666;">${stat.win_rate.toFixed(0)}% wins • ${stat.total_competitions} competitions</div></div>`;
+                content.appendChild(row);
+              });
+            })
+            .catch(err => {
+              loading.innerHTML = 'Failed to load rankings';
+            });
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
