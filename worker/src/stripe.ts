@@ -336,7 +336,15 @@ export class StripeService {
     if (priceAmount >= 7000) tier = 'monthly';
     else if (priceAmount <= 500) tier = 'daily';
 
-    const status = subscription.status === 'active' ? 'active' : subscription.status;
+    // Map Stripe status to our status values
+    // profiles.subscription_status uses: free, daily, weekly, monthly, cancelled
+    // subscriptions.status uses: active, cancelled, expired, past_due
+    const subscriptionTableStatus = subscription.status === 'active' ? 'active' : 
+      subscription.status === 'canceled' ? 'cancelled' :
+      subscription.status === 'past_due' ? 'past_due' : 'expired';
+    
+    // For profiles table, use the tier when active, or 'cancelled' when not
+    const profileStatus = subscription.status === 'active' ? tier : 'cancelled';
 
     // Safely convert timestamps (some may be null or undefined)
     const startDate = subscription.start_date ? new Date(subscription.start_date * 1000).toISOString() : new Date().toISOString();
@@ -344,7 +352,7 @@ export class StripeService {
     const periodEnd = subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null;
 
     // Update profiles table
-    console.log('Updating profiles table for user:', userId, 'with status:', status, 'tier:', tier);
+    console.log('Updating profiles table for user:', userId, 'with profileStatus:', profileStatus, 'tier:', tier);
     const profileResponse = await fetch(
       `${this.supabaseUrl}/rest/v1/profiles?id=eq.${userId}`,
       {
@@ -356,7 +364,7 @@ export class StripeService {
           'Prefer': 'return=minimal',
         },
         body: JSON.stringify({
-          subscription_status: status,
+          subscription_status: profileStatus,
           subscription_tier: tier,
           stripe_subscription_id: subscription.id,
           subscription_started_at: startDate,
@@ -381,13 +389,12 @@ export class StripeService {
         body: JSON.stringify({
           user_id: userId,
           plan_id: tier,
-          status: status,
+          status: subscriptionTableStatus,
           stripe_subscription_id: subscription.id,
           stripe_customer_id: customerId,
           started_at: startDate,
           current_period_start: periodStart,
           current_period_end: periodEnd,
-          expires_at: periodEnd,
         }),
       }
     );
