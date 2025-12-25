@@ -2294,7 +2294,6 @@ button {
   /* Input Buttons */
   .attach-button,
   .voice-button,
-  .send-button,
   .stop-button,
   .auto-speak-button {
     width: 36px !important;
@@ -2302,6 +2301,16 @@ button {
     min-width: 36px !important;
     min-height: 36px !important;
     font-size: 18px !important;
+    padding: 0 !important;
+  }
+
+  /* Larger send button for better mobile UX */
+  .send-button {
+    width: 60px !important;
+    height: 60px !important;
+    min-width: 60px !important;
+    min-height: 60px !important;
+    font-size: 28px !important;
     padding: 0 !important;
   }
 
