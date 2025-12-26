@@ -4,6 +4,7 @@ import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
 import './Admin.css';
+import { ModelInsights } from '../components/ModelInsights';
 
 interface PromoCode {
   id: string;
@@ -31,7 +32,7 @@ interface User {
 
 export function Admin() {
   const { user, profile, loading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<'promos' | 'users'>('promos');
+  const [activeTab, setActiveTab] = useState<'promos' | 'users' | 'insights'>('promos');
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
@@ -293,6 +294,12 @@ export function Admin() {
           >
             👥 Users
           </button>
+          <button
+            className={activeTab === 'insights' ? 'active' : ''}
+            onClick={() => setActiveTab('insights')}
+          >
+            🤖 Model Insights
+          </button>
         </div>
       </div>
 
@@ -499,6 +506,12 @@ export function Admin() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {activeTab === 'insights' && (
+        <div className="admin-section">
+          <ModelInsights userId={user?.id || ''} />
         </div>
       )}
     </div>
