@@ -220,7 +220,7 @@ export default {
           
           // Send email alert via Resend
           // Temporary fallback for testing - remove after confirming secrets work
-          const resendApiKey = env.RESEND_API_KEY || 're_734UY3sy_4oAXDz1ka7W9C8sJTcDwy5Y5';
+          const resendApiKey = env.RESEND_API_KEY || 're_REUiV8mR_LJ6zi1sH3BfWePhaWmETj5FP';
           let emailSent = false;
           let emailError: any = null;
           
