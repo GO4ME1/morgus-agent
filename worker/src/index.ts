@@ -222,6 +222,7 @@ export default {
           // Temporary fallback for testing - remove after confirming secrets work
           const resendApiKey = env.RESEND_API_KEY || 're_734UY3sy_4oAXDz1ka7W9C8sJTcDwy5Y5';
           let emailSent = false;
+          let emailError: any = null;
           
           if (resendApiKey) {
             try {
@@ -258,16 +259,18 @@ export default {
                 emailSent = true;
               } else {
                 const errorData = await emailResponse.json();
+                emailError = { status: emailResponse.status, data: errorData };
                 console.error('❌ Failed to send alert email:', emailResponse.status, JSON.stringify(errorData));
               }
             } catch (emailErr: any) {
+              emailError = { message: emailErr.message };
               console.error('❌ Email sending error:', emailErr.message);
             }
           } else {
             console.warn('⚠️ RESEND_API_KEY not configured - email not sent');
           }
           
-          return new Response(JSON.stringify({ received: true, alert_logged: true, email_sent: emailSent, has_resend_key: !!resendApiKey, key_length: resendApiKey ? resendApiKey.length : 0 }), {
+          return new Response(JSON.stringify({ received: true, alert_logged: true, email_sent: emailSent, has_resend_key: !!resendApiKey, key_length: resendApiKey ? resendApiKey.length : 0, email_error: emailError }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         } catch (err: any) {
