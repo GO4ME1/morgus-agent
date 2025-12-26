@@ -142,8 +142,8 @@ async function runMOECompetition(
       () => queryOpenRouter(prompt, systemPrompt, config.openrouter_api_key, 'mistralai/mistral-7b-instruct:free'),
       MODEL_TIMEOUT
     )},
-    { name: 'deepseek-r1', fn: () => queryWithTimeout(
-      () => queryOpenRouter(prompt, systemPrompt, config.openrouter_api_key, 'deepseek/deepseek-r1:free'),
+    { name: 'llama-3.3-8b', fn: () => queryWithTimeout(
+      () => queryOpenRouter(prompt, systemPrompt, config.openrouter_api_key, 'meta-llama/llama-3.3-8b-instruct:free'),
       MODEL_TIMEOUT
     )},
     { name: 'kat-coder', fn: () => queryWithTimeout(
