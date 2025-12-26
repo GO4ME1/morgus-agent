@@ -588,7 +588,7 @@ function detectProjectType(message: string, artifacts: CodeArtifact[]): 'website
   return 'document';
 }
 
-// Store learning data in Supabase
+// Store learning data in Supabase using service role key from environment
 async function storeLearningData(
   userId: string | undefined,
   conversationId: string | undefined,
@@ -599,13 +599,17 @@ async function storeLearningData(
   totalTime: number,
   config: DPPMRequest['config']
 ): Promise<void> {
-  if (!userId || !config.supabase_url || !config.supabase_key) {
+  // Use environment variables for Supabase credentials (service role key bypasses RLS)
+  const supabaseUrl = process.env.SUPABASE_URL || config.supabase_url;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || config.supabase_key;
+  
+  if (!userId || !supabaseUrl || !supabaseKey) {
     console.log('[DPPM] Skipping learning data storage - missing user_id or Supabase config');
     return;
   }
 
   try {
-    const supabase = createClient(config.supabase_url, config.supabase_key);
+    const supabase = createClient(supabaseUrl, supabaseKey);
     
     // Determine goal category based on keywords
     const lowerGoal = goal.toLowerCase();
@@ -640,8 +644,12 @@ async function storeLearningData(
       .insert({
         user_id: userId,
         conversation_id: conversationId,
-        goal_description: goal.substring(0, 1000),
+        goal: goal.substring(0, 1000),
         goal_category: goalCategory,
+        subtask_count: subtaskResults.length,
+        completed_subtasks: subtaskResults.filter(r => r.status === 'success').length,
+        total_time_ms: totalTime,
+        success: successRate >= 0.5,
         subtask_results: subtaskResults.map(r => ({
           id: r.id,
           title: r.title,
@@ -649,9 +657,6 @@ async function storeLearningData(
           latency_ms: r.latency,
           status: r.status
         })),
-        winning_model: winningModel,
-        success_rate: successRate,
-        total_latency_ms: totalTime,
         lessons_learned: lessons,
         reflection_text: reflection
       });
