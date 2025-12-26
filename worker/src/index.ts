@@ -696,57 +696,55 @@ export default {
           });
           console.log('[MOE-CHAT] Complexity analysis:', complexityAnalysis.score, complexityAnalysis.recommendedApproach, complexityAnalysis.reasons);
           
-          // If complex task and DPPM is enabled, use orchestrated execution
+          // If complex task and DPPM is enabled, route to Fly.dev DPPM service
           if (complexityAnalysis.isComplex && !body.skip_dppm) {
-            console.log('[MOE-CHAT] Using DPPM orchestration for complex task');
-            
-            // Create MOE competition function for DPPM to use
-            const moe = new MOEEndpoint(env.OPENROUTER_API_KEY);
-            const moeCompetition = async (messages: any[], subtaskContext?: string) => {
-              return await moe.chatWithMultipleAPIs({
-                messages,
-                geminiApiKey: env.GEMINI_API_KEY,
-                openaiApiKey: env.OPENAI_API_KEY,
-                anthropicApiKey: env.ANTHROPIC_API_KEY,
-                files: body.files || []
-              });
-            };
+            console.log('[MOE-CHAT] 🧠 Complex task detected - routing to Deep Thinking mode on Fly.dev');
             
             try {
-              const dppmResult = await executeDPPMMOE(
-                body.message,
-                {
-                  userId: body.user_id || 'anonymous',
-                  supabaseUrl: env.SUPABASE_URL,
-                  supabaseKey: env.SUPABASE_KEY,
-                  openrouterApiKey: env.OPENROUTER_API_KEY,
-                  geminiApiKey: env.GEMINI_API_KEY,
-                  openaiApiKey: env.OPENAI_API_KEY,
-                  anthropicApiKey: env.ANTHROPIC_API_KEY,
-                  conversationId: body.conversation_id,
-                  onProgress: (update: ProgressUpdate) => {
-                    console.log('[DPPM] Progress:', update.phase, update.message);
+              // Call Fly.dev DPPM service (no time limit)
+              const dppmResponse = await fetch('https://morgus-deploy.fly.dev/dppm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  message: body.message,
+                  history: body.history || [],
+                  user_id: body.user_id,
+                  conversation_id: body.conversation_id,
+                  config: {
+                    openrouter_api_key: env.OPENROUTER_API_KEY,
+                    gemini_api_key: env.GEMINI_API_KEY,
+                    openai_api_key: env.OPENAI_API_KEY,
+                    anthropic_api_key: env.ANTHROPIC_API_KEY,
+                    supabase_url: env.SUPABASE_URL,
+                    supabase_key: env.SUPABASE_KEY
                   }
-                },
-                moeCompetition
-              );
+                })
+              });
+              
+              if (!dppmResponse.ok) {
+                throw new Error(`DPPM service returned ${dppmResponse.status}`);
+              }
+              
+              const dppmResult = await dppmResponse.json() as any;
               
               // Return DPPM orchestrated result
               return new Response(JSON.stringify({
-                content: dppmResult.output,
+                message: dppmResult.output,
                 dppmOrchestrated: true,
                 dppmSummary: dppmResult.dppmSummary,
                 subtaskResults: dppmResult.subtaskResults,
                 lessonsLearned: dppmResult.lessonsLearned,
+                reflection: dppmResult.reflection,
                 complexityAnalysis: {
                   score: complexityAnalysis.score,
                   reasons: complexityAnalysis.reasons
-                }
+                },
+                deepThinkingMode: true
               }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
               });
             } catch (dppmError: any) {
-              console.error('[DPPM] Orchestration failed, falling back to direct MOE:', dppmError);
+              console.error('[DPPM] Fly.dev service failed, falling back to direct MOE:', dppmError.message);
               // Fall through to regular MOE flow
             }
           }
