@@ -146,6 +146,7 @@ export class OpenRouterClient {
   /**
    * Query multiple models in parallel with majority-based early exit
    * Returns as soon as majority (4+ of 6) models respond
+   * Also returns list of models that were too slow
    */
   async queryMultiple(
     models: string[],
@@ -155,7 +156,7 @@ export class OpenRouterClient {
       maxTokens?: number;
       majorityThreshold?: number; // Default: ceil(models.length * 0.6)
     } = {}
-  ): Promise<OpenRouterResponse[]> {
+  ): Promise<{ responses: OpenRouterResponse[]; tooSlowModels: string[]; allModels: string[] }> {
     const threshold = options.majorityThreshold || Math.ceil(models.length * 0.6);
     const results: OpenRouterResponse[] = [];
     const tooSlowModels: string[] = [];
@@ -167,6 +168,7 @@ export class OpenRouterClient {
     return new Promise((resolve) => {
       // Track pending promises
       let pendingCount = models.length;
+      const failedModels: string[] = [];
       
       // Query each model
       models.forEach((model) => {
@@ -185,15 +187,21 @@ export class OpenRouterClient {
             // Check if we have majority
             if (results.length >= threshold && !resolved) {
               resolved = true;
+              // Calculate which models haven't responded yet
+              const respondedModels = results.map(r => r.model);
+              const pendingModels = models.filter(m => !respondedModels.includes(m) && !failedModels.includes(m));
+              tooSlowModels.push(...pendingModels);
+              
               console.log(`[MOE] Majority reached! Returning ${results.length} responses in ${Date.now() - startTime}ms`);
               if (tooSlowModels.length > 0) {
                 console.log(`[MOE] Too slow models: ${tooSlowModels.join(', ')}`);
               }
-              resolve(results);
+              resolve({ responses: results, tooSlowModels, allModels: models });
             }
           })
           .catch((error) => {
             console.error(`[MOE] Failed to query ${model}:`, error);
+            failedModels.push(model);
           })
           .finally(() => {
             pendingCount--;
@@ -201,7 +209,7 @@ export class OpenRouterClient {
             if (pendingCount === 0 && !resolved) {
               resolved = true;
               console.log(`[MOE] All models finished, returning ${results.length} responses`);
-              resolve(results);
+              resolve({ responses: results, tooSlowModels, allModels: models });
             }
           });
       });
@@ -210,9 +218,10 @@ export class OpenRouterClient {
       setTimeout(() => {
         if (!resolved) {
           resolved = true;
-          const slowModels = models.filter(m => !results.some(r => r.model === m));
+          const slowModels = models.filter(m => !results.some(r => r.model === m) && !failedModels.includes(m));
+          tooSlowModels.push(...slowModels);
           console.log(`[MOE] Timeout! Returning ${results.length} responses. Too slow: ${slowModels.join(', ')}`);
-          resolve(results);
+          resolve({ responses: results, tooSlowModels, allModels: models });
         }
       }, 30000);
     });

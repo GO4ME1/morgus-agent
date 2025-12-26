@@ -25,12 +25,13 @@ export interface MOEChatResponse {
     };
     allModels: Array<{
       model: string;
-      latency: number;
+      latency: number;  // -1 if too slow
       tokens: number;
       cost: number;
       score: number;
+      status: 'responded' | 'too_slow';  // Whether model responded in time
     }>;
-    tooSlowModels?: string[]; // Models that didn't respond before majority threshold
+    tooSlowModels: string[]; // Models that didn't respond before majority threshold
     nashExplanation: string;
     totalLatency: number;
     totalCost: number;
@@ -58,6 +59,25 @@ export class MOEEndpoint {
     const result: MOEResponse = await this.moe.query({ messages });
 
     // Format response with MOE visualization data
+    // Include all models (responded + too slow) in the response
+    const respondedModels = result.allResponses.map((r) => ({
+      model: r.model,
+      latency: r.latency,
+      tokens: r.tokens.total,
+      cost: r.cost,
+      score: result.nashResult.scores.get(r.model) || 0,
+      status: 'responded' as const,
+    }));
+    
+    const slowModels = result.tooSlowModels.map((model) => ({
+      model,
+      latency: -1,  // Indicates too slow / no response
+      tokens: 0,
+      cost: 0,
+      score: 0,
+      status: 'too_slow' as const,
+    }));
+    
     return {
       content: this.formatWinnerResponse(result),
       moeMetadata: {
@@ -67,13 +87,8 @@ export class MOEEndpoint {
           tokens: result.winner.tokens.total,
           cost: result.winner.cost,
         },
-        allModels: result.allResponses.map((r) => ({
-          model: r.model,
-          latency: r.latency,
-          tokens: r.tokens.total,
-          cost: r.cost,
-          score: result.nashResult.scores.get(r.model) || 0,
-        })),
+        allModels: [...respondedModels, ...slowModels],
+        tooSlowModels: result.tooSlowModels,
         nashExplanation: result.nashResult.explanation,
         totalLatency: result.metadata.totalLatency,
         totalCost: result.metadata.totalCost,

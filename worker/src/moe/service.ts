@@ -18,6 +18,8 @@ export interface MOERequest {
 export interface MOEResponse {
   winner: OpenRouterResponse;
   allResponses: OpenRouterResponse[];
+  tooSlowModels: string[];  // Models that didn't respond before majority threshold
+  allModels: string[];      // All models that were queried
   nashResult: NashResult;
   metadata: {
     modelsQueried: number;
@@ -48,7 +50,7 @@ export class MOEService {
     console.log(`MOE: Querying ${models.length} models...`);
 
     // Query all models in parallel
-    const responses = await this.openrouter.queryMultiple(
+    const { responses, tooSlowModels, allModels } = await this.openrouter.queryMultiple(
       models,
       request.messages,
       {
@@ -62,6 +64,9 @@ export class MOEService {
     }
 
     console.log(`MOE: Received ${responses.length} responses`);
+    if (tooSlowModels.length > 0) {
+      console.log(`MOE: Too slow models: ${tooSlowModels.join(', ')}`);
+    }
 
     // Apply Nash Equilibrium to select winner
     const nashResult = this.nash.select(responses);
@@ -76,6 +81,8 @@ export class MOEService {
     return {
       winner: nashResult.winner,
       allResponses: responses,
+      tooSlowModels,
+      allModels,
       nashResult,
       metadata: {
         modelsQueried: models.length,
