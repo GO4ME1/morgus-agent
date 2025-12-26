@@ -7,6 +7,7 @@ import { handleUsageAPI } from './usage-api';
 import { handlePromoAPI } from './promo-api';
 import { handleReferralAPI } from './referral-api';
 import { handleAdminAPI } from './admin-api';
+import { createSubscriptionMiddleware } from './subscription-middleware';
 
 interface Env {
   SUPABASE_URL: string;
@@ -875,6 +876,34 @@ The MOE analysis above is just a plan - now you must execute it.`;
       // Chat endpoint with streaming and conversation history
       if (path === '/chat' && request.method === 'POST') {
         const body = await request.json() as ChatMessage;
+        
+        // Check usage limits before processing message
+        if (body.user_id) {
+          const subscriptionMiddleware = createSubscriptionMiddleware({
+            SUPABASE_URL: env.SUPABASE_URL,
+            SUPABASE_SERVICE_KEY: env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY,
+          });
+          
+          const usageCheck = await subscriptionMiddleware.checkAndUseFeature(body.user_id, 'message');
+          
+          if (!usageCheck.allowed) {
+            return new Response(JSON.stringify({
+              error: 'usage_limit_reached',
+              message: usageCheck.error,
+              upgradeMessage: usageCheck.upgradeMessage,
+              currentPlan: usageCheck.plan,
+              usage: {
+                current: usageCheck.current,
+                limit: usageCheck.limit,
+                remaining: usageCheck.remaining,
+              },
+              showUpgradeModal: true,
+            }), {
+              status: 402, // Payment Required
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+        }
         
         // Use history from request body (sent by frontend)
         const conversationHistory = body.history || [];
