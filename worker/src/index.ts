@@ -266,7 +266,7 @@ export default {
             console.warn('⚠️ RESEND_API_KEY not configured - email not sent');
           }
           
-          return new Response(JSON.stringify({ received: true, alert_logged: true, email_sent: emailSent }), {
+          return new Response(JSON.stringify({ received: true, alert_logged: true, email_sent: emailSent, has_resend_key: !!resendApiKey, key_length: resendApiKey ? resendApiKey.length : 0 }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         } catch (err: any) {
