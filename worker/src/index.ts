@@ -10,6 +10,7 @@ import { handleAdminAPI } from './admin-api';
 import { handleNotebooksAPI } from './notebooks-api';
 import { createSubscriptionMiddleware } from './subscription-middleware';
 import { contentFilter } from './services/content-filter';
+import { categorizeQuery, QueryCategory } from './services/query-categorizer';
 
 interface Env {
   SUPABASE_URL: string;
@@ -641,6 +642,14 @@ export default {
         }
         
         try {
+          // Categorize the query for analytics and smart routing
+          const fileTypes = body.files?.map(f => {
+            const match = f.match(/^data:([^;]+)/);
+            return match ? match[1] : 'unknown';
+          }) || [];
+          const queryCategory = categorizeQuery(body.message, (body.files?.length || 0) > 0, fileTypes);
+          console.log('[MOE-CHAT] Query categorized:', queryCategory.primary, queryCategory.complexity, queryCategory.confidence);
+          
           // Step 1: Run MOE competition to get best answer
           const moe = new MOEEndpoint(env.OPENROUTER_API_KEY);
           
@@ -749,7 +758,7 @@ export default {
               return match ? match[1] : 'unknown';
             }) || [];
             
-            // Prepare competition results
+            // Prepare competition results with category data
             const competitionResults = moeResult.moeMetadata.allModels.map((model, index) => ({
               model_name: model.model,
               is_winner: model.model === moeResult.moeMetadata.winner.model,
@@ -762,6 +771,17 @@ export default {
               model_response: model.model === moeResult.moeMetadata.winner.model ? moeResult.content : undefined,
               had_files: (body.files?.length || 0) > 0,
               file_types: fileTypes.length > 0 ? fileTypes : undefined,
+              // Enhanced tracking with query categorization
+              query_category: queryCategory.primary,
+              query_subcategory: queryCategory.secondary,
+              query_complexity: queryCategory.complexity,
+              query_intent: queryCategory.intent,
+              query_domain: queryCategory.domain,
+              requires_reasoning: queryCategory.requiresReasoning,
+              requires_creativity: queryCategory.requiresCreativity,
+              requires_accuracy: queryCategory.requiresFactualAccuracy,
+              estimated_tokens: queryCategory.estimatedTokens,
+              category_confidence: queryCategory.confidence,
             }));
             
             // Record asynchronously (don't block response)

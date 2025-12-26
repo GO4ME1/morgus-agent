@@ -149,6 +149,74 @@ export async function handleAdminAPI(request: Request, env: AdminEnv): Promise<R
     }
   }
 
+  // GET /api/admin/model-insights - Get MOE model performance insights dashboard
+  if (path === '/api/admin/model-insights' && request.method === 'GET') {
+    try {
+      const { ModelStatsService } = await import('./services/model-stats');
+      const statsService = new ModelStatsService(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY);
+      
+      // Get all insights data
+      const [insights, categoryPerformance, complexityPerformance, leaderboard] = await Promise.all([
+        statsService.getInsightsSummary(),
+        statsService.getPerformanceByCategory(),
+        statsService.getPerformanceByComplexity(),
+        statsService.getLeaderboard(10),
+      ]);
+      
+      return new Response(JSON.stringify({
+        summary: insights,
+        by_category: categoryPerformance,
+        by_complexity: complexityPerformance,
+        leaderboard: leaderboard,
+        generated_at: new Date().toISOString(),
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (error: any) {
+      console.error('[ADMIN] Error fetching model insights:', error);
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
+  // GET /api/admin/model-insights/:model - Get insights for a specific model
+  const modelInsightsMatch = path.match(/^\/api\/admin\/model-insights\/([\w.-]+)$/);
+  if (modelInsightsMatch && request.method === 'GET') {
+    try {
+      const modelName = decodeURIComponent(modelInsightsMatch[1]);
+      const { ModelStatsService } = await import('./services/model-stats');
+      const statsService = new ModelStatsService(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY);
+      
+      const [stats, categoryPerformance, complexityPerformance, streaks, history] = await Promise.all([
+        statsService.getModelStats(modelName),
+        statsService.getPerformanceByCategory(modelName),
+        statsService.getPerformanceByComplexity(modelName),
+        statsService.getStreaks(modelName),
+        statsService.getModelHistory(modelName, 20),
+      ]);
+      
+      return new Response(JSON.stringify({
+        model: modelName,
+        stats,
+        by_category: categoryPerformance,
+        by_complexity: complexityPerformance,
+        streaks,
+        recent_history: history,
+        generated_at: new Date().toISOString(),
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (error: any) {
+      console.error('[ADMIN] Error fetching model insights:', error);
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
   return new Response('Not Found', { status: 404, headers: corsHeaders });
 }
 

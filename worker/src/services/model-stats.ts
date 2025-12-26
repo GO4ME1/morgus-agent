@@ -21,6 +21,17 @@ export interface ModelCompetitionResult {
   model_response?: string;
   had_files?: boolean;
   file_types?: string[];
+  // Enhanced tracking fields
+  query_category?: string;        // coding, research, creative, math, analysis, task, conversation
+  query_subcategory?: string;     // More specific category
+  query_complexity?: string;      // simple, medium, complex
+  query_intent?: string;          // question, instruction, conversation, creation
+  query_domain?: string;          // finance, science, tech, health, etc.
+  requires_reasoning?: boolean;
+  requires_creativity?: boolean;
+  requires_accuracy?: boolean;
+  estimated_tokens?: string;      // short, medium, long
+  category_confidence?: number;   // 0-1 confidence in categorization
 }
 
 export interface ModelStats {
@@ -75,6 +86,17 @@ export class ModelStatsService {
         model_response: result.model_response,
         had_files: result.had_files || false,
         file_types: result.file_types || [],
+        // Enhanced tracking fields
+        query_category: result.query_category,
+        query_subcategory: result.query_subcategory,
+        query_complexity: result.query_complexity,
+        query_intent: result.query_intent,
+        query_domain: result.query_domain,
+        requires_reasoning: result.requires_reasoning,
+        requires_creativity: result.requires_creativity,
+        requires_accuracy: result.requires_accuracy,
+        estimated_tokens: result.estimated_tokens,
+        category_confidence: result.category_confidence,
       }));
 
       const { error } = await this.supabase
@@ -299,6 +321,218 @@ export class ModelStatsService {
       model2_avg_score: model2Scores.length > 0
         ? model2Scores.reduce((a, b) => a + b, 0) / model2Scores.length
         : 0,
+    };
+  }
+
+  /**
+   * Get model performance by query category
+   * This is the key insight - which models are best at which types of queries
+   */
+  async getPerformanceByCategory(modelName?: string): Promise<{
+    category: string;
+    model_name: string;
+    total_competitions: number;
+    wins: number;
+    win_rate: number;
+    avg_score: number;
+    avg_latency: number;
+  }[]> {
+    let query = this.supabase
+      .from('model_competition_results')
+      .select('model_name, query_category, is_winner, score, latency')
+      .not('query_category', 'is', null);
+    
+    if (modelName) {
+      query = query.eq('model_name', modelName);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error || !data) {
+      console.error('[MODEL_STATS] Error fetching category performance:', error);
+      return [];
+    }
+    
+    // Aggregate by model and category
+    const aggregated = new Map<string, {
+      total: number;
+      wins: number;
+      scores: number[];
+      latencies: number[];
+    }>();
+    
+    for (const row of data) {
+      const key = `${row.model_name}:${row.query_category}`;
+      if (!aggregated.has(key)) {
+        aggregated.set(key, { total: 0, wins: 0, scores: [], latencies: [] });
+      }
+      const agg = aggregated.get(key)!;
+      agg.total++;
+      if (row.is_winner) agg.wins++;
+      if (row.score) agg.scores.push(row.score);
+      if (row.latency) agg.latencies.push(row.latency);
+    }
+    
+    const results: any[] = [];
+    for (const [key, agg] of aggregated) {
+      const [model_name, category] = key.split(':');
+      results.push({
+        category,
+        model_name,
+        total_competitions: agg.total,
+        wins: agg.wins,
+        win_rate: agg.total > 0 ? (agg.wins / agg.total) * 100 : 0,
+        avg_score: agg.scores.length > 0 
+          ? agg.scores.reduce((a, b) => a + b, 0) / agg.scores.length 
+          : 0,
+        avg_latency: agg.latencies.length > 0 
+          ? agg.latencies.reduce((a, b) => a + b, 0) / agg.latencies.length 
+          : 0,
+      });
+    }
+    
+    return results.sort((a, b) => b.win_rate - a.win_rate);
+  }
+
+  /**
+   * Get best model for each category based on historical performance
+   */
+  async getBestModelsByCategory(): Promise<Record<string, {
+    best_model: string;
+    win_rate: number;
+    sample_size: number;
+    runner_up?: string;
+  }>> {
+    const performance = await this.getPerformanceByCategory();
+    
+    // Group by category and find best model
+    const categoryBest: Record<string, any[]> = {};
+    for (const row of performance) {
+      if (!categoryBest[row.category]) {
+        categoryBest[row.category] = [];
+      }
+      categoryBest[row.category].push(row);
+    }
+    
+    const result: Record<string, any> = {};
+    for (const [category, models] of Object.entries(categoryBest)) {
+      // Sort by win rate, then by sample size
+      models.sort((a, b) => {
+        if (Math.abs(a.win_rate - b.win_rate) < 5) {
+          return b.total_competitions - a.total_competitions;
+        }
+        return b.win_rate - a.win_rate;
+      });
+      
+      if (models.length > 0) {
+        result[category] = {
+          best_model: models[0].model_name,
+          win_rate: models[0].win_rate,
+          sample_size: models[0].total_competitions,
+          runner_up: models[1]?.model_name,
+        };
+      }
+    }
+    
+    return result;
+  }
+
+  /**
+   * Get performance by complexity level
+   */
+  async getPerformanceByComplexity(modelName?: string): Promise<{
+    complexity: string;
+    model_name: string;
+    total: number;
+    wins: number;
+    win_rate: number;
+  }[]> {
+    let query = this.supabase
+      .from('model_competition_results')
+      .select('model_name, query_complexity, is_winner')
+      .not('query_complexity', 'is', null);
+    
+    if (modelName) {
+      query = query.eq('model_name', modelName);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error || !data) {
+      console.error('[MODEL_STATS] Error fetching complexity performance:', error);
+      return [];
+    }
+    
+    // Aggregate
+    const aggregated = new Map<string, { total: number; wins: number }>();
+    
+    for (const row of data) {
+      const key = `${row.model_name}:${row.query_complexity}`;
+      if (!aggregated.has(key)) {
+        aggregated.set(key, { total: 0, wins: 0 });
+      }
+      const agg = aggregated.get(key)!;
+      agg.total++;
+      if (row.is_winner) agg.wins++;
+    }
+    
+    const results: any[] = [];
+    for (const [key, agg] of aggregated) {
+      const [model_name, complexity] = key.split(':');
+      results.push({
+        complexity,
+        model_name,
+        total: agg.total,
+        wins: agg.wins,
+        win_rate: agg.total > 0 ? (agg.wins / agg.total) * 100 : 0,
+      });
+    }
+    
+    return results.sort((a, b) => b.win_rate - a.win_rate);
+  }
+
+  /**
+   * Get insights summary for dashboard
+   */
+  async getInsightsSummary(): Promise<{
+    total_competitions: number;
+    categories_tracked: string[];
+    best_by_category: Record<string, string>;
+    model_specialties: Record<string, string[]>;
+  }> {
+    const [categoryPerformance, bestByCategory] = await Promise.all([
+      this.getPerformanceByCategory(),
+      this.getBestModelsByCategory(),
+    ]);
+    
+    // Extract unique categories
+    const categories = [...new Set(categoryPerformance.map(p => p.category))];
+    
+    // Total competitions
+    const totalCompetitions = categoryPerformance.reduce((sum, p) => sum + p.total_competitions, 0) / 3; // Divide by ~3 models
+    
+    // Best model for each category
+    const bestModels: Record<string, string> = {};
+    for (const [cat, data] of Object.entries(bestByCategory)) {
+      bestModels[cat] = data.best_model;
+    }
+    
+    // Find specialties for each model (categories where they have >50% win rate)
+    const modelSpecialties: Record<string, string[]> = {};
+    for (const perf of categoryPerformance) {
+      if (perf.win_rate >= 50 && perf.total_competitions >= 5) {
+        if (!modelSpecialties[perf.model_name]) {
+          modelSpecialties[perf.model_name] = [];
+        }
+        modelSpecialties[perf.model_name].push(perf.category);
+      }
+    }
+    
+    return {
+      total_competitions: Math.round(totalCompetitions),
+      categories_tracked: categories,
+      best_by_category: bestModels,
+      model_specialties: modelSpecialties,
     };
   }
 }
