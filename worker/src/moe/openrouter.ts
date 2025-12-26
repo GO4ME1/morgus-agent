@@ -39,9 +39,9 @@ export const FREE_MODELS: ModelConfig[] = [
     free: true,
   },
   {
-    id: 'tngtech/deepseek-r1t2-chimera:free',
-    name: 'TNG: DeepSeek R1T2 Chimera',
-    provider: 'tngtech',
+    id: 'qwen/qwen3-4b:free',
+    name: 'Qwen3 4B',
+    provider: 'qwen',
     free: true,
   },
   {
