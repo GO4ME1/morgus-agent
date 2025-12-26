@@ -588,6 +588,34 @@ export default {
       if (path === '/moe-chat' && request.method === 'POST') {
         const body = await request.json() as ChatMessage;
         
+        // Check usage limits before processing message
+        if (body.user_id && !body.is_tool_synthesis) {
+          const subscriptionMiddleware = createSubscriptionMiddleware({
+            SUPABASE_URL: env.SUPABASE_URL,
+            SUPABASE_SERVICE_KEY: env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY,
+          });
+          
+          const usageCheck = await subscriptionMiddleware.checkAndUseFeature(body.user_id, 'message');
+          
+          if (!usageCheck.allowed) {
+            return new Response(JSON.stringify({
+              error: 'usage_limit_reached',
+              message: usageCheck.error,
+              upgradeMessage: usageCheck.upgradeMessage,
+              currentPlan: usageCheck.plan,
+              usage: {
+                current: usageCheck.current,
+                limit: usageCheck.limit,
+                remaining: usageCheck.remaining,
+              },
+              showUpgradeModal: true,
+            }), {
+              status: 402, // Payment Required
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+        }
+        
         try {
           // Step 1: Run MOE competition to get best answer
           const moe = new MOEEndpoint(env.OPENROUTER_API_KEY);

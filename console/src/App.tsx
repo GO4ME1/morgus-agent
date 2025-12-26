@@ -14,6 +14,7 @@ import MorgyPen from './components/MorgyPen';
 import { MorgyAutocomplete } from './components/MorgyAutocomplete';
 import { DeepResearchPanel } from './components/DeepResearchPanel';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
+import { SubscriptionStatus } from './components/SubscriptionStatus';
 import { runDeepResearch } from './lib/research-orchestrator';
 import type { ResearchSession, ResearchStep } from './lib/research-orchestrator';
 import { getMCPClient } from './lib/mcp-client';
@@ -96,6 +97,13 @@ function App() {
   const [currentTool] = useState<string | undefined>(); // TODO: Track tool usage from backend
   const [darkMode, setDarkMode] = useState(false); // Default to light mode
   const [showSettings, setShowSettings] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [usageLimitInfo, setUsageLimitInfo] = useState<{
+    message: string;
+    upgradeMessage: string;
+    currentPlan: string;
+    usage: { current: number; limit: number; remaining: number };
+  } | null>(null);
 
   // Close sidebar on mobile when navigating
   useEffect(() => {
@@ -380,6 +388,32 @@ function App() {
           mcp_tools_prompt: mcpToolsPrompt, // Include MCP tools in system prompt
         }),
       });
+
+      // Check for usage limit (402 Payment Required)
+      if (response.status === 402) {
+        const limitData = await response.json();
+        if (limitData.showUpgradeModal) {
+          setUsageLimitInfo({
+            message: limitData.message,
+            upgradeMessage: limitData.upgradeMessage,
+            currentPlan: limitData.currentPlan,
+            usage: limitData.usage,
+          });
+          setShowUpgradeModal(true);
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === statusMessageId
+                ? {
+                    ...msg,
+                    content: `⚠️ ${limitData.message}\n\n${limitData.upgradeMessage}`,
+                    isStreaming: false,
+                  }
+                : msg
+            )
+          );
+          return;
+        }
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -1339,6 +1373,50 @@ function App() {
 
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
+
+      {/* Upgrade Modal */}
+      {showUpgradeModal && usageLimitInfo && (
+        <div className="upgrade-modal-overlay" onClick={() => setShowUpgradeModal(false)}>
+          <div className="upgrade-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowUpgradeModal(false)}>×</button>
+            <div className="upgrade-modal-content">
+              <div className="upgrade-icon">⚡</div>
+              <h2>Usage Limit Reached</h2>
+              <p className="limit-message">{usageLimitInfo.message}</p>
+              <div className="usage-info">
+                <div className="usage-bar-modal">
+                  <div 
+                    className="usage-fill-modal" 
+                    style={{ width: `${(usageLimitInfo.usage.current / usageLimitInfo.usage.limit) * 100}%` }}
+                  />
+                </div>
+                <span className="usage-text">
+                  {usageLimitInfo.usage.current} / {usageLimitInfo.usage.limit} messages used today
+                </span>
+              </div>
+              <p className="upgrade-message">{usageLimitInfo.upgradeMessage}</p>
+              <div className="upgrade-buttons">
+                <button 
+                  className="upgrade-btn-primary"
+                  onClick={() => {
+                    setShowUpgradeModal(false);
+                    navigate('/pricing');
+                  }}
+                >
+                  ⚡ Upgrade Now
+                </button>
+                <button 
+                  className="upgrade-btn-secondary"
+                  onClick={() => setShowUpgradeModal(false)}
+                >
+                  Maybe Later
+                </button>
+              </div>
+              <p className="current-plan">Current plan: <strong>{usageLimitInfo.currentPlan}</strong></p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

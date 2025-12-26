@@ -2555,3 +2555,188 @@ button {
     height: 36px !important;
   }
 }
+
+
+/* ===== Upgrade Modal Styles ===== */
+.upgrade-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.upgrade-modal {
+  background: var(--bg-secondary, #1a1a2e);
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 420px;
+  width: 90%;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.upgrade-modal .modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-secondary, #888);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.upgrade-modal .modal-close:hover {
+  background: var(--bg-tertiary, #333);
+  color: var(--text-primary, #fff);
+}
+
+.upgrade-modal-content {
+  text-align: center;
+}
+
+.upgrade-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.upgrade-modal h2 {
+  color: var(--text-primary, #fff);
+  font-size: 24px;
+  margin: 0 0 12px 0;
+}
+
+.limit-message {
+  color: var(--accent-warning, #ffa500);
+  font-size: 16px;
+  margin: 0 0 20px 0;
+}
+
+.usage-info {
+  background: var(--bg-tertiary, #252540);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.usage-bar-modal {
+  height: 8px;
+  background: var(--bg-primary, #0f0f1a);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.usage-fill-modal {
+  height: 100%;
+  background: linear-gradient(90deg, #ff6b6b, #ff4757);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.usage-text {
+  color: var(--text-secondary, #888);
+  font-size: 14px;
+}
+
+.upgrade-message {
+  color: var(--accent-primary, #6c5ce7);
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 24px 0;
+}
+
+.upgrade-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.upgrade-btn-primary {
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+}
+
+.upgrade-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(108, 92, 231, 0.6);
+}
+
+.upgrade-btn-secondary {
+  background: transparent;
+  color: var(--text-secondary, #888);
+  border: 1px solid var(--border-color, #333);
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.upgrade-btn-secondary:hover {
+  background: var(--bg-tertiary, #333);
+  color: var(--text-primary, #fff);
+}
+
+.current-plan {
+  color: var(--text-secondary, #666);
+  font-size: 13px;
+  margin: 16px 0 0 0;
+}
+
+.current-plan strong {
+  color: var(--text-primary, #fff);
+  text-transform: capitalize;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+  .upgrade-modal {
+    padding: 24px;
+    margin: 16px;
+  }
+  
+  .upgrade-icon {
+    font-size: 40px;
+  }
+  
+  .upgrade-modal h2 {
+    font-size: 20px;
+  }
+}
