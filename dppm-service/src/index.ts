@@ -33,6 +33,7 @@ interface DPPMRequest {
   history?: Array<{ role: string; content: string }>;
   user_id?: string;
   conversation_id?: string;
+  allow_learning?: boolean; // User opt-in/out for learning data collection
   config: {
     openrouter_api_key: string;
     gemini_api_key: string;
@@ -593,15 +594,23 @@ async function storeLearningData(
   userId: string | undefined,
   conversationId: string | undefined,
   goal: string,
+  output: string, // The actual answer/output
   subtaskResults: SubtaskResult[],
   reflection: string,
   lessons: string[],
   totalTime: number,
+  allowLearning: boolean | undefined, // User's opt-in/out preference
   config: DPPMRequest['config']
 ): Promise<void> {
   // Use environment variables for Supabase credentials (service role key bypasses RLS)
   const supabaseUrl = process.env.SUPABASE_URL || config.supabase_url;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || config.supabase_key;
+  
+  // Respect user's privacy preference - if they opted out, don't store anything
+  if (allowLearning === false) {
+    console.log('[DPPM] Skipping learning data storage - user opted out (snake mode)');
+    return;
+  }
   
   if (!userId || !supabaseUrl || !supabaseKey) {
     console.log('[DPPM] Skipping learning data storage - missing user_id or Supabase config');
@@ -658,7 +667,9 @@ async function storeLearningData(
           status: r.status
         })),
         lessons_learned: lessons,
-        reflection_text: reflection
+        reflection_text: reflection,
+        output_text: output.substring(0, 10000), // Store output for caching (max 10KB)
+        is_cacheable: true
       });
 
     if (reflectionError) {
@@ -707,14 +718,17 @@ app.post('/dppm', async (req, res) => {
     console.log(`[DPPM] Extracted ${artifacts.length} code artifacts, projectType: ${projectType}, requiresDeployment: ${requiresDeployment}`);
     
     // Phase 4: Store learning data (non-blocking)
+    // Respects user's privacy preference (allow_learning flag)
     storeLearningData(
       request.user_id,
       request.conversation_id,
       request.message,
+      finalOutput, // Store the actual output for caching
       subtaskResults,
       reflection,
       lessons,
       totalTime,
+      request.allow_learning, // User's opt-in/out preference
       request.config
     ).catch(err => console.error('[DPPM] Learning data storage failed:', err.message));
     
