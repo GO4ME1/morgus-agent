@@ -58,7 +58,9 @@
 
 ## 🔑 CREDENTIALS & SECRETS
 
-### Cloudflare Worker Secrets (Set)
+**⚠️ NEVER commit secrets to this repo!**
+
+All secrets are stored securely in **Cloudflare Worker Secrets**:
 - `SUPABASE_URL`
 - `SUPABASE_KEY`
 - `SUPABASE_SERVICE_KEY`
@@ -67,12 +69,9 @@
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `RESEND_API_KEY`
-- `ADMIN_API_TOKEN`: `29c6ea6eb34bd3a9c87008bba734cd5edef6250a74b17a18506598282d0b0173`
+- `ADMIN_API_TOKEN`
 
-### Cloudflare API Token (for deployments)
-```
-paBfmirMYWM_EthxlYKQRWskHH0_5MQOBhzPylUi
-```
+To set secrets, use: `npx wrangler secret put SECRET_NAME`
 
 ---
 
@@ -80,21 +79,21 @@ paBfmirMYWM_EthxlYKQRWskHH0_5MQOBhzPylUi
 
 ### Deploy Worker
 ```bash
-export CLOUDFLARE_API_TOKEN="paBfmirMYWM_EthxlYKQRWskHH0_5MQOBhzPylUi"
+export CLOUDFLARE_API_TOKEN="YOUR_TOKEN_HERE"
 cd worker && npm install && npx wrangler deploy
 ```
 
 ### Deploy Console
 ```bash
-export CLOUDFLARE_API_TOKEN="paBfmirMYWM_EthxlYKQRWskHH0_5MQOBhzPylUi"
+export CLOUDFLARE_API_TOKEN="YOUR_TOKEN_HERE"
 cd console && npm run build
 npx wrangler pages deploy dist --project-name=morgus-console
 ```
 
 ### Rollback Console to Working Version
 ```bash
-curl -X POST "https://api.cloudflare.com/client/v4/accounts/4265ab2d0ff6b1d95610b887788bdfaf/pages/projects/morgus-console/deployments/a645c17a-1ccd-46d4-ab06-164c087fff6f/rollback" \
-  -H "Authorization: Bearer paBfmirMYWM_EthxlYKQRWskHH0_5MQOBhzPylUi"
+curl -X POST "https://api.cloudflare.com/client/v4/accounts/YOUR_ACCOUNT_ID/pages/projects/morgus-console/deployments/DEPLOYMENT_ID/rollback" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
 ---
@@ -131,3 +130,4 @@ curl -X POST "https://api.cloudflare.com/client/v4/accounts/4265ab2d0ff6b1d95610
 | `worker/src/stripe.ts` | Stripe payment handling |
 | `console/src/App.tsx` | Main React app |
 | `CURRENT_STATUS.md` | This file |
+| `DEVELOPMENT_RULES.md` | Development guidelines |

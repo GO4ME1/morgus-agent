@@ -39,7 +39,7 @@
 - **Service Role Key:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRueHFncGhhaXNkeHZkeWVpd25oIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzgyMjQ3NCwiZXhwIjoyMDc5Mzk4NDc0fQ.RbLtADfCmt-HRpBXDLc2VzCYJzYNsQQm9mV7eFdTSMk`
 
 ### Stripe (Test Mode)
-- **Secret Key:** `sk_test_51SF1HBFUo2mVZD3dCEgG8HOlqAZxbv9gdqLO1x6AcrbhVsQ1qBE6kYwWkoQxmast0anYUzIDF55WF3ntZ3gWmlfg009fShDn3A`
+- **Secret Key:** `sk_test_YOUR_STRIPE_SECRET_KEY`
 
 ---
 
@@ -157,7 +157,7 @@ cd morgus-agent/worker
 
 echo "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRueHFncGhhaXNkeHZkeWVpd25oIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzgyMjQ3NCwiZXhwIjoyMDc5Mzk4NDc0fQ.RbLtADfCmt-HRpBXDLc2VzCYJzYNsQQm9mV7eFdTSMk" | wrangler secret put SUPABASE_SERVICE_KEY
 
-echo "sk_test_51SF1HBFUo2mVZD3dCEgG8HOlqAZxbv9gdqLO1x6AcrbhVsQ1qBE6kYwWkoQxmast0anYUzIDF55WF3ntZ3gWmlfg009fShDn3A" | wrangler secret put STRIPE_SECRET_KEY
+echo "sk_test_YOUR_STRIPE_SECRET_KEY" | wrangler secret put STRIPE_SECRET_KEY
 
 echo "whsec_???" | wrangler secret put STRIPE_WEBHOOK_SECRET  # From Step 3
 ```
