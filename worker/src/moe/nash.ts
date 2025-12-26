@@ -4,6 +4,9 @@
  * Uses game theory to select the best model response based on multiple criteria.
  * The Nash Equilibrium represents a stable state where no other model could have
  * performed better given the evaluation criteria.
+ * 
+ * Includes reliability scoring - models that are "too slow" get penalized
+ * in future competitions.
  */
 
 import type { OpenRouterResponse } from './openrouter';
@@ -13,6 +16,7 @@ export interface EvaluationCriteria {
   speed: number; // 0-1 score
   cost: number; // 0-1 score
   preference: number; // 0-1 score based on historical performance
+  reliability: number; // 0-1 score based on response rate (not being too slow)
 }
 
 export interface EvaluationWeights {
@@ -20,6 +24,7 @@ export interface EvaluationWeights {
   speed: number;
   cost: number;
   preference: number;
+  reliability: number;
 }
 
 export interface NashResult {
@@ -27,32 +32,93 @@ export interface NashResult {
   scores: Map<string, number>;
   criteria: Map<string, EvaluationCriteria>;
   explanation: string;
+  tooSlowModels?: string[]; // Models that didn't make the majority cutoff
+}
+
+export interface ModelReliabilityStats {
+  totalRaces: number;
+  respondedInTime: number;
+  tooSlowCount: number;
+  avgLatency: number;
+  lastTooSlow?: number; // timestamp
 }
 
 /**
  * Default weights for evaluation criteria
  */
 export const DEFAULT_WEIGHTS: EvaluationWeights = {
-  quality: 0.7, // Quality is MUCH more important - prioritize smarter models
-  speed: 0.1, // Speed matters but less than quality
-  cost: 0.1, // Cost efficiency (all free models anyway)
-  preference: 0.1, // Historical performance
+  quality: 0.60, // Quality is most important
+  speed: 0.10, // Speed matters
+  cost: 0.10, // Cost efficiency
+  preference: 0.10, // Historical user preference
+  reliability: 0.10, // Reliability (not being too slow)
 };
 
 export class NashEquilibriumSelector {
   private weights: EvaluationWeights;
   private userPreferences: Map<string, number> = new Map();
+  private reliabilityStats: Map<string, ModelReliabilityStats> = new Map();
 
   constructor(weights: EvaluationWeights = DEFAULT_WEIGHTS) {
     this.weights = weights;
   }
 
   /**
+   * Record that models were too slow to participate
+   */
+  recordTooSlow(models: string[]) {
+    for (const model of models) {
+      const stats = this.reliabilityStats.get(model) || {
+        totalRaces: 0,
+        respondedInTime: 0,
+        tooSlowCount: 0,
+        avgLatency: 0,
+      };
+      
+      stats.totalRaces++;
+      stats.tooSlowCount++;
+      stats.lastTooSlow = Date.now();
+      
+      this.reliabilityStats.set(model, stats);
+      console.log(`[NASH] ${model} marked too slow (${stats.tooSlowCount}/${stats.totalRaces} races)`);
+    }
+  }
+
+  /**
+   * Record successful response from a model
+   */
+  recordSuccess(model: string, latency: number) {
+    const stats = this.reliabilityStats.get(model) || {
+      totalRaces: 0,
+      respondedInTime: 0,
+      tooSlowCount: 0,
+      avgLatency: 0,
+    };
+    
+    stats.totalRaces++;
+    stats.respondedInTime++;
+    // Rolling average latency
+    stats.avgLatency = (stats.avgLatency * (stats.respondedInTime - 1) + latency) / stats.respondedInTime;
+    
+    this.reliabilityStats.set(model, stats);
+  }
+
+  /**
    * Select the best response using Nash Equilibrium
    */
-  select(responses: OpenRouterResponse[]): NashResult {
+  select(responses: OpenRouterResponse[], tooSlowModels?: string[]): NashResult {
     if (responses.length === 0) {
       throw new Error('No responses to evaluate');
+    }
+
+    // Record successful responses
+    for (const response of responses) {
+      this.recordSuccess(response.model, response.latency);
+    }
+
+    // Record too-slow models
+    if (tooSlowModels && tooSlowModels.length > 0) {
+      this.recordTooSlow(tooSlowModels);
     }
 
     if (responses.length === 1) {
@@ -63,6 +129,7 @@ export class NashEquilibriumSelector {
           [responses[0].model, this.evaluateResponse(responses[0], responses)],
         ]),
         explanation: 'Only one response available',
+        tooSlowModels,
       };
     }
 
@@ -82,7 +149,8 @@ export class NashEquilibriumSelector {
         criteria.quality * this.weights.quality +
         criteria.speed * this.weights.speed +
         criteria.cost * this.weights.cost +
-        criteria.preference * this.weights.preference;
+        criteria.preference * this.weights.preference +
+        criteria.reliability * this.weights.reliability;
 
       // Handle NaN or Infinity (fallback to 0)
       if (!isFinite(score)) {
@@ -105,13 +173,14 @@ export class NashEquilibriumSelector {
       }
     }
 
-    const explanation = this.generateExplanation(winner, scores, evaluations);
+    const explanation = this.generateExplanation(winner, scores, evaluations, tooSlowModels);
 
     return {
       winner,
       scores,
       criteria: evaluations,
       explanation,
+      tooSlowModels,
     };
   }
 
@@ -127,6 +196,7 @@ export class NashEquilibriumSelector {
       speed: this.evaluateSpeed(response, allResponses),
       cost: this.evaluateCost(response, allResponses),
       preference: this.evaluatePreference(response),
+      reliability: this.evaluateReliability(response),
     };
   }
 
@@ -219,6 +289,35 @@ export class NashEquilibriumSelector {
   }
 
   /**
+   * Evaluate reliability based on historical too-slow rate
+   * 
+   * Models that are frequently too slow get penalized
+   */
+  private evaluateReliability(response: OpenRouterResponse): number {
+    const stats = this.reliabilityStats.get(response.model);
+    
+    if (!stats || stats.totalRaces === 0) {
+      return 0.5; // No history, neutral score
+    }
+    
+    // Reliability = percentage of times model responded in time
+    const reliabilityRate = stats.respondedInTime / stats.totalRaces;
+    
+    // Apply recency bias: if model was too slow recently, penalize more
+    let recencyPenalty = 0;
+    if (stats.lastTooSlow) {
+      const hoursSinceLastTooSlow = (Date.now() - stats.lastTooSlow) / (1000 * 60 * 60);
+      if (hoursSinceLastTooSlow < 1) {
+        recencyPenalty = 0.2; // Recent too-slow, big penalty
+      } else if (hoursSinceLastTooSlow < 24) {
+        recencyPenalty = 0.1; // Within last day, small penalty
+      }
+    }
+    
+    return Math.max(0, reliabilityRate - recencyPenalty);
+  }
+
+  /**
    * Update user preference for a model
    */
   updatePreference(model: string, rating: number) {
@@ -234,7 +333,8 @@ export class NashEquilibriumSelector {
   private generateExplanation(
     winner: OpenRouterResponse,
     scores: Map<string, number>,
-    criteria: Map<string, EvaluationCriteria>
+    criteria: Map<string, EvaluationCriteria>,
+    tooSlowModels?: string[]
   ): string {
     const winnerScore = scores.get(winner.model) || 0;
     const winnerCriteria = criteria.get(winner.model)!;
@@ -257,6 +357,9 @@ export class NashEquilibriumSelector {
     parts.push(
       `- Preference: ${(winnerCriteria.preference * 100).toFixed(1)}% (weight: ${this.weights.preference * 100}%)`
     );
+    parts.push(
+      `- Reliability: ${(winnerCriteria.reliability * 100).toFixed(1)}% (weight: ${this.weights.reliability * 100}%)`
+    );
     parts.push('');
     parts.push('**All Scores:**');
 
@@ -265,6 +368,17 @@ export class NashEquilibriumSelector {
     );
     for (const [model, score] of sortedScores) {
       parts.push(`- ${model}: ${(score * 100).toFixed(1)}%`);
+    }
+
+    // Add too-slow models
+    if (tooSlowModels && tooSlowModels.length > 0) {
+      parts.push('');
+      parts.push('**⏱️ Too Slow (excluded from competition):**');
+      for (const model of tooSlowModels) {
+        const stats = this.reliabilityStats.get(model);
+        const tooSlowRate = stats ? ((stats.tooSlowCount / stats.totalRaces) * 100).toFixed(0) : '?';
+        parts.push(`- ${model} (${tooSlowRate}% too-slow rate)`);
+      }
     }
 
     return parts.join('\n');
@@ -282,5 +396,19 @@ export class NashEquilibriumSelector {
    */
   setPreferences(preferences: Map<string, number>) {
     this.userPreferences = new Map(preferences);
+  }
+
+  /**
+   * Get reliability stats for all models
+   */
+  getReliabilityStats(): Map<string, ModelReliabilityStats> {
+    return new Map(this.reliabilityStats);
+  }
+
+  /**
+   * Get reliability stats for a specific model
+   */
+  getModelReliability(model: string): ModelReliabilityStats | undefined {
+    return this.reliabilityStats.get(model);
   }
 }
