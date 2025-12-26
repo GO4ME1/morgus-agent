@@ -23,7 +23,7 @@ const PORT = process.env.PORT || 8080;
 // Configuration
 const MAX_SUBTASKS = 5;
 const MODEL_TIMEOUT = 15000; // 15 seconds per model
-const MAJORITY_THRESHOLD = 2;
+const MAJORITY_THRESHOLD = 4; // Same as main MOE - 4 of 6 models
 
 // Types
 interface DPPMRequest {
@@ -120,7 +120,7 @@ async function queryFast(
   }
 }
 
-// Optimized MOE Competition - 2 models, 15s timeout
+// Full MOE Competition - all 6 models, majority of 4
 async function runMOECompetition(
   prompt: string,
   systemPrompt: string,
@@ -128,7 +128,7 @@ async function runMOECompetition(
 ): Promise<{ content: string; model: string; latency: number }> {
   const startTime = Date.now();
   
-  // Only use 2 fast models for subtasks
+  // All 6 models compete
   const models = [
     { name: 'gemini', fn: () => queryWithTimeout(
       () => queryGemini(prompt, systemPrompt, config.gemini_api_key),
@@ -138,7 +138,27 @@ async function runMOECompetition(
       () => queryOpenAI(prompt, systemPrompt, config.openai_api_key),
       MODEL_TIMEOUT
     )},
+    { name: 'mistral-free', fn: () => queryWithTimeout(
+      () => queryOpenRouter(prompt, systemPrompt, config.openrouter_api_key, 'mistralai/mistral-7b-instruct:free'),
+      MODEL_TIMEOUT
+    )},
+    { name: 'deepseek-r1', fn: () => queryWithTimeout(
+      () => queryOpenRouter(prompt, systemPrompt, config.openrouter_api_key, 'deepseek/deepseek-r1:free'),
+      MODEL_TIMEOUT
+    )},
+    { name: 'kat-coder', fn: () => queryWithTimeout(
+      () => queryOpenRouter(prompt, systemPrompt, config.openrouter_api_key, 'kwaipilot/kat-coder-pro-v1:free'),
+      MODEL_TIMEOUT
+    )},
   ];
+  
+  // Add Claude if API key available
+  if (config.anthropic_api_key) {
+    models.push({ name: 'claude', fn: () => queryWithTimeout(
+      () => queryClaude(prompt, systemPrompt, config.anthropic_api_key!),
+      MODEL_TIMEOUT
+    )});
+  }
   
   // Race - return first successful response
   const results: Array<{ name: string; content: string; latency: number }> = [];
@@ -227,6 +247,48 @@ async function queryOpenAI(prompt: string, systemPrompt: string, apiKey: string)
   });
   const data = await response.json() as any;
   return data.choices?.[0]?.message?.content || '';
+}
+
+async function queryOpenRouter(prompt: string, systemPrompt: string, apiKey: string, model: string): Promise<string> {
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      'HTTP-Referer': 'https://morgus.ai',
+      'X-Title': 'Morgus DPPM'
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 4096
+    })
+  });
+  const data = await response.json() as any;
+  return data.choices?.[0]?.message?.content || '';
+}
+
+async function queryClaude(prompt: string, systemPrompt: string, apiKey: string): Promise<string> {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-3-5-haiku-20241022',
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  const data = await response.json() as any;
+  return data.content?.[0]?.text || '';
 }
 
 // DPPM Phase 1: Decompose (FAST - single model)
