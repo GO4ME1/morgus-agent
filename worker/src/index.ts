@@ -23,6 +23,7 @@ interface Env {
   STRIPE_SECRET_KEY?: string;
   STRIPE_PUBLISHABLE_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
+  RESEND_API_KEY?: string;
 }
 
 interface ChatMessage {
@@ -218,7 +219,7 @@ export default {
           }));
           
           // Send email alert via Resend
-          const resendApiKey = (env as any).RESEND_API_KEY;
+          const resendApiKey = env.RESEND_API_KEY;
           let emailSent = false;
           
           if (resendApiKey) {
