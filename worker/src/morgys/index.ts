@@ -186,19 +186,20 @@ export class MorgyManager {
     const activeMorgys = this.getActiveMorgys();
     if (activeMorgys.length === 0) return '';
 
-    const morgyPrompts = activeMorgys.map(m => m.systemPrompt).join('\\n\\n---\\n\\n');
+    const morgyPrompts = activeMorgys.map(m => m.systemPrompt).join('\n\n---\n\n');
+    const morgyList = activeMorgys.map(m => `- **${m.name}** (${m.title}): ${m.description}`).join('\n');
     
     return `
 ## Active Morgys (Your Sounder)
 
-You have \${activeMorgys.length} Morgy(s) activated to help with this task:
-\${activeMorgys.map(m => `- **\${m.name}** (\${m.title}): \${m.description}`).join('\\n')}
+You have ${activeMorgys.length} Morgy(s) activated to help with this task:
+${morgyList}
 
 When responding, incorporate the expertise of your active Morgys. You can reference them by name.
 
 ### Morgy Personalities:
 
-\${morgyPrompts}
+${morgyPrompts}
 `;
   }
 

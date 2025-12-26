@@ -9,6 +9,7 @@ import { handleReferralAPI } from './referral-api';
 import { handleAdminAPI } from './admin-api';
 import { handleNotebooksAPI } from './notebooks-api';
 import { createSubscriptionMiddleware } from './subscription-middleware';
+import { contentFilter } from './services/content-filter';
 
 interface Env {
   SUPABASE_URL: string;
@@ -597,6 +598,20 @@ export default {
       if (path === '/moe-chat' && request.method === 'POST') {
         const body = await request.json() as ChatMessage;
         
+        // Content safety filter - check input before processing
+        const inputFilterResult = contentFilter.filterInput(body.message);
+        if (!inputFilterResult.allowed) {
+          return new Response(JSON.stringify({
+            error: 'content_blocked',
+            message: contentFilter.getBlockedResponse(inputFilterResult),
+            category: inputFilterResult.category,
+            severity: inputFilterResult.severity,
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        
         // Check usage limits before processing message
         if (body.user_id && !body.is_tool_synthesis) {
           const subscriptionMiddleware = createSubscriptionMiddleware({
@@ -913,6 +928,20 @@ The MOE analysis above is just a plan - now you must execute it.`;
       // Chat endpoint with streaming and conversation history
       if (path === '/chat' && request.method === 'POST') {
         const body = await request.json() as ChatMessage;
+        
+        // Content safety filter - check input before processing
+        const inputFilterResult = contentFilter.filterInput(body.message);
+        if (!inputFilterResult.allowed) {
+          return new Response(JSON.stringify({
+            error: 'content_blocked',
+            message: contentFilter.getBlockedResponse(inputFilterResult),
+            category: inputFilterResult.category,
+            severity: inputFilterResult.severity,
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
         
         // Check usage limits before processing message
         if (body.user_id) {
