@@ -368,6 +368,7 @@ async function executeSubtasks(
                             goal.toLowerCase().includes('website') ||
                             goal.toLowerCase().includes('web page');
       
+      const currentYear = new Date().getFullYear();
       const prompt = isWebsiteTask 
         ? `You are building: "${goal}"
 
@@ -378,6 +379,8 @@ IMPORTANT: Generate complete, production-ready code. Use markdown code blocks wi
 - \`\`\`html for HTML
 - \`\`\`css for CSS  
 - \`\`\`javascript for JS
+
+IMPORTANT DATES: The current year is ${currentYear}. Use ${currentYear} for all copyright notices, footer dates, and any year references.
 
 Make the code modern, responsive, and visually appealing. Include all necessary code - no placeholders or "add your content here".`
         : `You are working on: "${goal}"
@@ -425,6 +428,7 @@ Provide a focused, actionable response. Be concise but thorough.`;
                           goal.toLowerCase().includes('website') ||
                           goal.toLowerCase().includes('web page');
     
+    const currentYear = new Date().getFullYear();
     const prompt = isWebsiteTask
       ? `You are building: "${goal}"
 
@@ -438,6 +442,8 @@ Combine all the code into a complete, working website. Output the final complete
 1. All CSS (inline in <style> or combined)
 2. All JavaScript (inline in <script> or combined)
 3. Complete responsive design
+
+IMPORTANT DATES: The current year is ${currentYear}. Use ${currentYear} for all copyright notices, footer dates, and any year references.
 
 Output ONLY the final combined code in a single \`\`\`html code block.`
       : `You are working on: "${goal}"
@@ -589,6 +595,85 @@ function detectProjectType(message: string, artifacts: CodeArtifact[]): 'website
   return 'document';
 }
 
+// Sensitivity filter to prevent caching sensitive data
+// Returns true if the content contains potentially sensitive information
+function containsSensitiveData(text: string): boolean {
+  const lowerText = text.toLowerCase();
+  
+  // Patterns that indicate sensitive data
+  const sensitivePatterns = [
+    // API keys and secrets
+    /api[_-]?key/i,
+    /secret[_-]?key/i,
+    /access[_-]?token/i,
+    /bearer\s+[a-z0-9]/i,
+    /sk-[a-z0-9]{20,}/i, // OpenAI keys
+    /ghp_[a-z0-9]{36}/i, // GitHub tokens
+    /xox[baprs]-[a-z0-9-]+/i, // Slack tokens
+    
+    // Passwords and credentials
+    /password[\s:=]/i,
+    /passwd[\s:=]/i,
+    /my password is/i,
+    /login credentials/i,
+    
+    // Personal identifiable information (PII)
+    /social security/i,
+    /ssn[\s:=]/i,
+    /\b\d{3}-\d{2}-\d{4}\b/, // SSN format
+    /credit card/i,
+    /\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/, // Credit card format
+    /cvv[\s:=]/i,
+    /bank account/i,
+    /routing number/i,
+    
+    // Medical information (HIPAA)
+    /medical record/i,
+    /patient id/i,
+    /diagnosis[\s:]/i,
+    /prescription[\s:]/i,
+    /health insurance/i,
+    
+    // Financial information
+    /tax return/i,
+    /income[\s:=]\$?\d/i,
+    /salary[\s:=]\$?\d/i,
+    /net worth/i,
+    
+    // Private keys and certificates
+    /-----BEGIN.*PRIVATE KEY-----/i,
+    /-----BEGIN CERTIFICATE-----/i,
+    
+    // Database credentials
+    /connection string/i,
+    /mongodb\+srv:\/\//i,
+    /postgres:\/\//i,
+    /mysql:\/\//i,
+    
+    // Personal contact info patterns
+    /my phone number is/i,
+    /my address is/i,
+    /my email is/i,
+    /date of birth/i,
+    /\bdob[\s:=]/i,
+  ];
+  
+  // Check for sensitive patterns
+  for (const pattern of sensitivePatterns) {
+    if (pattern.test(text)) {
+      return true;
+    }
+  }
+  
+  // Check for email addresses in personal context
+  const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/;
+  if (emailPattern.test(text) && (lowerText.includes('my email') || lowerText.includes('contact me'))) {
+    return true;
+  }
+  
+  return false;
+}
+
 // Store learning data in Supabase using service role key from environment
 async function storeLearningData(
   userId: string | undefined,
@@ -669,7 +754,7 @@ async function storeLearningData(
         lessons_learned: lessons,
         reflection_text: reflection,
         output_text: output.substring(0, 10000), // Store output for caching (max 10KB)
-        is_cacheable: true
+        is_cacheable: !containsSensitiveData(goal) && !containsSensitiveData(output) // Don't cache sensitive data
       });
 
     if (reflectionError) {

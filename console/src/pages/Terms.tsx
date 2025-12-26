@@ -14,7 +14,7 @@ export function Terms() {
             <span className="logo-text">Morgus</span>
           </div>
           <h1>Terms of Service</h1>
-          <p className="legal-updated">Last updated: December 20, 2025</p>
+          <p className="legal-updated">Last updated: December 26, 2025</p>
         </div>
 
         <div className="legal-content">
@@ -107,10 +107,38 @@ export function Terms() {
               Your use of the Service is also governed by our <Link to="/privacy">Privacy Policy</Link>. 
               By using the Service, you consent to the collection and use of information as described therein.
             </p>
-            <h3>7.1 Training Data</h3>
+            <h3>7.1 Learning System & Data Collection</h3>
             <p>
-              By default, your conversations may be used to improve Morgus. You can opt out of this at any time 
-              using the "Don't Train on Me" toggle in Settings.
+              By default, your interactions with Morgus may be used to improve the Service. This includes:
+            </p>
+            <ul>
+              <li><strong>Task Performance Data:</strong> We collect metadata about task execution (success rates, timing, model performance) to optimize our AI systems.</li>
+              <li><strong>Answer Caching:</strong> Responses may be cached to provide faster service for similar future queries. Cached data is stored securely and may be used to serve other users with similar questions.</li>
+              <li><strong>Pattern Learning:</strong> Successful task patterns may be stored and reused to improve task decomposition and execution.</li>
+            </ul>
+            <h3>7.2 Opt-Out Rights</h3>
+            <p>
+              You can opt out of data collection at any time using the "Don't Train on Me" toggle (🐍 snake mode) in Settings. 
+              When opted out:
+            </p>
+            <ul>
+              <li>No task data, responses, or patterns will be stored</li>
+              <li>Your queries will not be cached or used for training</li>
+              <li>You will still have full access to all Service features</li>
+            </ul>
+            <h3>7.3 Sensitive Data Protection</h3>
+            <p>
+              We automatically detect and exclude sensitive information from caching, including but not limited to:
+            </p>
+            <ul>
+              <li>API keys, passwords, and authentication credentials</li>
+              <li>Personal identifiable information (SSN, credit cards, addresses)</li>
+              <li>Medical and health information (HIPAA-protected data)</li>
+              <li>Financial information (bank accounts, tax data)</li>
+              <li>Private keys and certificates</li>
+            </ul>
+            <p>
+              Even if you have not opted out, sensitive data is never cached or shared.
             </p>
           </section>
 

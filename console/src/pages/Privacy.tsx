@@ -14,7 +14,7 @@ export function Privacy() {
             <span className="logo-text">Morgus</span>
           </div>
           <h1>Privacy Policy</h1>
-          <p className="legal-updated">Last updated: December 20, 2025</p>
+          <p className="legal-updated">Last updated: December 26, 2025</p>
         </div>
 
         <div className="legal-content">
@@ -60,37 +60,56 @@ export function Privacy() {
           </section>
 
           <section className="highlight-section">
-            <h2>4. Training Data & The "Don't Train on Me" Option</h2>
+            <h2>4. Learning System & Data Usage</h2>
             <p>
-              <strong>🐍 Your Choice Matters:</strong> By default, your conversations may be used to improve 
+              <strong>🐍 Your Choice Matters:</strong> By default, your interactions may be used to improve 
               Morgus's capabilities for all users. However, you have full control over this.
             </p>
             
-            <h3>4.1 Default Behavior (Training Enabled)</h3>
-            <p>When training is enabled, we may use your conversations to:</p>
+            <h3>4.1 What We Collect (When Learning is Enabled)</h3>
+            <p>When learning is enabled, we collect and may use:</p>
             <ul>
-              <li>Improve AI response quality and accuracy</li>
-              <li>Develop new features and capabilities</li>
-              <li>Train and fine-tune our models</li>
+              <li><strong>Task Performance Metadata:</strong> Success rates, execution times, and model performance metrics to optimize our AI systems</li>
+              <li><strong>Response Caching:</strong> Your queries and responses may be cached to provide faster service for similar future queries from you or other users</li>
+              <li><strong>Pattern Learning:</strong> Successful task decomposition patterns to improve how we break down complex tasks</li>
+              <li><strong>Model Training Data:</strong> Anonymized conversation data to improve AI response quality</li>
             </ul>
 
-            <h3>4.2 "Don't Train on Me" Mode</h3>
-            <p>When you enable the "Don't Train on Me" toggle:</p>
+            <h3>4.2 Answer Caching</h3>
+            <p>To improve response times and reduce costs, we may cache answers:</p>
+            <ul>
+              <li><strong>Personal Cache:</strong> Your previous answers, accessible only to you</li>
+              <li><strong>Global Cache:</strong> Anonymized answers that may be served to other users with similar queries</li>
+              <li><strong>Cache Duration:</strong> Cached answers expire after 30 days by default</li>
+              <li><strong>Quality Control:</strong> Only successful, high-quality responses are cached</li>
+            </ul>
+
+            <h3>4.3 "Don't Train on Me" Mode (🐍 Snake Mode)</h3>
+            <p>When you enable the "Don't Train on Me" toggle in Settings:</p>
             <ul>
               <li>Your conversations will NOT be used for model training</li>
-              <li>Your data will only be used to provide the Service</li>
-              <li>Conversations may still be temporarily stored for service delivery</li>
+              <li>Your queries and responses will NOT be cached</li>
+              <li>No task performance data will be stored</li>
+              <li>You will still have full access to all Service features</li>
+              <li>You can toggle this setting on or off at any time</li>
             </ul>
 
-            <h3>4.3 What We NEVER Use for Training</h3>
-            <p>Regardless of your settings, we NEVER store or use:</p>
+            <h3>4.4 Automatic Sensitive Data Protection</h3>
+            <p>Regardless of your settings, we automatically detect and NEVER cache or store:</p>
             <ul>
-              <li>Passwords or authentication credentials</li>
-              <li>Credit card numbers or payment details</li>
-              <li>Social Security numbers or government IDs</li>
-              <li>Health information (PHI/HIPAA data)</li>
-              <li>Content explicitly marked as confidential</li>
+              <li>API keys, passwords, and authentication credentials</li>
+              <li>Credit card numbers, CVVs, and payment details</li>
+              <li>Social Security numbers and government IDs</li>
+              <li>Health information (PHI/HIPAA-protected data)</li>
+              <li>Bank account and routing numbers</li>
+              <li>Private keys and certificates</li>
+              <li>Database connection strings</li>
+              <li>Personal contact information in sensitive contexts</li>
             </ul>
+            <p>
+              Our sensitivity filter automatically scans all content before storage. If sensitive data is detected, 
+              the content is marked as non-cacheable and excluded from the learning system.
+            </p>
           </section>
 
           <section>

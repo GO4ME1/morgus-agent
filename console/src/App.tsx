@@ -26,6 +26,15 @@ marked.setOptions({
   gfm: true,
 });
 
+// Custom renderer to open links in new tabs
+const renderer = new marked.Renderer();
+renderer.link = ({ href, title, tokens }: { href: string; title?: string | null | undefined; tokens: any[] }) => {
+  const text = tokens.map((t: any) => t.raw || t.text || '').join('');
+  const titleAttr = title ? ` title="${title}"` : '';
+  return `<a href="${href}" target="_blank" rel="noopener noreferrer"${titleAttr}>${text}</a>`;
+};
+marked.use({ renderer });
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
