@@ -57,6 +57,12 @@ interface SubtaskResult {
   status: 'success' | 'failed';
 }
 
+interface CodeArtifact {
+  filename: string;
+  content: string;
+  language: string;
+}
+
 interface DPPMResponse {
   output: string;
   dppmSummary: {
@@ -68,6 +74,10 @@ interface DPPMResponse {
   subtaskResults: SubtaskResult[];
   lessonsLearned: string[];
   reflection: string;
+  // New: Code artifacts for deployment
+  artifacts?: CodeArtifact[];
+  requiresDeployment?: boolean;
+  projectType?: 'website' | 'app' | 'script' | 'document';
 }
 
 // Fast single model query (for decomposition - skip MOE)
@@ -351,7 +361,23 @@ async function executeSubtasks(
     independentTasks.map(async (subtask) => {
       console.log(`[DPPM] Executing subtask ${subtask.id}: ${subtask.title}`);
       
-      const prompt = `You are working on: "${goal}"
+      const isWebsiteTask = goal.toLowerCase().includes('landing page') || 
+                            goal.toLowerCase().includes('website') ||
+                            goal.toLowerCase().includes('web page');
+      
+      const prompt = isWebsiteTask 
+        ? `You are building: "${goal}"
+
+Your subtask: ${subtask.title}
+Description: ${subtask.description}
+
+IMPORTANT: Generate complete, production-ready code. Use markdown code blocks with language specifiers:
+- \`\`\`html for HTML
+- \`\`\`css for CSS  
+- \`\`\`javascript for JS
+
+Make the code modern, responsive, and visually appealing. Include all necessary code - no placeholders or "add your content here".`
+        : `You are working on: "${goal}"
 
 Your subtask: ${subtask.title}
 Description: ${subtask.description}
@@ -392,7 +418,26 @@ Provide a focused, actionable response. Be concise but thorough.`;
       .filter(Boolean)
       .join('\n\n---\n\n');
     
-    const prompt = `You are working on: "${goal}"
+    const isWebsiteTask = goal.toLowerCase().includes('landing page') || 
+                          goal.toLowerCase().includes('website') ||
+                          goal.toLowerCase().includes('web page');
+    
+    const prompt = isWebsiteTask
+      ? `You are building: "${goal}"
+
+Your subtask: ${subtask.title}
+Description: ${subtask.description}
+
+Previous code generated:
+${dependencyContext}
+
+Combine all the code into a complete, working website. Output the final complete HTML file that includes:
+1. All CSS (inline in <style> or combined)
+2. All JavaScript (inline in <script> or combined)
+3. Complete responsive design
+
+Output ONLY the final combined code in a single \`\`\`html code block.`
+      : `You are working on: "${goal}"
 
 Your subtask: ${subtask.title}
 Description: ${subtask.description}
@@ -462,6 +507,85 @@ What could improve? (2 sentences max)`;
   };
 }
 
+// Extract code artifacts from subtask outputs
+function extractCodeArtifacts(subtaskResults: SubtaskResult[]): CodeArtifact[] {
+  const artifacts: CodeArtifact[] = [];
+  
+  for (const result of subtaskResults) {
+    if (result.status !== 'success') continue;
+    
+    // Match code blocks with language specifier
+    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+    let match;
+    
+    while ((match = codeBlockRegex.exec(result.output)) !== null) {
+      const language = match[1] || 'text';
+      const content = match[2].trim();
+      
+      // Determine filename based on language and content
+      let filename = 'code';
+      if (language === 'html' || content.includes('<!DOCTYPE') || content.includes('<html')) {
+        filename = 'index.html';
+      } else if (language === 'css' || content.includes('{') && content.includes(':') && !content.includes('function')) {
+        filename = 'styles.css';
+      } else if (language === 'javascript' || language === 'js') {
+        filename = 'script.js';
+      } else if (language === 'json') {
+        filename = 'data.json';
+      }
+      
+      // Avoid duplicates
+      const existing = artifacts.find(a => a.filename === filename);
+      if (existing) {
+        // Append or replace based on content length
+        if (content.length > existing.content.length) {
+          existing.content = content;
+        }
+      } else {
+        artifacts.push({ filename, content, language });
+      }
+    }
+  }
+  
+  return artifacts;
+}
+
+// Detect project type from message and artifacts
+function detectProjectType(message: string, artifacts: CodeArtifact[]): 'website' | 'app' | 'script' | 'document' {
+  const lowerMessage = message.toLowerCase();
+  
+  // Check message for project type indicators
+  if (lowerMessage.includes('landing page') || 
+      lowerMessage.includes('website') || 
+      lowerMessage.includes('web page') ||
+      lowerMessage.includes('html') ||
+      lowerMessage.includes('portfolio')) {
+    return 'website';
+  }
+  
+  if (lowerMessage.includes('mobile app') || 
+      lowerMessage.includes('react native') ||
+      lowerMessage.includes('ios app') ||
+      lowerMessage.includes('android app')) {
+    return 'app';
+  }
+  
+  // Check artifacts
+  const hasHtml = artifacts.some(a => a.filename.endsWith('.html'));
+  const hasCss = artifacts.some(a => a.filename.endsWith('.css'));
+  
+  if (hasHtml || hasCss) {
+    return 'website';
+  }
+  
+  const hasJs = artifacts.some(a => a.filename.endsWith('.js'));
+  if (hasJs) {
+    return 'script';
+  }
+  
+  return 'document';
+}
+
 // Main DPPM endpoint
 app.post('/dppm', async (req, res) => {
   const startTime = Date.now();
@@ -488,6 +612,13 @@ app.post('/dppm', async (req, res) => {
     const totalTime = Date.now() - startTime;
     console.log(`[DPPM] Completed in ${totalTime}ms`);
     
+    // Extract code artifacts from subtask outputs
+    const artifacts = extractCodeArtifacts(subtaskResults);
+    const projectType = detectProjectType(request.message, artifacts);
+    const requiresDeployment = projectType === 'website' && artifacts.length > 0;
+    
+    console.log(`[DPPM] Extracted ${artifacts.length} code artifacts, projectType: ${projectType}, requiresDeployment: ${requiresDeployment}`);
+    
     const response: DPPMResponse = {
       output: finalOutput,
       dppmSummary: {
@@ -498,7 +629,10 @@ app.post('/dppm', async (req, res) => {
       },
       subtaskResults,
       lessonsLearned: lessons,
-      reflection
+      reflection,
+      artifacts,
+      requiresDeployment,
+      projectType
     };
     
     res.json(response);

@@ -727,14 +727,60 @@ export default {
               
               const dppmResult = await dppmResponse.json() as any;
               
+              // Check if DPPM generated deployable artifacts
+              let deployedUrl: string | undefined;
+              if (dppmResult.requiresDeployment && dppmResult.artifacts?.length > 0) {
+                console.log('[DPPM] Deploying generated website...');
+                try {
+                  // Convert artifacts to deployment format
+                  const files = dppmResult.artifacts.map((a: any) => ({
+                    name: a.filename,
+                    content: a.content
+                  }));
+                  
+                  // Generate project name from message
+                  const projectName = body.message
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .substring(0, 30) + '-' + Date.now().toString(36);
+                  
+                  // Call deployment service
+                  const deployResponse = await fetch('https://morgus-deploy.fly.dev/deploy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      projectName,
+                      files,
+                      userId: body.user_id || 'anonymous'
+                    })
+                  });
+                  
+                  if (deployResponse.ok) {
+                    const deployResult = await deployResponse.json() as any;
+                    deployedUrl = deployResult.url;
+                    console.log('[DPPM] Website deployed to:', deployedUrl);
+                  }
+                } catch (deployError: any) {
+                  console.error('[DPPM] Deployment failed:', deployError.message);
+                }
+              }
+              
+              // Build response message
+              let responseMessage = dppmResult.output;
+              if (deployedUrl) {
+                responseMessage = `🚀 **Your website is live!**\n\n**URL:** ${deployedUrl}\n\n---\n\n${dppmResult.output}`;
+              }
+              
               // Return DPPM orchestrated result
               return new Response(JSON.stringify({
-                message: dppmResult.output,
+                message: responseMessage,
                 dppmOrchestrated: true,
                 dppmSummary: dppmResult.dppmSummary,
                 subtaskResults: dppmResult.subtaskResults,
                 lessonsLearned: dppmResult.lessonsLearned,
                 reflection: dppmResult.reflection,
+                artifacts: dppmResult.artifacts,
+                deployedUrl,
                 complexityAnalysis: {
                   score: complexityAnalysis.score,
                   reasons: complexityAnalysis.reasons
