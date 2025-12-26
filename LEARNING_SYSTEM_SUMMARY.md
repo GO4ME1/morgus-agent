@@ -125,7 +125,21 @@ Added `is_admin` column to the `profiles` table. Users with `is_admin = true` se
 - "👑 Admin" badge in settings
 - Access to Admin Panel button
 
-## Deployment
+## Deployment Status
+
+**✅ DEPLOYED AND WORKING** (December 26, 2025)
+
+The DPPM service has been deployed to Fly.io (version 29) and is actively storing learning data.
+
+### Fly.io Secrets Configured:
+- `SUPABASE_URL` - Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY` - Service role key for bypassing RLS
+
+### Verified Working:
+- DPPM tasks complete successfully
+- Learning data is stored in `dppm_reflections` table
+- Model performance tracking via database triggers
+- First test record stored: "What is 7 times 8?" by test-user-123
 
 ### Files Changed
 - `dppm-service/src/index.ts` - Learning data storage
