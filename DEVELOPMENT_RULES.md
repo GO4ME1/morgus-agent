@@ -8,6 +8,7 @@
 The following must NEVER be committed to this repository:
 - API keys (OpenAI, OpenRouter, Stripe, Resend, etc.)
 - Secret keys (sk_test_*, sk_live_*, whsec_*, re_*)
+- AWS credentials (AKIA*, aws_secret_access_key)
 - Cloudflare API tokens
 - Supabase service role keys
 - Admin tokens or passwords

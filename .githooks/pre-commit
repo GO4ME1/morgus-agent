@@ -92,6 +92,33 @@ if echo "$STAGED_FILES" | xargs grep -lE "$OPENAI_PATTERN" 2>/dev/null; then
 fi
 
 # ===========================================
+# CHECK 6b: AWS Access Keys
+# ===========================================
+echo "  Checking for AWS access keys..."
+AWS_ACCESS_PATTERN="AKIA[0-9A-Z]{16}"
+if echo "$STAGED_FILES" | xargs grep -lE "$AWS_ACCESS_PATTERN" 2>/dev/null; then
+    echo -e "${RED}❌ BLOCKED: AWS Access Key ID detected!${NC}"
+    echo "   Files containing AWS keys:"
+    echo "$STAGED_FILES" | xargs grep -lE "$AWS_ACCESS_PATTERN" 2>/dev/null
+    ERRORS_FOUND=1
+fi
+
+# ===========================================
+# CHECK 6c: AWS Secret Keys
+# ===========================================
+echo "  Checking for AWS secret keys..."
+# AWS secret keys are 40 characters, base64-like
+for file in $STAGED_FILES; do
+    if [[ "$file" =~ \.(md|ts|tsx|js|json|yaml|yml)$ ]] && [[ ! "$file" =~ \.env ]]; then
+        # Look for aws_secret or secret_access_key followed by a 40-char string
+        if grep -iE "(aws_secret|secret_access_key|aws_secret_access_key)\s*[:=]\s*['\"]?[A-Za-z0-9/+=]{40}['\"]?" "$file" 2>/dev/null; then
+            echo -e "${RED}❌ BLOCKED: AWS Secret Access Key detected in $file${NC}"
+            ERRORS_FOUND=1
+        fi
+    fi
+done
+
+# ===========================================
 # CHECK 7: Generic Secret Patterns
 # ===========================================
 echo "  Checking for generic secret patterns..."

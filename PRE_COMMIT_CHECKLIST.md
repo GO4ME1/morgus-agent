@@ -18,6 +18,7 @@ The hook will automatically block commits containing:
 - Stripe keys (`sk_test_*`, `sk_live_*`, `whsec_*`)
 - Resend API keys (`re_*`)
 - OpenAI keys (`sk-*`)
+- AWS Access Keys (`AKIA*`) and Secret Keys
 - JWT tokens (Supabase keys)
 - `.env` files
 
@@ -35,6 +36,8 @@ Before running `git commit`, verify each item:
 | No Stripe webhook secrets (`whsec_*`) | ☐ |
 | No Resend API keys (`re_*`) | ☐ |
 | No OpenAI/OpenRouter keys (`sk-*`) | ☐ |
+| No AWS Access Key IDs (`AKIA*`) | ☐ |
+| No AWS Secret Access Keys | ☐ |
 | No Cloudflare API tokens | ☐ |
 | No Supabase service role keys | ☐ |
 | No admin tokens or passwords | ☐ |
