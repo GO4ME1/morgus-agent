@@ -14,7 +14,6 @@ import MorgyPen from './components/MorgyPen';
 import { MorgyAutocomplete } from './components/MorgyAutocomplete';
 import { DeepResearchPanel } from './components/DeepResearchPanel';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
-import { SubscriptionStatus } from './components/SubscriptionStatus';
 import { runDeepResearch } from './lib/research-orchestrator';
 import type { ResearchSession, ResearchStep } from './lib/research-orchestrator';
 import { getMCPClient } from './lib/mcp-client';
