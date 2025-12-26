@@ -744,14 +744,15 @@ export default {
                     .replace(/[^a-z0-9]+/g, '-')
                     .substring(0, 30) + '-' + Date.now().toString(36);
                   
-                  // Call deployment service
+                  // Call deployment service with Cloudflare credentials
                   const deployResponse = await fetch('https://morgus-deploy.fly.dev/deploy', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                       projectName,
-                      files,
-                      userId: body.user_id || 'anonymous'
+                      files: files.map((f: any) => ({ path: f.name, content: f.content })),
+                      apiToken: env.CLOUDFLARE_API_TOKEN,
+                      accountId: env.CLOUDFLARE_ACCOUNT_ID
                     })
                   });
                   
