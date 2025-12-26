@@ -17,6 +17,7 @@ export interface EvaluationCriteria {
   cost: number; // 0-1 score
   preference: number; // 0-1 score based on historical performance
   reliability: number; // 0-1 score based on response rate (not being too slow)
+  alignment: number; // 0-1 score based on agreement with other responses (NAMEx insight)
 }
 
 export interface EvaluationWeights {
@@ -25,6 +26,7 @@ export interface EvaluationWeights {
   cost: number;
   preference: number;
   reliability: number;
+  alignment: number; // Bonus for agreeing with other high-quality responses
 }
 
 export interface NashResult {
@@ -45,13 +47,16 @@ export interface ModelReliabilityStats {
 
 /**
  * Default weights for evaluation criteria
+ * Inspired by NAMEx paper: quality is king, but speed is a key factor
+ * in the Nash bargaining utility function
  */
 export const DEFAULT_WEIGHTS: EvaluationWeights = {
-  quality: 0.60, // Quality is most important
-  speed: 0.10, // Speed matters
-  cost: 0.10, // Cost efficiency
+  quality: 0.45, // Quality is king - most important factor
+  speed: 0.20, // Speed matters significantly (NAMEx insight: faster TTFT = better UX)
+  cost: 0.05, // Cost efficiency (free models, so less important)
   preference: 0.10, // Historical user preference
-  reliability: 0.10, // Reliability (not being too slow)
+  reliability: 0.10, // Reliability (not being too slow) - penalize unreliable models
+  alignment: 0.10, // NAMEx insight: cooperative bonus for agreeing with consensus
 };
 
 export class NashEquilibriumSelector {
@@ -142,7 +147,7 @@ export class NashEquilibriumSelector {
       );
     }
 
-    // Calculate weighted scores
+    // Calculate weighted scores using NAMEx-inspired Nash bargaining
     const scores = new Map<string, number>();
     for (const [model, criteria] of evaluations) {
       let score =
@@ -150,7 +155,8 @@ export class NashEquilibriumSelector {
         criteria.speed * this.weights.speed +
         criteria.cost * this.weights.cost +
         criteria.preference * this.weights.preference +
-        criteria.reliability * this.weights.reliability;
+        criteria.reliability * this.weights.reliability +
+        criteria.alignment * this.weights.alignment;
 
       // Handle NaN or Infinity (fallback to 0)
       if (!isFinite(score)) {
@@ -197,6 +203,7 @@ export class NashEquilibriumSelector {
       cost: this.evaluateCost(response, allResponses),
       preference: this.evaluatePreference(response),
       reliability: this.evaluateReliability(response),
+      alignment: this.evaluateAlignment(response, allResponses),
     };
   }
 
@@ -318,6 +325,78 @@ export class NashEquilibriumSelector {
   }
 
   /**
+   * Evaluate alignment with other responses (NAMEx-inspired)
+   * 
+   * Models that agree with the consensus of other high-quality responses
+   * get a cooperative bonus. This is inspired by the Nash Bargaining
+   * approach where experts that align get better outcomes.
+   */
+  private evaluateAlignment(
+    response: OpenRouterResponse,
+    allResponses: OpenRouterResponse[]
+  ): number {
+    if (allResponses.length <= 1) {
+      return 0.5; // No other responses to compare
+    }
+
+    // Calculate simple word overlap as a proxy for semantic similarity
+    const responseWords = this.extractKeywords(response.content);
+    let totalSimilarity = 0;
+    let comparisons = 0;
+
+    for (const other of allResponses) {
+      if (other.model === response.model) continue;
+      
+      const otherWords = this.extractKeywords(other.content);
+      const similarity = this.calculateJaccardSimilarity(responseWords, otherWords);
+      totalSimilarity += similarity;
+      comparisons++;
+    }
+
+    if (comparisons === 0) return 0.5;
+
+    // Average similarity with other responses
+    const avgSimilarity = totalSimilarity / comparisons;
+    
+    // Normalize to 0-1 range (Jaccard is already 0-1)
+    // Give bonus for moderate alignment (0.3-0.7 range is ideal)
+    // Too high alignment might mean the response is generic
+    // Too low might mean it's off-topic
+    if (avgSimilarity >= 0.3 && avgSimilarity <= 0.7) {
+      return 0.8 + (avgSimilarity - 0.3) * 0.5; // Bonus for good alignment
+    } else if (avgSimilarity > 0.7) {
+      return 0.7; // Slightly penalize overly similar (might be generic)
+    } else {
+      return avgSimilarity + 0.2; // Low alignment, but might have unique insights
+    }
+  }
+
+  /**
+   * Extract keywords from text for similarity comparison
+   */
+  private extractKeywords(text: string): Set<string> {
+    // Simple keyword extraction: lowercase, remove punctuation, split by whitespace
+    const words = text
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .split(/\s+/)
+      .filter(w => w.length > 3); // Only words longer than 3 chars
+    
+    return new Set(words);
+  }
+
+  /**
+   * Calculate Jaccard similarity between two sets of words
+   */
+  private calculateJaccardSimilarity(set1: Set<string>, set2: Set<string>): number {
+    const intersection = new Set([...set1].filter(x => set2.has(x)));
+    const union = new Set([...set1, ...set2]);
+    
+    if (union.size === 0) return 0;
+    return intersection.size / union.size;
+  }
+
+  /**
    * Update user preference for a model
    */
   updatePreference(model: string, rating: number) {
@@ -359,6 +438,9 @@ export class NashEquilibriumSelector {
     );
     parts.push(
       `- Reliability: ${(winnerCriteria.reliability * 100).toFixed(1)}% (weight: ${this.weights.reliability * 100}%)`
+    );
+    parts.push(
+      `- Alignment: ${(winnerCriteria.alignment * 100).toFixed(1)}% (weight: ${this.weights.alignment * 100}%)`
     );
     parts.push('');
     parts.push('**All Scores:**');

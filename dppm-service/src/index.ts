@@ -13,6 +13,8 @@
 
 import express from 'express';
 import cors from 'cors';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { deployToGitHubPages, GitHubDeployRequest } from './github-pages-deploy';
 
 const app = express();
 app.use(cors());
@@ -586,6 +588,86 @@ function detectProjectType(message: string, artifacts: CodeArtifact[]): 'website
   return 'document';
 }
 
+// Store learning data in Supabase
+async function storeLearningData(
+  userId: string | undefined,
+  conversationId: string | undefined,
+  goal: string,
+  subtaskResults: SubtaskResult[],
+  reflection: string,
+  lessons: string[],
+  totalTime: number,
+  config: DPPMRequest['config']
+): Promise<void> {
+  if (!userId || !config.supabase_url || !config.supabase_key) {
+    console.log('[DPPM] Skipping learning data storage - missing user_id or Supabase config');
+    return;
+  }
+
+  try {
+    const supabase = createClient(config.supabase_url, config.supabase_key);
+    
+    // Determine goal category based on keywords
+    const lowerGoal = goal.toLowerCase();
+    let goalCategory = 'general';
+    if (lowerGoal.includes('code') || lowerGoal.includes('program') || lowerGoal.includes('script') || lowerGoal.includes('function')) {
+      goalCategory = 'coding';
+    } else if (lowerGoal.includes('write') || lowerGoal.includes('essay') || lowerGoal.includes('article') || lowerGoal.includes('blog')) {
+      goalCategory = 'writing';
+    } else if (lowerGoal.includes('analyze') || lowerGoal.includes('research') || lowerGoal.includes('data')) {
+      goalCategory = 'analysis';
+    } else if (lowerGoal.includes('website') || lowerGoal.includes('landing page') || lowerGoal.includes('web')) {
+      goalCategory = 'web_development';
+    } else if (lowerGoal.includes('math') || lowerGoal.includes('calculate') || lowerGoal.includes('equation')) {
+      goalCategory = 'math';
+    }
+
+    // Calculate success rate and winning model
+    const successfulResults = subtaskResults.filter(r => r.status === 'success');
+    const successRate = subtaskResults.length > 0 ? successfulResults.length / subtaskResults.length : 0;
+    
+    // Find the model that won most subtasks
+    const modelCounts: Record<string, number> = {};
+    successfulResults.forEach(r => {
+      modelCounts[r.model] = (modelCounts[r.model] || 0) + 1;
+    });
+    const winningModel = Object.entries(modelCounts)
+      .sort((a, b) => b[1] - a[1])[0]?.[0] || 'unknown';
+
+    // Store the DPPM reflection
+    const { error: reflectionError } = await supabase
+      .from('dppm_reflections')
+      .insert({
+        user_id: userId,
+        conversation_id: conversationId,
+        goal_description: goal.substring(0, 1000),
+        goal_category: goalCategory,
+        subtask_results: subtaskResults.map(r => ({
+          id: r.id,
+          title: r.title,
+          model: r.model,
+          latency_ms: r.latency,
+          status: r.status
+        })),
+        winning_model: winningModel,
+        success_rate: successRate,
+        total_latency_ms: totalTime,
+        lessons_learned: lessons,
+        reflection_text: reflection
+      });
+
+    if (reflectionError) {
+      console.error('[DPPM] Error storing reflection:', reflectionError.message);
+    } else {
+      console.log(`[DPPM] Stored learning data: category=${goalCategory}, winner=${winningModel}, success=${(successRate * 100).toFixed(0)}%`);
+    }
+
+    // Note: model_performance is updated automatically via database trigger
+  } catch (error: any) {
+    console.error('[DPPM] Error storing learning data:', error.message);
+  }
+}
+
 // Main DPPM endpoint
 app.post('/dppm', async (req, res) => {
   const startTime = Date.now();
@@ -618,6 +700,18 @@ app.post('/dppm', async (req, res) => {
     const requiresDeployment = projectType === 'website' && artifacts.length > 0;
     
     console.log(`[DPPM] Extracted ${artifacts.length} code artifacts, projectType: ${projectType}, requiresDeployment: ${requiresDeployment}`);
+    
+    // Phase 4: Store learning data (non-blocking)
+    storeLearningData(
+      request.user_id,
+      request.conversation_id,
+      request.message,
+      subtaskResults,
+      reflection,
+      lessons,
+      totalTime,
+      request.config
+    ).catch(err => console.error('[DPPM] Learning data storage failed:', err.message));
     
     const response: DPPMResponse = {
       output: finalOutput,
@@ -857,9 +951,56 @@ app.post('/deploy', async (req, res) => {
   }
 });
 
+// GitHub Pages deployment endpoint
+app.post('/deploy-github', async (req, res) => {
+  const startTime = Date.now();
+  
+  try {
+    const { projectName, files, githubToken } = req.body;
+    
+    if (!projectName || !files || !githubToken) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        required: ['projectName', 'files', 'githubToken']
+      });
+    }
+    
+    console.log('[GITHUB-DEPLOY] Starting deployment for:', projectName);
+    
+    const result = await deployToGitHubPages({
+      projectName,
+      files,
+      githubToken,
+    });
+    
+    const totalTime = Date.now() - startTime;
+    
+    if (result.success) {
+      res.json({
+        success: true,
+        url: result.url,
+        repoUrl: result.repoUrl,
+        totalTime,
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: result.error,
+        totalTime,
+      });
+    }
+  } catch (error: any) {
+    console.error('[GITHUB-DEPLOY] Error:', error.message);
+    res.status(500).json({
+      error: 'GitHub deployment failed',
+      message: error.message,
+    });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', service: 'morgus-dppm', version: '2.1.0-with-deploy' });
+  res.json({ status: 'healthy', service: 'morgus-dppm', version: '2.2.0-github-pages' });
 });
 
 // Start server

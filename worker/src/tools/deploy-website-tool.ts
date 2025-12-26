@@ -1,14 +1,14 @@
 /**
- * Deploy Website Tool - Simplified website deployment
+ * Deploy Website Tool - Simplified website deployment via GitHub Pages
  */
 
 import { Tool } from '../tools';
-// Deployment now handled by Fly.io service
+// Deployment now handled by Fly.io service via GitHub Pages
 type DeploymentFile = { path: string; content: string };
 
 export const deployWebsiteTool: Tool = {
   name: 'deploy_website',
-  description: 'Deploy a website to Cloudflare Pages. Use this when user asks to BUILD or CREATE a website. Provide HTML, CSS, and optionally JS files.',
+  description: 'Deploy a website to GitHub Pages. Use this when user asks to BUILD or CREATE a website. Provide HTML, CSS, and optionally JS files.',
   parameters: {
     type: 'object',
     properties: {
@@ -81,17 +81,16 @@ Please try again and ensure the HTML is properly formatted.`;
         files.push({ path: 'script.js', content: args.js });
       }
 
-      // Get Cloudflare credentials from environment
-      const apiToken = env.CLOUDFLARE_API_TOKEN;
-      const accountId = env.CLOUDFLARE_ACCOUNT_ID;
+      // Get GitHub token from environment
+      const githubToken = env.GITHUB_TOKEN;
 
-      if (!apiToken || !accountId) {
-        throw new Error('Cloudflare credentials not configured in Worker environment');
+      if (!githubToken) {
+        throw new Error('GitHub token not configured in Worker environment');
       }
 
-      // Deploy via Fly.io service
-      console.log('[DEPLOY_WEBSITE] Calling deployment service...');
-      const response = await fetch('https://morgus-deploy.fly.dev/deploy', {
+      // Deploy via Fly.io service to GitHub Pages
+      console.log('[DEPLOY_WEBSITE] Calling GitHub Pages deployment service...');
+      const response = await fetch('https://morgus-deploy.fly.dev/deploy-github', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,8 +98,7 @@ Please try again and ensure the HTML is properly formatted.`;
         body: JSON.stringify({
           projectName,
           files,
-          apiToken,
-          accountId,
+          githubToken,
         }),
       });
 
@@ -110,13 +108,13 @@ Please try again and ensure the HTML is properly formatted.`;
       }
 
       const result = await response.json();
-      const deploymentUrl = result.productionUrl;
+      const deploymentUrl = result.url;
 
       return `🚀 **WEBSITE DEPLOYED SUCCESSFULLY!**
 
 **Live URL:** ${deploymentUrl}
 
-Your website is now live and accessible worldwide on Cloudflare's global network!
+Your website is now live on GitHub Pages!
 
 **Files deployed:**
 - index.html (${args.html.length} bytes)
@@ -135,7 +133,7 @@ ${args.js ? `- script.js (${args.js.length} bytes)` : ''}
 Error: ${error.message}
 
 **Troubleshooting:**
-- Check that Cloudflare credentials are configured
+- Check that GitHub token is configured
 - Ensure project name is valid (lowercase, hyphens only)
 - Verify HTML and CSS are valid
 

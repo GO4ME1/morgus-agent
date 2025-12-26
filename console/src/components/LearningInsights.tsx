@@ -1,37 +1,43 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import './LearningInsights.css';
 
-const API_URL = 'https://morgus-orchestrator.morgan-426.workers.dev';
-
-interface UserLesson {
+// Types matching our Supabase tables
+interface DPPMReflection {
   id: string;
-  task_type: string;
-  model_used: string;
-  feedback_type: 'positive' | 'negative' | 'glitch';
-  what_worked?: string;
-  what_failed?: string;
-  lesson_learned: string;
-  applied_count: number;
+  goal_description: string;
+  goal_category: string;
+  subtask_results: Array<{
+    id: number;
+    title: string;
+    model: string;
+    latency_ms: number;
+    status: 'success' | 'failed';
+  }>;
+  winning_model: string;
+  success_rate: number;
+  total_latency_ms: number;
+  lessons_learned: string[];
+  reflection_text: string;
   created_at: string;
 }
 
-interface UserPattern {
-  id: string;
-  pattern_type: 'task' | 'style' | 'preference';
-  pattern_key: string;
-  pattern_value: string;
-  confidence: number;
-  occurrence_count: number;
-  last_seen: string;
+interface ModelPerformance {
+  model_name: string;
+  task_category: string;
+  total_attempts: number;
+  wins: number;
+  avg_latency_ms: number;
+  win_rate: number;
 }
 
-interface UserPreferences {
-  preferred_tone: string;
-  preferred_models: string[];
-  industry?: string;
-  common_tasks: string[];
-  avoid_patterns: string[];
-  style_notes: string[];
+interface LearningStats {
+  total_dppm_tasks: number;
+  total_subtasks_completed: number;
+  avg_success_rate: number;
+  avg_latency_ms: number;
+  favorite_model: string;
+  top_category: string;
 }
 
 interface LearningInsightsProps {
@@ -39,12 +45,12 @@ interface LearningInsightsProps {
 }
 
 export function LearningInsights({ userId }: LearningInsightsProps) {
-  const [lessons, setLessons] = useState<UserLesson[]>([]);
-  const [patterns, setPatterns] = useState<UserPattern[]>([]);
-  const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+  const [reflections, setReflections] = useState<DPPMReflection[]>([]);
+  const [modelPerformance, setModelPerformance] = useState<ModelPerformance[]>([]);
+  const [stats, setStats] = useState<LearningStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<'overview' | 'lessons' | 'patterns'>('overview');
+  const [activeSection, setActiveSection] = useState<'overview' | 'history' | 'models'>('overview');
 
   useEffect(() => {
     if (userId) {
@@ -59,26 +65,77 @@ export function LearningInsights({ userId }: LearningInsightsProps) {
     setError(null);
 
     try {
-      // Load all data in parallel
-      const [lessonsRes, patternsRes, prefsRes] = await Promise.all([
-        fetch(`${API_URL}/api/user/lessons?user_id=${userId}`),
-        fetch(`${API_URL}/api/user/patterns?user_id=${userId}`),
-        fetch(`${API_URL}/api/user/preferences?user_id=${userId}`),
-      ]);
+      // Load DPPM reflections
+      const { data: reflectionsData, error: reflectionsError } = await supabase
+        .from('dppm_reflections')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(20);
 
-      if (lessonsRes.ok) {
-        const lessonsData = await lessonsRes.json();
-        setLessons(Array.isArray(lessonsData) ? lessonsData : []);
+      if (reflectionsError) {
+        console.error('Error loading reflections:', reflectionsError);
+      } else {
+        setReflections(reflectionsData || []);
       }
 
-      if (patternsRes.ok) {
-        const patternsData = await patternsRes.json();
-        setPatterns(Array.isArray(patternsData) ? patternsData : []);
+      // Load model performance data
+      const { data: performanceData, error: performanceError } = await supabase
+        .from('model_performance')
+        .select('*')
+        .order('wins', { ascending: false });
+
+      if (performanceError) {
+        console.error('Error loading model performance:', performanceError);
+      } else {
+        // Calculate win rate for each model
+        const withWinRate = (performanceData || []).map(p => ({
+          ...p,
+          win_rate: p.total_attempts > 0 ? p.wins / p.total_attempts : 0
+        }));
+        setModelPerformance(withWinRate);
       }
 
-      if (prefsRes.ok) {
-        const prefsData = await prefsRes.json();
-        setPreferences(prefsData);
+      // Calculate aggregate stats
+      if (reflectionsData && reflectionsData.length > 0) {
+        const totalTasks = reflectionsData.length;
+        const totalSubtasks = reflectionsData.reduce((sum, r) => 
+          sum + (r.subtask_results?.length || 0), 0);
+        const avgSuccess = reflectionsData.reduce((sum, r) => 
+          sum + (r.success_rate || 0), 0) / totalTasks;
+        const avgLatency = reflectionsData.reduce((sum, r) => 
+          sum + (r.total_latency_ms || 0), 0) / totalTasks;
+        
+        // Find favorite model
+        const modelCounts: Record<string, number> = {};
+        reflectionsData.forEach(r => {
+          if (r.winning_model) {
+            modelCounts[r.winning_model] = (modelCounts[r.winning_model] || 0) + 1;
+          }
+        });
+        const favoriteModel = Object.entries(modelCounts)
+          .sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+
+        // Find top category
+        const categoryCounts: Record<string, number> = {};
+        reflectionsData.forEach(r => {
+          if (r.goal_category) {
+            categoryCounts[r.goal_category] = (categoryCounts[r.goal_category] || 0) + 1;
+          }
+        });
+        const topCategory = Object.entries(categoryCounts)
+          .sort((a, b) => b[1] - a[1])[0]?.[0] || 'general';
+
+        setStats({
+          total_dppm_tasks: totalTasks,
+          total_subtasks_completed: totalSubtasks,
+          avg_success_rate: avgSuccess,
+          avg_latency_ms: avgLatency,
+          favorite_model: favoriteModel,
+          top_category: topCategory
+        });
+      } else {
+        setStats(null);
       }
     } catch (err) {
       console.error('Failed to load learning data:', err);
@@ -86,28 +143,6 @@ export function LearningInsights({ userId }: LearningInsightsProps) {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const getFeedbackEmoji = (type: string) => {
-    switch (type) {
-      case 'positive': return '👍';
-      case 'negative': return '👎';
-      case 'glitch': return '🍅';
-      default: return '📝';
-    }
-  };
-
-  const getConfidenceBar = (confidence: number) => {
-    const percentage = Math.round(confidence * 100);
-    return (
-      <div className="confidence-bar">
-        <div 
-          className="confidence-fill" 
-          style={{ width: `${percentage}%` }}
-        />
-        <span className="confidence-text">{percentage}%</span>
-      </div>
-    );
   };
 
   const formatDate = (dateString: string) => {
@@ -118,6 +153,29 @@ export function LearningInsights({ userId }: LearningInsightsProps) {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const formatLatency = (ms: number) => {
+    if (ms < 1000) return `${Math.round(ms)}ms`;
+    return `${(ms / 1000).toFixed(1)}s`;
+  };
+
+  const getCategoryEmoji = (category: string) => {
+    const emojis: Record<string, string> = {
+      'coding': '💻',
+      'writing': '✍️',
+      'analysis': '📊',
+      'web_development': '🌐',
+      'math': '🔢',
+      'general': '📝'
+    };
+    return emojis[category] || '📝';
+  };
+
+  const getSuccessColor = (rate: number) => {
+    if (rate >= 0.9) return '#4ade80';
+    if (rate >= 0.7) return '#facc15';
+    return '#f87171';
   };
 
   if (!userId) {
@@ -158,16 +216,16 @@ export function LearningInsights({ userId }: LearningInsightsProps) {
           📊 Overview
         </button>
         <button 
-          className={`section-tab ${activeSection === 'lessons' ? 'active' : ''}`}
-          onClick={() => setActiveSection('lessons')}
+          className={`section-tab ${activeSection === 'history' ? 'active' : ''}`}
+          onClick={() => setActiveSection('history')}
         >
-          📚 Lessons ({lessons.length})
+          📜 History ({reflections.length})
         </button>
         <button 
-          className={`section-tab ${activeSection === 'patterns' ? 'active' : ''}`}
-          onClick={() => setActiveSection('patterns')}
+          className={`section-tab ${activeSection === 'models' ? 'active' : ''}`}
+          onClick={() => setActiveSection('models')}
         >
-          🔍 Patterns ({patterns.length})
+          🤖 Models ({modelPerformance.length})
         </button>
       </div>
 
@@ -180,92 +238,97 @@ export function LearningInsights({ userId }: LearningInsightsProps) {
         <div className="insights-content">
           {activeSection === 'overview' && (
             <div className="overview-section">
-              <div className="stats-grid">
-                <div className="stat-card">
-                  <span className="stat-icon">📚</span>
-                  <span className="stat-value">{lessons.length}</span>
-                  <span className="stat-label">Lessons Learned</span>
-                </div>
-                <div className="stat-card">
-                  <span className="stat-icon">🔍</span>
-                  <span className="stat-value">{patterns.length}</span>
-                  <span className="stat-label">Patterns Detected</span>
-                </div>
-                <div className="stat-card">
-                  <span className="stat-icon">👍</span>
-                  <span className="stat-value">{lessons.filter(l => l.feedback_type === 'positive').length}</span>
-                  <span className="stat-label">Positive Feedback</span>
-                </div>
-                <div className="stat-card">
-                  <span className="stat-icon">👎</span>
-                  <span className="stat-value">{lessons.filter(l => l.feedback_type === 'negative').length}</span>
-                  <span className="stat-label">Areas to Improve</span>
-                </div>
-              </div>
-
-              {preferences && (
-                <div className="preferences-summary">
-                  <h4>Your Preferences</h4>
-                  <div className="pref-item">
-                    <span className="pref-label">Preferred Tone:</span>
-                    <span className="pref-value">{preferences.preferred_tone || 'Not set'}</span>
+              {stats ? (
+                <>
+                  <div className="stats-grid">
+                    <div className="stat-card">
+                      <span className="stat-icon">🎯</span>
+                      <span className="stat-value">{stats.total_dppm_tasks}</span>
+                      <span className="stat-label">DPPM Tasks</span>
+                    </div>
+                    <div className="stat-card">
+                      <span className="stat-icon">✅</span>
+                      <span className="stat-value">{stats.total_subtasks_completed}</span>
+                      <span className="stat-label">Subtasks Completed</span>
+                    </div>
+                    <div className="stat-card">
+                      <span className="stat-icon">📈</span>
+                      <span className="stat-value" style={{ color: getSuccessColor(stats.avg_success_rate) }}>
+                        {(stats.avg_success_rate * 100).toFixed(0)}%
+                      </span>
+                      <span className="stat-label">Success Rate</span>
+                    </div>
+                    <div className="stat-card">
+                      <span className="stat-icon">⚡</span>
+                      <span className="stat-value">{formatLatency(stats.avg_latency_ms)}</span>
+                      <span className="stat-label">Avg Response Time</span>
+                    </div>
                   </div>
-                  {preferences.industry && (
-                    <div className="pref-item">
-                      <span className="pref-label">Industry:</span>
-                      <span className="pref-value">{preferences.industry}</span>
-                    </div>
-                  )}
-                  {preferences.preferred_models?.length > 0 && (
-                    <div className="pref-item">
-                      <span className="pref-label">Preferred Models:</span>
-                      <span className="pref-value">{preferences.preferred_models.join(', ')}</span>
-                    </div>
-                  )}
-                </div>
-              )}
 
-              {lessons.length === 0 && patterns.length === 0 && (
+                  <div className="preferences-summary">
+                    <h4>Your Profile</h4>
+                    <div className="pref-item">
+                      <span className="pref-label">🏆 Favorite Model:</span>
+                      <span className="pref-value model-badge">{stats.favorite_model}</span>
+                    </div>
+                    <div className="pref-item">
+                      <span className="pref-label">{getCategoryEmoji(stats.top_category)} Top Category:</span>
+                      <span className="pref-value">{stats.top_category.replace('_', ' ')}</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
                 <div className="empty-state">
                   <span className="empty-icon">🌱</span>
-                  <h4>Start Teaching Morgus!</h4>
-                  <p>Use the 👍 👎 🍅 buttons on responses to help Morgus learn your preferences.</p>
+                  <h4>Start Using Deep Thinking!</h4>
+                  <p>Enable DPPM mode for complex tasks to see your learning insights here.</p>
+                  <p className="hint">Tip: Use the 🧠 button in chat to enable deep thinking mode.</p>
                 </div>
               )}
             </div>
           )}
 
-          {activeSection === 'lessons' && (
+          {activeSection === 'history' && (
             <div className="lessons-section">
-              {lessons.length === 0 ? (
+              {reflections.length === 0 ? (
                 <div className="empty-state">
-                  <span className="empty-icon">📚</span>
-                  <p>No lessons yet. Give feedback on responses to start teaching!</p>
+                  <span className="empty-icon">📜</span>
+                  <p>No DPPM tasks yet. Try deep thinking mode for complex tasks!</p>
                 </div>
               ) : (
                 <div className="lessons-list">
-                  {lessons.map((lesson) => (
-                    <div key={lesson.id} className={`lesson-card ${lesson.feedback_type}`}>
+                  {reflections.map((reflection) => (
+                    <div key={reflection.id} className="lesson-card">
                       <div className="lesson-header">
-                        <span className="feedback-emoji">{getFeedbackEmoji(lesson.feedback_type)}</span>
-                        <span className="task-type">{lesson.task_type}</span>
-                        <span className="model-badge">{lesson.model_used}</span>
-                        <span className="lesson-date">{formatDate(lesson.created_at)}</span>
+                        <span className="feedback-emoji">{getCategoryEmoji(reflection.goal_category)}</span>
+                        <span className="task-type">{reflection.goal_category.replace('_', ' ')}</span>
+                        <span className="model-badge">{reflection.winning_model}</span>
+                        <span className="lesson-date">{formatDate(reflection.created_at)}</span>
                       </div>
                       <div className="lesson-content">
-                        <p className="lesson-text">{lesson.lesson_learned}</p>
-                        {lesson.what_worked && (
-                          <p className="what-worked">✅ {lesson.what_worked}</p>
-                        )}
-                        {lesson.what_failed && (
-                          <p className="what-failed">❌ {lesson.what_failed}</p>
+                        <p className="lesson-text">{reflection.goal_description}</p>
+                        <div className="reflection-stats">
+                          <span className="stat-pill" style={{ backgroundColor: getSuccessColor(reflection.success_rate) }}>
+                            {(reflection.success_rate * 100).toFixed(0)}% success
+                          </span>
+                          <span className="stat-pill">
+                            ⚡ {formatLatency(reflection.total_latency_ms)}
+                          </span>
+                          <span className="stat-pill">
+                            📋 {reflection.subtask_results?.length || 0} subtasks
+                          </span>
+                        </div>
+                        {reflection.lessons_learned && reflection.lessons_learned.length > 0 && (
+                          <div className="lessons-learned">
+                            <strong>Lessons:</strong>
+                            <ul>
+                              {reflection.lessons_learned.map((lesson, i) => (
+                                <li key={i}>{lesson}</li>
+                              ))}
+                            </ul>
+                          </div>
                         )}
                       </div>
-                      {lesson.applied_count > 0 && (
-                        <div className="applied-count">
-                          Applied {lesson.applied_count} time{lesson.applied_count > 1 ? 's' : ''}
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -273,31 +336,42 @@ export function LearningInsights({ userId }: LearningInsightsProps) {
             </div>
           )}
 
-          {activeSection === 'patterns' && (
+          {activeSection === 'models' && (
             <div className="patterns-section">
-              {patterns.length === 0 ? (
+              {modelPerformance.length === 0 ? (
                 <div className="empty-state">
-                  <span className="empty-icon">🔍</span>
-                  <p>No patterns detected yet. Keep using Morgus to build your profile!</p>
+                  <span className="empty-icon">🤖</span>
+                  <p>No model performance data yet. Complete some DPPM tasks first!</p>
                 </div>
               ) : (
                 <div className="patterns-list">
-                  {patterns.map((pattern) => (
-                    <div key={pattern.id} className="pattern-card">
+                  {modelPerformance.map((model, index) => (
+                    <div key={`${model.model_name}-${model.task_category}`} className="pattern-card">
                       <div className="pattern-header">
-                        <span className="pattern-type">{pattern.pattern_type}</span>
-                        <span className="occurrence-count">{pattern.occurrence_count}x</span>
+                        <span className="pattern-type">
+                          {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🤖'} {model.model_name}
+                        </span>
+                        <span className="occurrence-count">{model.wins} wins</span>
                       </div>
                       <div className="pattern-content">
-                        <span className="pattern-key">{pattern.pattern_key}:</span>
-                        <span className="pattern-value">{pattern.pattern_value}</span>
+                        <span className="pattern-key">Category:</span>
+                        <span className="pattern-value">{getCategoryEmoji(model.task_category)} {model.task_category}</span>
                       </div>
                       <div className="pattern-confidence">
-                        <span className="confidence-label">Confidence:</span>
-                        {getConfidenceBar(pattern.confidence)}
+                        <span className="confidence-label">Win Rate:</span>
+                        <div className="confidence-bar">
+                          <div 
+                            className="confidence-fill" 
+                            style={{ 
+                              width: `${model.win_rate * 100}%`,
+                              backgroundColor: getSuccessColor(model.win_rate)
+                            }}
+                          />
+                          <span className="confidence-text">{(model.win_rate * 100).toFixed(0)}%</span>
+                        </div>
                       </div>
                       <div className="pattern-date">
-                        Last seen: {formatDate(pattern.last_seen)}
+                        Avg latency: {formatLatency(model.avg_latency_ms)} • {model.total_attempts} attempts
                       </div>
                     </div>
                   ))}

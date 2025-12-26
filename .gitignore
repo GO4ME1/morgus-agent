@@ -68,3 +68,4 @@ temp/
 # Wrangler
 .wrangler/
 wrangler.toml.local
+fly-deploy-token.txt

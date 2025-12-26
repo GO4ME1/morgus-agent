@@ -3,7 +3,6 @@ import './SettingsPanel.css';
 import { MCPServerBrowser } from './MCPServerBrowser';
 import './MCPServerBrowser.css';
 import { LearningInsights } from './LearningInsights';
-import './LearningInsights.css';
 
 interface MCPServer {
   id: string;
@@ -214,7 +213,7 @@ export function SettingsPanel({ isOpen, onClose, darkMode, onDarkModeChange, don
             className={`tab ${activeTab === 'learning' ? 'active' : ''}`}
             onClick={() => setActiveTab('learning')}
           >
-            🧠 Learning
+            📚 Learning
           </button>
         </div>
 
@@ -491,7 +490,9 @@ export function SettingsPanel({ isOpen, onClose, darkMode, onDarkModeChange, don
           )}
 
           {activeTab === 'learning' && (
-            <LearningInsights userId={user?.id} />
+            <div className="learning-settings">
+              <LearningInsights userId={user?.id} />
+            </div>
           )}
         </div>
       </div>

@@ -31,6 +31,7 @@ interface Env {
   STRIPE_PUBLISHABLE_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
   RESEND_API_KEY?: string;
+  GITHUB_TOKEN?: string;
 }
 
 interface ChatMessage {
@@ -744,15 +745,14 @@ export default {
                     .replace(/[^a-z0-9]+/g, '-')
                     .substring(0, 30) + '-' + Date.now().toString(36);
                   
-                  // Call deployment service with Cloudflare credentials
-                  const deployResponse = await fetch('https://morgus-deploy.fly.dev/deploy', {
+                  // Call GitHub Pages deployment service
+                  const deployResponse = await fetch('https://morgus-deploy.fly.dev/deploy-github', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                       projectName,
                       files: files.map((f: any) => ({ path: f.name, content: f.content })),
-                      apiToken: env.CLOUDFLARE_API_TOKEN,
-                      accountId: env.CLOUDFLARE_ACCOUNT_ID
+                      githubToken: env.GITHUB_TOKEN
                     })
                   });
                   

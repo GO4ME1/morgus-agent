@@ -30,6 +30,9 @@ export interface ModelConfig {
 
 /**
  * Free models available on OpenRouter
+ * Selected for speed, quality, and diversity based on NAMEx research
+ * Qwen3 4B replaces DeepSeek R1T2 Chimera for better speed
+ * Note: Gemini is queried via direct Google API, not OpenRouter
  */
 export const FREE_MODELS: ModelConfig[] = [
   {

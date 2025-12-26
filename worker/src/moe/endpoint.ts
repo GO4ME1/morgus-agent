@@ -236,13 +236,26 @@ export class MOEEndpoint {
                 tokens: nashResult.winner.tokens.total,
                 cost: nashResult.winner.cost,
               },
-              allModels: responses.map((r) => ({
-                model: r.model,
-                latency: r.latency,
-                tokens: r.tokens.total,
-                cost: r.cost,
-                score: nashResult.scores.get(r.model) || 0,
-              })),
+              allModels: [
+                // Responded models
+                ...responses.map((r) => ({
+                  model: r.model,
+                  latency: r.latency,
+                  tokens: r.tokens.total,
+                  cost: r.cost,
+                  score: nashResult.scores.get(r.model) || 0,
+                  status: 'responded' as const,
+                })),
+                // Too slow models
+                ...tooSlowModels.map((model) => ({
+                  model,
+                  latency: -1,
+                  tokens: 0,
+                  cost: 0,
+                  score: 0,
+                  status: 'too_slow' as const,
+                })),
+              ],
               tooSlowModels: tooSlowModels.length > 0 ? tooSlowModels : undefined,
               nashExplanation: nashResult.explanation,
               totalLatency,
@@ -370,13 +383,26 @@ export class MOEEndpoint {
                 tokens: nashResult.winner.tokens.total,
                 cost: nashResult.winner.cost,
               },
-              allModels: responses.map((r) => ({
-                model: r.model,
-                latency: r.latency,
-                tokens: r.tokens.total,
-                cost: r.cost,
-                score: nashResult.scores.get(r.model) || 0,
-              })),
+              allModels: [
+                // Responded models
+                ...responses.map((r) => ({
+                  model: r.model,
+                  latency: r.latency,
+                  tokens: r.tokens.total,
+                  cost: r.cost,
+                  score: nashResult.scores.get(r.model) || 0,
+                  status: 'responded' as const,
+                })),
+                // Too slow models
+                ...tooSlowModels.map((model) => ({
+                  model,
+                  latency: -1,
+                  tokens: 0,
+                  cost: 0,
+                  score: 0,
+                  status: 'too_slow' as const,
+                })),
+              ],
               tooSlowModels: tooSlowModels.length > 0 ? tooSlowModels : undefined,
               nashExplanation: nashResult.explanation,
               totalLatency,

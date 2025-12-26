@@ -9,7 +9,7 @@ interface DeployWebsiteArgs {
 
 export class DeployWebsiteServiceTool extends Tool<DeployWebsiteArgs> {
   name = 'deploy_website';
-  description = `Deploy a website to Cloudflare Pages. Takes HTML, CSS, and JavaScript content and deploys it to a live URL.
+  description = `Deploy a website to GitHub Pages. Takes HTML, CSS, and JavaScript content and deploys it to a live URL.
   
 Use this when the user asks to:
 - Build a website
@@ -17,7 +17,7 @@ Use this when the user asks to:
 - Make a web app
 - Deploy a site
 
-The website will be instantly live on Cloudflare Pages with HTTPS.`;
+The website will be instantly live on GitHub Pages with HTTPS.`;
 
   schema = {
     type: 'object' as const,
@@ -50,11 +50,10 @@ The website will be instantly live on Cloudflare Pages with HTTPS.`;
       return 'Error: Project name must be lowercase letters, numbers, and hyphens only';
     }
 
-    const apiToken = env.CLOUDFLARE_API_TOKEN;
-    const accountId = env.CLOUDFLARE_ACCOUNT_ID;
+    const githubToken = env.GITHUB_TOKEN;
 
-    if (!apiToken || !accountId) {
-      return 'Error: Cloudflare credentials not configured';
+    if (!githubToken) {
+      return 'Error: GitHub token not configured';
     }
 
     try {
@@ -80,10 +79,10 @@ The website will be instantly live on Cloudflare Pages with HTTPS.`;
         });
       }
 
-      console.log(`[Deploy] Deploying ${projectName} with ${files.length} files...`);
+      console.log(`[Deploy] Deploying ${projectName} with ${files.length} files to GitHub Pages...`);
 
-      // Call the deployment service
-      const response = await fetch('https://morgus-deploy.fly.dev/deploy', {
+      // Call the GitHub Pages deployment service
+      const response = await fetch('https://morgus-deploy.fly.dev/deploy-github', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -91,8 +90,7 @@ The website will be instantly live on Cloudflare Pages with HTTPS.`;
         body: JSON.stringify({
           projectName,
           files,
-          apiToken,
-          accountId,
+          githubToken,
         }),
       });
 
@@ -107,9 +105,9 @@ The website will be instantly live on Cloudflare Pages with HTTPS.`;
 
       return `🚀 **WEBSITE DEPLOYED SUCCESSFULLY!**
 
-**Live URL:** ${result.productionUrl}
+**Live URL:** ${result.url}
 
-Your website is now live and accessible worldwide on Cloudflare's global network!
+Your website is now live on GitHub Pages!
 
 **Files deployed:**
 ${files.map(f => `- ${f.path} (${f.content.length} bytes)`).join('\n')}
