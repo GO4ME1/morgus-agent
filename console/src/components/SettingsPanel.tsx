@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import './SettingsPanel.css';
 import { MCPServerBrowser } from './MCPServerBrowser';
 import './MCPServerBrowser.css';
+import { LearningInsights } from './LearningInsights';
+import './LearningInsights.css';
 
 interface MCPServer {
   id: string;
@@ -33,7 +35,7 @@ interface SettingsPanelProps {
 }
 
 export function SettingsPanel({ isOpen, onClose, darkMode, onDarkModeChange, dontTrainOnMe: dontTrainOnMeProp, onDontTrainChange, user, profile, onLogout, onNavigate }: SettingsPanelProps) {
-  const [activeTab, setActiveTab] = useState<'general' | 'mcp' | 'skills'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'mcp' | 'skills' | 'learning'>('general');
   
   // Debug logging
   console.log('[SettingsPanel] Rendering with:', { user: user?.email, profile, isAdmin: profile?.is_admin });
@@ -207,6 +209,12 @@ export function SettingsPanel({ isOpen, onClose, darkMode, onDarkModeChange, don
             onClick={() => setActiveTab('skills')}
           >
             Skills
+          </button>
+          <button 
+            className={`tab ${activeTab === 'learning' ? 'active' : ''}`}
+            onClick={() => setActiveTab('learning')}
+          >
+            🧠 Learning
           </button>
         </div>
 
@@ -480,6 +488,10 @@ export function SettingsPanel({ isOpen, onClose, darkMode, onDarkModeChange, don
                 </div>
               ))}
             </div>
+          )}
+
+          {activeTab === 'learning' && (
+            <LearningInsights userId={user?.id} />
           )}
         </div>
       </div>
