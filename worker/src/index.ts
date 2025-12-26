@@ -7,6 +7,7 @@ import { handleUsageAPI } from './usage-api';
 import { handlePromoAPI } from './promo-api';
 import { handleReferralAPI } from './referral-api';
 import { handleAdminAPI } from './admin-api';
+import { handleNotebooksAPI } from './notebooks-api';
 import { createSubscriptionMiddleware } from './subscription-middleware';
 
 interface Env {
@@ -371,6 +372,14 @@ export default {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
+      }
+
+      // Notebooks API routing
+      if (path.startsWith('/api/notebooks')) {
+        return handleNotebooksAPI(request, {
+          SUPABASE_URL: env.SUPABASE_URL,
+          SUPABASE_SERVICE_KEY: env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY,
+        });
       }
 
       // Thoughts API routing
