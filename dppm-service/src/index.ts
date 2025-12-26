@@ -646,9 +646,220 @@ app.post('/dppm', async (req, res) => {
   }
 });
 
+// Deploy endpoint - handles Cloudflare Pages deployment
+interface DeployRequest {
+  projectName: string;
+  files: Array<{ path: string; content: string }>;
+  apiToken: string;
+  accountId: string;
+}
+
+app.post('/deploy', async (req, res) => {
+  const startTime = Date.now();
+  const request: DeployRequest = req.body;
+  
+  console.log('[DEPLOY] Starting deployment for:', request.projectName);
+  console.log('[DEPLOY] Files:', request.files?.length || 0);
+  
+  try {
+    if (!request.projectName || !request.files || !request.apiToken || !request.accountId) {
+      return res.status(400).json({ 
+        error: 'Missing required fields',
+        required: ['projectName', 'files', 'apiToken', 'accountId']
+      });
+    }
+    
+    const projectName = request.projectName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    
+    // Step 1: Create project if it doesn't exist
+    console.log('[DEPLOY] Checking/creating project...');
+    const projectResponse = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${request.accountId}/pages/projects/${projectName}`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${request.apiToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!projectResponse.ok && projectResponse.status === 404) {
+      console.log('[DEPLOY] Creating new project...');
+      const createResponse = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${request.accountId}/pages/projects`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${request.apiToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: projectName,
+            production_branch: 'main',
+          }),
+        }
+      );
+
+      if (!createResponse.ok) {
+        const error = await createResponse.text();
+        throw new Error(`Failed to create project: ${error}`);
+      }
+    }
+
+    // Step 2: Get upload JWT token
+    console.log('[DEPLOY] Getting upload token...');
+    const tokenResponse = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${request.accountId}/pages/projects/${projectName}/upload-token`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${request.apiToken}`,
+        },
+      }
+    );
+
+    if (!tokenResponse.ok) {
+      const error = await tokenResponse.text();
+      throw new Error(`Failed to get upload token: ${error}`);
+    }
+
+    const tokenData: any = await tokenResponse.json();
+    const uploadToken = tokenData.result.jwt;
+
+    // Step 3: Prepare files with hashes
+    const fileData: Array<{
+      path: string;
+      hash: string;
+      content: string;
+      contentType: string;
+    }> = [];
+
+    const crypto = await import('crypto');
+    
+    for (const file of request.files) {
+      let contentType = 'text/html';
+      if (file.path.endsWith('.css')) contentType = 'text/css';
+      if (file.path.endsWith('.js')) contentType = 'application/javascript';
+      if (file.path.endsWith('.json')) contentType = 'application/json';
+
+      const base64Content = Buffer.from(file.content).toString('base64');
+      const hash = crypto.createHash('sha256').update(base64Content + file.path).digest('hex');
+
+      fileData.push({
+        path: file.path.startsWith('/') ? file.path : `/${file.path}`,
+        hash,
+        content: base64Content,
+        contentType,
+      });
+    }
+
+    // Step 4: Upload files
+    console.log('[DEPLOY] Uploading', fileData.length, 'files...');
+    const uploadBatch = fileData.map(f => ({
+      key: f.hash,
+      value: f.content,
+      metadata: { contentType: f.contentType },
+      base64: true,
+    }));
+
+    const uploadResponse = await fetch(
+      'https://api.cloudflare.com/client/v4/pages/assets/upload',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${uploadToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(uploadBatch),
+      }
+    );
+
+    if (!uploadResponse.ok) {
+      const error = await uploadResponse.text();
+      throw new Error(`File upload failed: ${error}`);
+    }
+
+    // Step 5: Register file hashes
+    console.log('[DEPLOY] Registering hashes...');
+    const hashes = fileData.map(f => f.hash);
+    
+    const hashResponse = await fetch(
+      'https://api.cloudflare.com/client/v4/pages/assets/upsert-hashes',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${uploadToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ hashes }),
+      }
+    );
+
+    if (!hashResponse.ok) {
+      const error = await hashResponse.text();
+      throw new Error(`Hash registration failed: ${error}`);
+    }
+
+    // Step 6: Create manifest and deployment
+    console.log('[DEPLOY] Creating deployment...');
+    const manifest: Record<string, string> = {};
+    for (const file of fileData) {
+      manifest[file.path] = file.hash;
+    }
+
+    const boundary = '----WebKitFormBoundary' + Math.random().toString(36).substring(2);
+    const parts: string[] = [];
+    parts.push(`--${boundary}\r\n`);
+    parts.push(`Content-Disposition: form-data; name="manifest"\r\n\r\n`);
+    parts.push(`${JSON.stringify(manifest)}\r\n`);
+    parts.push(`--${boundary}--\r\n`);
+
+    const deployResponse = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${request.accountId}/pages/projects/${projectName}/deployments`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${request.apiToken}`,
+          'Content-Type': `multipart/form-data; boundary=${boundary}`,
+        },
+        body: parts.join(''),
+      }
+    );
+
+    if (!deployResponse.ok) {
+      const error = await deployResponse.text();
+      throw new Error(`Deployment creation failed: ${error}`);
+    }
+
+    const result: any = await deployResponse.json();
+    const deploymentUrl = result.result?.url;
+    const productionUrl = `https://${projectName}.pages.dev`;
+    
+    const totalTime = Date.now() - startTime;
+    console.log(`[DEPLOY] Success! URL: ${productionUrl} (${totalTime}ms)`);
+
+    res.json({
+      success: true,
+      productionUrl,
+      deploymentUrl,
+      projectName,
+      filesDeployed: fileData.length,
+      totalTime
+    });
+
+  } catch (error: any) {
+    console.error('[DEPLOY] Error:', error.message);
+    res.status(500).json({
+      error: 'Deployment failed',
+      message: error.message
+    });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', service: 'morgus-dppm', version: '2.0.0-optimized' });
+  res.json({ status: 'healthy', service: 'morgus-dppm', version: '2.1.0-with-deploy' });
 });
 
 // Start server
