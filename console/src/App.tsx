@@ -888,17 +888,12 @@ function App() {
       <div className="main-content">
         <div className="chat-header">
           <button 
-            className="sidebar-toggle" 
-            onClick={() => {
-              if (window.innerWidth <= 768) {
-                setShowMorgyPen(!showMorgyPen);
-              } else {
-                setShowSidebar(!showSidebar);
-              }
-            }}
-            aria-label="Toggle Menu"
+            className="sidebar-toggle morgy-pen-toggle" 
+            onClick={() => setShowMorgyPen(!showMorgyPen)}
+            aria-label="Toggle Morgy Pen"
+            title={showMorgyPen ? 'Close Morgy Pen' : 'Open Morgy Pen'}
           >
-            {(window.innerWidth <= 768 ? showMorgyPen : showSidebar) ? '✕' : '☰'}
+            🐷
           </button>
           
           
