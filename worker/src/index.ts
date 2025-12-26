@@ -8,9 +8,12 @@ import { handlePromoAPI } from './promo-api';
 import { handleReferralAPI } from './referral-api';
 import { handleAdminAPI } from './admin-api';
 import { handleNotebooksAPI } from './notebooks-api';
+import { handleUserPreferencesAPI } from './user-preferences-api';
 import { createSubscriptionMiddleware } from './subscription-middleware';
 import { contentFilter } from './services/content-filter';
 import { categorizeQuery, QueryCategory } from './services/query-categorizer';
+import { analyzeComplexity, executeDPPMMOE, type ProgressUpdate } from './dppm-moe-integration';
+import { MorgusPrime, isComplexTask, createMorgusPrime } from './morgus-prime';
 
 interface Env {
   SUPABASE_URL: string;
@@ -384,6 +387,21 @@ export default {
         });
       }
 
+      // User Preferences API routing
+      if (path.startsWith('/api/user')) {
+        const corsHeaders = {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        };
+        const response = await handleUserPreferencesAPI(request, {
+          SUPABASE_URL: env.SUPABASE_URL,
+          SUPABASE_KEY: env.SUPABASE_KEY,
+          SUPABASE_SERVICE_KEY: env.SUPABASE_SERVICE_KEY,
+        }, corsHeaders);
+        if (response) return response;
+      }
+
       // Thoughts API routing
       if (path.startsWith('/api/thoughts')) {
         return handleThoughtsAPI(request, env);
@@ -565,15 +583,15 @@ export default {
         });
       }
 
-      // Feedback endpoint for self-improvement
+      // Feedback endpoint for self-improvement with user learning
       if (path === '/feedback' && request.method === 'POST') {
         const body = await request.json();
-        const { message_id, feedback_type, input, output, task_id } = body;
+        const { message_id, feedback_type, input, output, task_id, user_id, model_used, task_type } = body;
 
         // Calculate score based on feedback type
         const score = feedback_type === 'positive' ? 1.0 : feedback_type === 'negative' ? 0.0 : 0.0;
 
-        // Store feedback in database (will create table later)
+        // Store feedback in database
         try {
           await supabase.from('agent_evaluations').insert({
             task_id: task_id || null,
@@ -583,14 +601,34 @@ export default {
             score: score,
             feedback_type: feedback_type === 'glitch' ? 'human_glitch' : 'human',
             feedback_text: feedback_type === 'glitch' ? 'User reported a glitch/bug' : null,
-            metadata: { message_id },
+            metadata: { message_id, user_id, model_used },
             created_at: new Date().toISOString(),
           });
         } catch (error) {
           console.error('Failed to store feedback (table may not exist yet):', error);
         }
 
-        return new Response(JSON.stringify({ success: true, message: 'Feedback recorded' }), {
+        // Wire feedback to user learning system
+        if (user_id) {
+          try {
+            const { UserLearningService } = await import('./services/user-learning');
+            const learningService = new UserLearningService(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY || env.SUPABASE_KEY);
+            
+            await learningService.learnFromFeedback(
+              user_id,
+              feedback_type as 'positive' | 'negative' | 'glitch',
+              task_type || 'general',
+              model_used || 'unknown',
+              input || '',
+              output || ''
+            );
+            console.log('[FEEDBACK] User learning updated for user:', user_id);
+          } catch (error) {
+            console.error('[FEEDBACK] Failed to update user learning:', error);
+          }
+        }
+
+        return new Response(JSON.stringify({ success: true, message: 'Feedback recorded and learning updated' }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -650,7 +688,70 @@ export default {
           const queryCategory = categorizeQuery(body.message, (body.files?.length || 0) > 0, fileTypes);
           console.log('[MOE-CHAT] Query categorized:', queryCategory.primary, queryCategory.complexity, queryCategory.confidence);
           
-          // Step 1: Run MOE competition to get best answer
+          // Analyze if task is complex enough for DPPM orchestration
+          const complexityAnalysis = analyzeComplexity(body.message, {
+            primary: queryCategory.primary,
+            complexity: queryCategory.complexity,
+            intent: queryCategory.intent
+          });
+          console.log('[MOE-CHAT] Complexity analysis:', complexityAnalysis.score, complexityAnalysis.recommendedApproach, complexityAnalysis.reasons);
+          
+          // If complex task and DPPM is enabled, use orchestrated execution
+          if (complexityAnalysis.isComplex && !body.skip_dppm) {
+            console.log('[MOE-CHAT] Using DPPM orchestration for complex task');
+            
+            // Create MOE competition function for DPPM to use
+            const moe = new MOEEndpoint(env.OPENROUTER_API_KEY);
+            const moeCompetition = async (messages: any[], subtaskContext?: string) => {
+              return await moe.chatWithMultipleAPIs({
+                messages,
+                geminiApiKey: env.GEMINI_API_KEY,
+                openaiApiKey: env.OPENAI_API_KEY,
+                anthropicApiKey: env.ANTHROPIC_API_KEY,
+                files: body.files || []
+              });
+            };
+            
+            try {
+              const dppmResult = await executeDPPMMOE(
+                body.message,
+                {
+                  userId: body.user_id || 'anonymous',
+                  supabaseUrl: env.SUPABASE_URL,
+                  supabaseKey: env.SUPABASE_KEY,
+                  openrouterApiKey: env.OPENROUTER_API_KEY,
+                  geminiApiKey: env.GEMINI_API_KEY,
+                  openaiApiKey: env.OPENAI_API_KEY,
+                  anthropicApiKey: env.ANTHROPIC_API_KEY,
+                  conversationId: body.conversation_id,
+                  onProgress: (update: ProgressUpdate) => {
+                    console.log('[DPPM] Progress:', update.phase, update.message);
+                  }
+                },
+                moeCompetition
+              );
+              
+              // Return DPPM orchestrated result
+              return new Response(JSON.stringify({
+                content: dppmResult.output,
+                dppmOrchestrated: true,
+                dppmSummary: dppmResult.dppmSummary,
+                subtaskResults: dppmResult.subtaskResults,
+                lessonsLearned: dppmResult.lessonsLearned,
+                complexityAnalysis: {
+                  score: complexityAnalysis.score,
+                  reasons: complexityAnalysis.reasons
+                }
+              }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              });
+            } catch (dppmError: any) {
+              console.error('[DPPM] Orchestration failed, falling back to direct MOE:', dppmError);
+              // Fall through to regular MOE flow
+            }
+          }
+          
+          // Step 1: Run MOE competition to get best answer (simple tasks or DPPM fallback)
           const moe = new MOEEndpoint(env.OPENROUTER_API_KEY);
           
           // Enhance prompt when files are attached
