@@ -167,6 +167,28 @@
   margin-left: 8px;
 }
 
+.billing-type-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.billing-type-badge.one-time {
+  background: linear-gradient(135deg, #ffd700, #ffaa00);
+  color: #333;
+  box-shadow: 0 2px 10px rgba(255, 170, 0, 0.3);
+}
+
+.billing-type-badge.subscription {
+  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(168, 85, 247, 0.3);
+}
+
 .pricing-description {
   color: #555;
   font-size: 14px;

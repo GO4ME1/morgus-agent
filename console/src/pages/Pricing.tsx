@@ -12,6 +12,7 @@ interface Plan {
   price: number;
   priceLabel: string;
   period: string;
+  billingType: 'free' | 'one-time' | 'subscription';
   description: string;
   features: string[];
   highlight?: boolean;
@@ -25,6 +26,7 @@ const PLANS: Plan[] = [
     price: 0,
     priceLabel: '$0',
     period: 'forever',
+    billingType: 'free',
     description: 'Try Morgus with basic features',
     features: [
       '20 messages per day',
@@ -40,8 +42,9 @@ const PLANS: Plan[] = [
     name: 'Day Pass',
     price: 3,
     priceLabel: '$3',
-    period: 'per day',
-    description: 'Full access for 24 hours',
+    period: 'one-time',
+    billingType: 'one-time',
+    description: 'Full access for 24 hours — no subscription!',
     features: [
       'Unlimited messages',
       'Unlimited website builds',
@@ -58,7 +61,8 @@ const PLANS: Plan[] = [
     name: 'Weekly',
     price: 21,
     priceLabel: '$21',
-    period: 'per week',
+    period: '/week',
+    billingType: 'subscription',
     description: 'Best value for regular users',
     features: [
       'Everything in Day Pass',
@@ -75,7 +79,8 @@ const PLANS: Plan[] = [
     name: 'Monthly',
     price: 75,
     priceLabel: '$75',
-    period: 'per month',
+    period: '/month',
+    billingType: 'subscription',
     description: 'Maximum power for power users',
     features: [
       'Everything in Weekly',
@@ -167,6 +172,12 @@ export function Pricing() {
               <span className="price">{plan.priceLabel}</span>
               <span className="period">{plan.period}</span>
             </div>
+            {plan.billingType === 'subscription' && (
+              <div className="billing-type-badge subscription">Auto-renews</div>
+            )}
+            {plan.billingType === 'one-time' && (
+              <div className="billing-type-badge one-time">One-time purchase</div>
+            )}
             <p className="pricing-description">{plan.description}</p>
             
             <ul className="pricing-features">
@@ -185,7 +196,8 @@ export function Pricing() {
             >
               {loading === plan.id ? 'Loading...' : 
                currentPlan === plan.id ? 'Current Plan' :
-               plan.id === 'free' ? 'Get Started' : 'Subscribe'}
+               plan.id === 'free' ? 'Get Started' : 
+               plan.billingType === 'one-time' ? 'Buy Day Pass' : 'Subscribe'}
             </button>
           </div>
         ))}
