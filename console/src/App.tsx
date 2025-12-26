@@ -316,20 +316,62 @@ function App() {
 
   const rateMessage = async (messageId: string, rating: 'good' | 'bad' | 'glitch') => {
     try {
-      // Save rating to database
-      const { error } = await supabase
+      // Find the message and its context
+      const message = messages.find(m => m.id === messageId);
+      const messageIndex = messages.findIndex(m => m.id === messageId);
+      const userMessage = messageIndex > 0 ? messages[messageIndex - 1] : null;
+      
+      // Map rating to feedback type
+      const feedbackType = rating === 'good' ? 'positive' : rating === 'bad' ? 'negative' : 'glitch';
+      
+      // Get model info from MOE metadata if available
+      const modelUsed = message?.moeMetadata?.winner?.model || 'unknown';
+      
+      // Detect task type from user message
+      const userInput = userMessage?.content || '';
+      let taskType = 'general';
+      if (userInput.toLowerCase().includes('code') || userInput.toLowerCase().includes('build') || userInput.toLowerCase().includes('create')) {
+        taskType = 'development';
+      } else if (userInput.toLowerCase().includes('research') || userInput.toLowerCase().includes('find') || userInput.toLowerCase().includes('search')) {
+        taskType = 'research';
+      } else if (userInput.toLowerCase().includes('write') || userInput.toLowerCase().includes('draft') || userInput.toLowerCase().includes('email')) {
+        taskType = 'writing';
+      } else if (userInput.toLowerCase().includes('analyze') || userInput.toLowerCase().includes('explain') || userInput.toLowerCase().includes('summarize')) {
+        taskType = 'analysis';
+      }
+
+      // Call the backend feedback endpoint for learning system
+      const feedbackResponse = await fetch(`${API_URL}/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message_id: messageId,
+          feedback_type: feedbackType,
+          input: userMessage?.content || '',
+          output: message?.content || '',
+          user_id: user?.id,
+          model_used: modelUsed,
+          task_type: taskType,
+        }),
+      });
+
+      if (!feedbackResponse.ok) {
+        console.error('Feedback API error:', await feedbackResponse.text());
+      }
+
+      // Also save to Supabase for backwards compatibility
+      await supabase
         .from('message_ratings')
         .insert({
           message_id: messageId,
           rating: rating,
+          user_id: user?.id,
           created_at: new Date().toISOString(),
         });
 
-      if (error) throw error;
-
       // Show feedback
       const emoji = rating === 'good' ? '👍' : rating === 'bad' ? '👎' : '🍅';
-      const text = rating === 'good' ? 'Thanks for the feedback!' : rating === 'bad' ? 'Sorry! I\'ll try to improve.' : 'Glitch reported!';
+      const text = rating === 'good' ? 'Thanks! I\'ll remember what worked.' : rating === 'bad' ? 'Got it! I\'ll learn from this.' : 'Glitch reported! Thanks for helping me improve.';
       alert(`${emoji} ${text}`);
     } catch (error) {
       console.error('Failed to save rating:', error);
