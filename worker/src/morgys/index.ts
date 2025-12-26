@@ -6,7 +6,22 @@
  * - Morgy = A mini agent inside Morgus
  * - Morgy Pen = The sidebar where Morgys live
  * - Activate a Morgy = Add it to the current chat
+ * 
+ * MCP Server Architecture:
+ * Each Morgy is also an MCP server that can be used with:
+ * - Morgus (native)
+ * - Claude Desktop (via MCP)
+ * - Any MCP-compatible AI
  */
+
+// Import MCP Server implementations
+import BillMCP from './bill-mcp';
+
+// Export MCP servers for external use
+export { BillMCP };
+export const MCP_SERVERS = {
+  'morgy.marketing.bill': BillMCP
+};
 
 export interface Morgy {
   id: string;
@@ -259,3 +274,32 @@ ${morgyPrompts}
 
 // Singleton instance
 export const morgyManager = new MorgyManager();
+
+/**
+ * Get MCP manifest for a Morgy
+ */
+export function getMorgyMCPManifest(morgyId: string) {
+  switch (morgyId) {
+    case 'bill':
+      return BillMCP.manifest;
+    default:
+      return null;
+  }
+}
+
+/**
+ * Execute an MCP tool for a Morgy
+ */
+export async function executeMorgyTool(
+  morgyId: string,
+  toolName: string,
+  args: Record<string, any>,
+  llmCall: (prompt: string) => Promise<string>
+): Promise<string> {
+  switch (morgyId) {
+    case 'bill':
+      return BillMCP.execute(toolName, args, llmCall);
+    default:
+      return `Morgy "${morgyId}" does not have MCP tools.`;
+  }
+}
