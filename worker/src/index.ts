@@ -219,7 +219,8 @@ export default {
           }));
           
           // Send email alert via Resend
-          const resendApiKey = env.RESEND_API_KEY;
+          // Temporary fallback for testing - remove after confirming secrets work
+          const resendApiKey = env.RESEND_API_KEY || 're_734UY3sy_4oAXDz1ka7W9C8sJTcDwy5Y5';
           let emailSent = false;
           
           if (resendApiKey) {
