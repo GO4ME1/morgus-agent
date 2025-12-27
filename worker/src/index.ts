@@ -697,8 +697,23 @@ export default {
           });
           console.log('[MOE-CHAT] Complexity analysis:', complexityAnalysis.score, complexityAnalysis.recommendedApproach, complexityAnalysis.reasons);
           
-          // If complex task and DPPM is enabled, route to Fly.dev DPPM service
-          if (complexityAnalysis.isComplex && !body.skip_dppm) {
+          // Detect if this is a website/app request that should ALWAYS use templates
+          const lowerMessage = body.message.toLowerCase();
+          const isWebsiteRequest = [
+            'website', 'landing page', 'web page', 'web app', 'homepage',
+            'portfolio site', 'blog site', 'ecommerce', 'online store'
+          ].some(kw => lowerMessage.includes(kw));
+          const isAppRequest = [
+            'mobile app', 'ios app', 'android app', 'react native', 'expo app'
+          ].some(kw => lowerMessage.includes(kw)) && !lowerMessage.includes('web app');
+          const forceTemplateMode = (isWebsiteRequest || isAppRequest) && !body.skip_dppm;
+          
+          if (forceTemplateMode) {
+            console.log('[MOE-CHAT] 🎨 Website/App request detected - forcing template mode via DPPM');
+          }
+          
+          // If complex task OR website/app request, route to Fly.dev DPPM service for template-based generation
+          if ((complexityAnalysis.isComplex || forceTemplateMode) && !body.skip_dppm) {
             console.log('[MOE-CHAT] 🧠 Complex task detected - routing to Deep Thinking mode on Fly.dev');
             
             try {
