@@ -1,8 +1,9 @@
-// Pricing Page for Morgus
+// Updated Pricing Page for Morgus with Credit Packs
 import { useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { useNavigate } from 'react-router-dom';
 import './Pricing.css';
+import './PricingCreditPacks.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://morgus-orchestrator.morgan-426.workers.dev';
 
@@ -17,6 +18,18 @@ interface Plan {
   features: string[];
   highlight?: boolean;
   badge?: string;
+}
+
+interface CreditPack {
+  id: string;
+  name: string;
+  price: number;
+  imageCredits?: number;
+  videoCredits?: number;
+  perCredit?: number;
+  description: string;
+  badge?: string;
+  type: 'video' | 'image' | 'bundle';
 }
 
 const PLANS: Plan[] = [
@@ -94,6 +107,102 @@ const PLANS: Plan[] = [
   },
 ];
 
+const VIDEO_PACKS: CreditPack[] = [
+  {
+    id: 'video-small',
+    name: 'Small Video Pack',
+    price: 5,
+    videoCredits: 5,
+    perCredit: 1.00,
+    description: 'Perfect for quick projects',
+    type: 'video',
+  },
+  {
+    id: 'video-medium',
+    name: 'Video Pack',
+    price: 10,
+    videoCredits: 15,
+    perCredit: 0.67,
+    description: 'Best for regular usage',
+    badge: 'POPULAR',
+    type: 'video',
+  },
+  {
+    id: 'video-large',
+    name: 'Large Video Pack',
+    price: 15,
+    videoCredits: 25,
+    perCredit: 0.60,
+    description: 'Maximum savings',
+    badge: 'BEST VALUE',
+    type: 'video',
+  },
+];
+
+const IMAGE_PACKS: CreditPack[] = [
+  {
+    id: 'image-small',
+    name: 'Small Image Pack',
+    price: 5,
+    imageCredits: 25,
+    perCredit: 0.20,
+    description: 'Perfect for trying it out',
+    type: 'image',
+  },
+  {
+    id: 'image-medium',
+    name: 'Image Pack',
+    price: 10,
+    imageCredits: 60,
+    perCredit: 0.17,
+    description: 'Best for regular usage',
+    badge: 'POPULAR',
+    type: 'image',
+  },
+  {
+    id: 'image-large',
+    name: 'Large Image Pack',
+    price: 15,
+    imageCredits: 100,
+    perCredit: 0.15,
+    description: 'Maximum savings',
+    badge: 'BEST VALUE',
+    type: 'image',
+  },
+];
+
+const BUNDLES: CreditPack[] = [
+  {
+    id: 'bundle-starter',
+    name: 'Starter Bundle',
+    price: 10,
+    imageCredits: 25,
+    videoCredits: 5,
+    description: 'Great for new users',
+    type: 'bundle',
+  },
+  {
+    id: 'bundle-creator',
+    name: 'Creator Bundle',
+    price: 15,
+    imageCredits: 60,
+    videoCredits: 15,
+    description: 'Best for regular creators',
+    badge: 'SAVE $5',
+    type: 'bundle',
+  },
+  {
+    id: 'bundle-pro',
+    name: 'Pro Bundle',
+    price: 25,
+    imageCredits: 100,
+    videoCredits: 25,
+    description: 'Maximum power',
+    badge: 'SAVE $5',
+    type: 'bundle',
+  },
+];
+
 export function Pricing() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
@@ -143,6 +252,42 @@ export function Pricing() {
     }
   };
 
+  const handleBuyPack = async (packId: string, price: number) => {
+    if (!user) {
+      navigate(`/signup?redirect=/pricing`);
+      return;
+    }
+
+    setLoading(packId);
+    setError('');
+
+    try {
+      const response = await fetch(`${API_URL}/api/checkout/credits`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          email: user.email,
+          packId,
+          successUrl: `${window.location.origin}/checkout/success?type=credits`,
+          cancelUrl: `${window.location.origin}/pricing`,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Redirect to Stripe checkout
+      window.location.href = data.url;
+    } catch (err: any) {
+      setError(err.message || 'Failed to start checkout');
+      setLoading(null);
+    }
+  };
+
   const currentPlan = profile?.subscription_tier || 'free';
 
   return (
@@ -158,6 +303,7 @@ export function Pricing() {
         </div>
       )}
 
+      {/* Subscription Plans */}
       <div className="pricing-grid">
         {PLANS.map((plan) => (
           <div
@@ -203,8 +349,130 @@ export function Pricing() {
         ))}
       </div>
 
+      {/* Credit Packs Section */}
+      <div className="credit-packs-section">
+        <div className="section-header">
+          <h2>Need Extra Credits?</h2>
+          <p>Buy exactly what you need, when you need it.</p>
+          <p className="subtitle">Perfect for Day Pass and Weekly users who need more videos!</p>
+        </div>
+
+        {/* Video Packs */}
+        <div className="pack-category">
+          <h3>🎥 Video Packs</h3>
+          <div className="pack-grid">
+            {VIDEO_PACKS.map((pack) => (
+              <div key={pack.id} className="pack-card">
+                {pack.badge && <div className="pack-badge">{pack.badge}</div>}
+                <h4>{pack.name}</h4>
+                <div className="pack-price">
+                  <span className="price">${pack.price}</span>
+                </div>
+                <div className="pack-credits">
+                  {pack.videoCredits} videos
+                </div>
+                {pack.perCredit && (
+                  <div className="pack-per-credit">
+                    ${pack.perCredit.toFixed(2)} per video
+                  </div>
+                )}
+                <p className="pack-description">{pack.description}</p>
+                <button
+                  className="pack-button"
+                  onClick={() => handleBuyPack(pack.id, pack.price)}
+                  disabled={loading === pack.id}
+                >
+                  {loading === pack.id ? 'Loading...' : 'Buy Now'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Image Packs */}
+        <div className="pack-category">
+          <h3>🖼️ Image Packs</h3>
+          <div className="pack-grid">
+            {IMAGE_PACKS.map((pack) => (
+              <div key={pack.id} className="pack-card">
+                {pack.badge && <div className="pack-badge">{pack.badge}</div>}
+                <h4>{pack.name}</h4>
+                <div className="pack-price">
+                  <span className="price">${pack.price}</span>
+                </div>
+                <div className="pack-credits">
+                  {pack.imageCredits} images
+                </div>
+                {pack.perCredit && (
+                  <div className="pack-per-credit">
+                    ${pack.perCredit.toFixed(2)} per image
+                  </div>
+                )}
+                <p className="pack-description">{pack.description}</p>
+                <button
+                  className="pack-button"
+                  onClick={() => handleBuyPack(pack.id, pack.price)}
+                  disabled={loading === pack.id}
+                >
+                  {loading === pack.id ? 'Loading...' : 'Buy Now'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bundles */}
+        <div className="pack-category">
+          <h3>📦 Bundles (Images + Videos)</h3>
+          <div className="pack-grid">
+            {BUNDLES.map((pack) => (
+              <div key={pack.id} className="pack-card">
+                {pack.badge && <div className="pack-badge">{pack.badge}</div>}
+                <h4>{pack.name}</h4>
+                <div className="pack-price">
+                  <span className="price">${pack.price}</span>
+                </div>
+                <div className="pack-credits">
+                  <div>{pack.imageCredits} images</div>
+                  <div>{pack.videoCredits} videos</div>
+                </div>
+                <p className="pack-description">{pack.description}</p>
+                <button
+                  className="pack-button"
+                  onClick={() => handleBuyPack(pack.id, pack.price)}
+                  disabled={loading === pack.id}
+                >
+                  {loading === pack.id ? 'Loading...' : 'Buy Now'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* FAQ Section */}
       <div className="pricing-faq">
         <h2>Frequently Asked Questions</h2>
+        
+        <div className="faq-item">
+          <h3>What are credit packs?</h3>
+          <p>Credit packs let you purchase additional image or video generation credits without upgrading your subscription. They're perfect for when you need extra credits for a specific project!</p>
+        </div>
+        
+        <div className="faq-item">
+          <h3>Can I buy credit packs if I have a subscription?</h3>
+          <p>Yes! All users can purchase credit packs. For example, if you have a Day Pass (2 videos included) and need 5 more videos, just buy a Small Video Pack for $5.</p>
+        </div>
+        
+        <div className="faq-item">
+          <h3>Do credit packs expire?</h3>
+          <p>No! Your purchased credits never expire. Use them whenever you need them.</p>
+        </div>
+        
+        <div className="faq-item">
+          <h3>Which pack should I buy?</h3>
+          <p>Just need a few? Buy a small pack ($5). Regular usage? Medium packs offer better value ($10). Heavy user? Large packs have the best per-credit price ($15).</p>
+        </div>
         
         <div className="faq-item">
           <h3>Can I cancel anytime?</h3>
@@ -223,7 +491,7 @@ export function Pricing() {
         
         <div className="faq-item">
           <h3>What happens when I hit my free tier limits?</h3>
-          <p>You'll see a friendly upgrade prompt. You can either wait until tomorrow when limits reset, or upgrade to continue immediately.</p>
+          <p>You'll see a friendly upgrade prompt. You can either wait until tomorrow when limits reset, buy a credit pack, or upgrade to continue immediately.</p>
         </div>
       </div>
 
