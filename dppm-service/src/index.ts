@@ -28,6 +28,14 @@ import {
   AppData
 } from './templates';
 import { generateFromContent, getContentGenerationPrompt } from './template-generator';
+import { MorgyService } from './morgy-service';
+import { MorgyExecutionEngine } from './morgy-execution';
+import { KnowledgeBaseService } from './knowledge-base-service';
+import multer from 'multer';
+import { authMiddleware, optionalAuthMiddleware, adminMiddleware } from './auth-middleware';
+import avatarRoutes from './avatar-routes';
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
 app.use(cors());
@@ -1191,9 +1199,337 @@ app.post('/deploy-github', async (req, res) => {
   }
 });
 
+// ============================================================================
+// MORGY ROUTES
+// ============================================================================
+
+// Authentication middleware
+// Public routes don't need auth, protected routes use authMiddleware
+
+const morgyService = new MorgyService(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+);
+
+const knowledgeBaseService = new KnowledgeBaseService(
+  process.env.SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+  process.env.OPENAI_API_KEY || ''
+);
+
+// Avatar routes
+app.use('/api/morgys', avatarRoutes);
+app.use('/api/avatar', avatarRoutes);
+
+// Get starter Morgys (public)
+app.get('/api/morgys/starters', async (req, res) => {
+  try {
+    const morgys = await morgyService.getStarterMorgys();
+    res.json(morgys);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get user's Morgys (protected)
+app.get('/api/morgys', authMiddleware, async (req, res) => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const morgys = await morgyService.getUserMorgys(userId);
+    res.json(morgys);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create new Morgy (protected)
+app.post('/api/morgys', authMiddleware, async (req, res) => {
+  try {
+    const userId = (req as any).userId;d;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const morgy = await morgyService.createMorgy(userId, req.body);
+    res.status(201).json(morgy);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get a specific Morgy
+app.get('/api/morgys/:id', async (req, res) => {
+  try {
+    const userId = (req as any).userId;
+    const morgy = await morgyService.getMorgy(req.params.id, userId);
+    if (!morgy) {
+      return res.status(404).json({ error: 'Morgy not found' });
+    }
+    res.json(morgy);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create conversation
+app.post('/api/morgys/:id/conversations', async (req, res) => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const conversation = await morgyService.createConversation(userId, req.params.id, req.body.title);
+    res.status(201).json(conversation);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get creator analytics
+app.get('/api/creator/analytics', async (req, res) => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    const analytics = await morgyService.getCreatorAnalytics(userId);
+    res.json(analytics);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Browse marketplace
+app.get('/api/market/listings', async (req, res) => {
+  try {
+    const { category, minRating, maxPrice, search, limit, offset } = req.query;
+    const filters = {
+      category: category as string,
+      minRating: minRating ? parseFloat(minRating as string) : undefined,
+      maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
+      search: search as string
+    };
+    const listings = await morgyService.browseMarket(
+      filters,
+      limit ? parseInt(limit as string) : 20,
+      offset ? parseInt(offset as string) : 0
+    );
+    res.json(listings);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Initialize starter Morgys (admin only)
+app.post('/api/admin/init-starters', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    await morgyService.initializeStarterMorgys(userId);
+    res.json({ message: 'Starter Morgys initialized successfully' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Chat with a Morgy (protected)
+app.post('/api/morgys/:id/chat', authMiddleware, async (req, res) => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { id: morgyId } = req.params;
+    const { message, history, mode } = req.body;
+
+    // Get Morgy
+    const morgy = await morgyService.getMorgy(morgyId, userId);
+    if (!morgy) {
+      return res.status(404).json({ error: 'Morgy not found' });
+    }
+
+    // Execute with Morgy execution engine
+    const executionEngine = new MorgyExecutionEngine();
+    executionEngine.setKnowledgeBaseService(knowledgeBaseService);
+    const result = await executionEngine.execute(
+      morgy,
+      message,
+      history || [],
+      {
+        gemini_api_key: process.env.GEMINI_API_KEY || '',
+        openai_api_key: process.env.OPENAI_API_KEY || '',
+        openrouter_api_key: process.env.OPENROUTER_API_KEY || '',
+        anthropic_api_key: process.env.ANTHROPIC_API_KEY || ''
+      },
+      mode
+    );
+
+    res.json(result);
+  } catch (error: any) {
+    console.error('[Morgy Chat] Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================================
+// KNOWLEDGE BASE ROUTES
+// ============================================================================
+
+// Upload file to knowledge base
+app.post('/api/morgys/:id/knowledge/upload', upload.single('file'), async (req, res) => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { id: morgyId } = req.params;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const knowledge = await knowledgeBaseService.uploadFile(morgyId, userId, {
+      name: file.originalname,
+      type: file.mimetype,
+      buffer: file.buffer
+    });
+
+    res.status(201).json(knowledge);
+  } catch (error: any) {
+    console.error('[Knowledge Upload] Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Add text knowledge
+app.post('/api/morgys/:id/knowledge', async (req, res) => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { id: morgyId } = req.params;
+    const { content, source, sourceType, metadata } = req.body;
+
+    const knowledge = await knowledgeBaseService.addKnowledge({
+      morgyId,
+      content,
+      source,
+      sourceType: sourceType || 'text',
+      metadata
+    }, userId);
+
+    res.status(201).json(knowledge);
+  } catch (error: any) {
+    console.error('[Knowledge Add] Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get knowledge for a Morgy
+app.get('/api/morgys/:id/knowledge', async (req, res) => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { id: morgyId } = req.params;
+    const knowledge = await knowledgeBaseService.getKnowledge(morgyId, userId);
+
+    res.json(knowledge);
+  } catch (error: any) {
+    console.error('[Knowledge Get] Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Search knowledge base
+app.get('/api/morgys/:id/knowledge/search', async (req, res) => {
+  try {
+    const { id: morgyId } = req.params;
+    const { query, limit } = req.query;
+
+    if (!query) {
+      return res.status(400).json({ error: 'Query parameter required' });
+    }
+
+    const results = await knowledgeBaseService.searchKnowledge(
+      morgyId,
+      query as string,
+      limit ? parseInt(limit as string) : 5
+    );
+
+    res.json(results);
+  } catch (error: any) {
+    console.error('[Knowledge Search] Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete knowledge item
+app.delete('/api/morgys/knowledge/:knowledgeId', async (req, res) => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { knowledgeId } = req.params;
+    await knowledgeBaseService.deleteKnowledge(knowledgeId, userId);
+
+    res.status(204).send();
+  } catch (error: any) {
+    console.error('[Knowledge Delete] Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Scrape website and add to knowledge base
+app.post('/api/morgys/:id/knowledge/scrape', async (req, res) => {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { id: morgyId } = req.params;
+    const { url } = req.body;
+
+    if (!url) {
+      return res.status(400).json({ error: 'URL required' });
+    }
+
+    // Scrape website
+    const content = await knowledgeBaseService.scrapeWebsite(url);
+
+    // Add to knowledge base
+    const knowledge = await knowledgeBaseService.addKnowledge({
+      morgyId,
+      content,
+      source: url,
+      sourceType: 'website',
+      metadata: { url, scrapedAt: new Date().toISOString() }
+    }, userId);
+
+    res.status(201).json(knowledge);
+  } catch (error: any) {
+    console.error('[Website Scrape] Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', service: 'morgus-dppm', version: '2.2.0-github-pages' });
+  res.json({ status: 'healthy', service: 'morgus-dppm', version: '2.4.0-knowledge-base' });
 });
 
 // Start server
