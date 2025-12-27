@@ -198,7 +198,8 @@ export interface GenerationResult {
 export async function generateFromContent(
   goal: string,
   aiContent: string,
-  config: { openrouter_api_key: string; gemini_api_key: string; openai_api_key: string }
+  config: { openrouter_api_key: string; gemini_api_key: string; openai_api_key: string },
+  options?: { generateVideo?: boolean }
 ): Promise<GenerationResult> {
   // Set the OpenAI key for image generation
   if (config.openai_api_key) {
@@ -220,44 +221,84 @@ export async function generateFromContent(
     const description = contentData.description || goal;
     const primaryColor = contentData.primaryColor || getDefaultColor(templateType);
     
-    // Generate images and video in parallel for speed
-    console.log('[Template] Generating hero image, logo, and video with GPT-Image-1.5 and Sora 2...');
-    const [heroImage, logoImage, heroVideo] = await Promise.all([
-      generateHeroImage(templateType, title, description),
-      generateLogo(title, templateType, primaryColor),
-      generateHeroVideo(templateType, title, description)
-    ]);
-    console.log(`[Template] Media generated: hero=${!!heroImage}, logo=${!!logoImage}, video=${!!heroVideo}`);
+    // Generate images (and optionally video) in parallel for speed
+    const shouldGenerateVideo = options?.generateVideo ?? false;
     
-    const websiteData: WebsiteData = {
-      title,
-      tagline,
-      description,
-      primaryColor,
-      accentColor: contentData.accentColor || getAccentColor(primaryColor),
-      features: contentData.features || generateDefaultFeatures(goal),
-      pricing: contentData.pricing,
-      testimonials: contentData.testimonials || generateDefaultTestimonials(),
-      cta: contentData.cta || { text: 'Get Started', secondaryText: 'Learn More' },
-      images: {
-        hero: heroImage || contentData.images?.hero,
-        logo: logoImage || contentData.images?.logo,
-        heroVideo: heroVideo || contentData.images?.heroVideo,
-        ...contentData.images
-      },
-      socialLinks: contentData.socialLinks,
-      contact: contentData.contact,
-      year,
-    };
-    
-    const html = generateWebsite(templateType, websiteData);
-    
-    return {
-      type: 'website',
-      templateType,
-      html,
-      files: [{ name: 'index.html', content: html }],
-    };
+    if (shouldGenerateVideo) {
+      console.log('[Template] Generating hero image, logo, and video with GPT-Image-1.5 and Sora 2...');
+      const [heroImage, logoImage, heroVideo] = await Promise.all([
+        generateHeroImage(templateType, title, description),
+        generateLogo(title, templateType, primaryColor),
+        generateHeroVideo(templateType, title, description)
+      ]);
+      console.log(`[Template] Media generated: hero=${!!heroImage}, logo=${!!logoImage}, video=${!!heroVideo}`);
+      
+      const websiteData: WebsiteData = {
+        title,
+        tagline,
+        description,
+        primaryColor,
+        accentColor: contentData.accentColor || getAccentColor(primaryColor),
+        features: contentData.features || generateDefaultFeatures(goal),
+        pricing: contentData.pricing,
+        testimonials: contentData.testimonials || generateDefaultTestimonials(),
+        cta: contentData.cta || { text: 'Get Started', secondaryText: 'Learn More' },
+        images: {
+          hero: heroImage || contentData.images?.hero,
+          logo: logoImage || contentData.images?.logo,
+          heroVideo: heroVideo || contentData.images?.heroVideo,
+          ...contentData.images
+        },
+        socialLinks: contentData.socialLinks,
+        contact: contentData.contact,
+        year,
+      };
+      
+      const html = generateWebsite(templateType, websiteData);
+      
+      return {
+        type: 'website',
+        templateType,
+        html,
+        files: [{ name: 'index.html', content: html }],
+      };
+    } else {
+      console.log('[Template] Generating hero image and logo with GPT-Image-1.5 (video skipped)...');
+      const [heroImage, logoImage] = await Promise.all([
+        generateHeroImage(templateType, title, description),
+        generateLogo(title, templateType, primaryColor)
+      ]);
+      console.log(`[Template] Media generated: hero=${!!heroImage}, logo=${!!logoImage}`);
+      
+      const websiteData: WebsiteData = {
+        title,
+        tagline,
+        description,
+        primaryColor,
+        accentColor: contentData.accentColor || getAccentColor(primaryColor),
+        features: contentData.features || generateDefaultFeatures(goal),
+        pricing: contentData.pricing,
+        testimonials: contentData.testimonials || generateDefaultTestimonials(),
+        cta: contentData.cta || { text: 'Get Started', secondaryText: 'Learn More' },
+        images: {
+          hero: heroImage || contentData.images?.hero,
+          logo: logoImage || contentData.images?.logo,
+          ...contentData.images
+        },
+        socialLinks: contentData.socialLinks,
+        contact: contentData.contact,
+        year,
+      };
+      
+      const html = generateWebsite(templateType, websiteData);
+      
+      return {
+        type: 'website',
+        templateType,
+        html,
+        files: [{ name: 'index.html', content: html }],
+      };
+    }
   }
   
   if (outputType === 'app') {

@@ -820,7 +820,10 @@ app.post('/dppm', async (req, res) => {
       const templateResult = await generateFromContent(
         request.message,
         contentResult,
-        request.config
+        request.config,
+        {
+          generateVideo: false // Default to no video for now, will add user confirmation later
+        }
       );
       console.log(`[DPPM] Generated ${outputType} using ${templateResult.templateType} template`);
       
