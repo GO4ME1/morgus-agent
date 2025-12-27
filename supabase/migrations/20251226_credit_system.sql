@@ -436,9 +436,20 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 INSERT INTO credit_packages (name, description, package_type, image_credits, video_credits, price_cents, featured, sort_order)
 VALUES
-  ('Image Pack', '50 AI-generated images for your projects', 'image_only', 50, 0, 1000, false, 1),
-  ('Video Pack', '20 AI-generated videos (5-sec each)', 'video_only', 0, 20, 1500, false, 2),
-  ('Creator Bundle', 'Best value: 50 images + 20 videos', 'bundle', 50, 20, 2000, true, 0)
+  -- Video Packs (affordable tiers)
+  ('Small Video Pack', '5 video generations - Perfect for quick projects', 'video_only', 0, 5, 500, false, 1),
+  ('Video Pack', '15 video generations - Best for regular usage', 'video_only', 0, 15, 1000, false, 2),
+  ('Large Video Pack', '25 video generations - Best value per video', 'video_only', 0, 25, 1500, false, 3),
+  
+  -- Image Packs (affordable tiers)
+  ('Small Image Pack', '25 image generations - Perfect for trying it out', 'image_only', 25, 0, 500, false, 4),
+  ('Image Pack', '60 image generations - Best for regular usage', 'image_only', 60, 0, 1000, false, 5),
+  ('Large Image Pack', '100 image generations - Best value per image', 'image_only', 100, 0, 1500, false, 6),
+  
+  -- Bundles (images + videos)
+  ('Starter Bundle', '25 images + 5 videos - Great for new users', 'bundle', 25, 5, 1000, false, 7),
+  ('Creator Bundle', '60 images + 15 videos - Best for regular creators', 'bundle', 60, 15, 1500, true, 8),
+  ('Pro Bundle', '100 images + 25 videos - Maximum power', 'bundle', 100, 25, 2500, false, 9)
 ON CONFLICT DO NOTHING;
 
 -- ============================================================================

@@ -1,0 +1,263 @@
+/* Credit Packs Section Styles */
+
+.credit-packs-section {
+  margin-top: 80px;
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 60px;
+  color: white;
+}
+
+.section-header h2 {
+  font-size: 2.5rem;
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+.section-header p {
+  font-size: 1.2rem;
+  opacity: 0.95;
+}
+
+.section-header .subtitle {
+  font-size: 1.1rem;
+  opacity: 0.85;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+.pack-category {
+  margin-bottom: 60px;
+}
+
+.pack-category:last-child {
+  margin-bottom: 0;
+}
+
+.pack-category h3 {
+  font-size: 1.8rem;
+  margin-bottom: 24px;
+  color: white;
+  text-align: center;
+  font-weight: 600;
+}
+
+.pack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.pack-card {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.pack-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.pack-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pack-card h4 {
+  font-size: 1.5rem;
+  margin-bottom: 16px;
+  color: #333;
+  font-weight: 600;
+}
+
+.pack-price {
+  margin-bottom: 12px;
+}
+
+.pack-price .price {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.pack-credits {
+  font-size: 1.2rem;
+  color: #666;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.pack-credits div {
+  margin-bottom: 4px;
+}
+
+.pack-per-credit {
+  font-size: 0.9rem;
+  color: #999;
+  margin-bottom: 16px;
+}
+
+.pack-description {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 24px;
+  min-height: 48px;
+  flex-grow: 1;
+}
+
+.pack-button {
+  width: 100%;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.3s ease, transform 0.1s ease;
+}
+
+.pack-button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.pack-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.pack-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .credit-packs-section {
+    margin-top: 60px;
+    padding: 40px 16px;
+    border-radius: 16px;
+  }
+  
+  .section-header h2 {
+    font-size: 2rem;
+  }
+  
+  .section-header p {
+    font-size: 1rem;
+  }
+  
+  .section-header .subtitle {
+    font-size: 0.95rem;
+  }
+  
+  .pack-category {
+    margin-bottom: 40px;
+  }
+  
+  .pack-category h3 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+  
+  .pack-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .pack-card {
+    padding: 24px;
+  }
+  
+  .pack-card h4 {
+    font-size: 1.3rem;
+  }
+  
+  .pack-price .price {
+    font-size: 2.5rem;
+  }
+}
+
+/* Tablet responsive */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .pack-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Animation for pack cards */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pack-card {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.pack-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.pack-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.pack-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* Loading state */
+.pack-button.loading {
+  position: relative;
+  color: transparent;
+}
+
+.pack-button.loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid white;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
