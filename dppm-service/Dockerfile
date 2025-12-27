@@ -11,11 +11,12 @@ RUN npm install
 # Copy source
 COPY . .
 
-# Build TypeScript
-RUN npm run build
-
 # Expose port
 EXPOSE 8080
 
-# Start the service
-CMD ["npm", "start"]
+# Set NODE_ENV and increase Node memory limit
+ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=400 --loader ts-node/esm"
+
+# Start with node using ts-node/register
+CMD ["node", "--require", "ts-node/register", "src/index.ts"]
