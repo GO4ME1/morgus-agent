@@ -15,6 +15,68 @@ import {
   AppData
 } from './templates';
 
+/**
+ * Generate an image using Pollinations.ai (FREE, no API key needed)
+ */
+async function generateImage(prompt: string, width: number = 1024, height: number = 768): Promise<string> {
+  try {
+    const encodedPrompt = encodeURIComponent(prompt);
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&nologo=true&enhance=true`;
+    
+    // Verify the image is accessible
+    const response = await fetch(imageUrl, { method: 'HEAD' });
+    if (response.ok) {
+      console.log(`[Image] Generated: ${prompt.substring(0, 50)}...`);
+      return imageUrl;
+    }
+  } catch (e) {
+    console.error('[Image] Generation failed:', e);
+  }
+  return '';
+}
+
+/**
+ * Generate hero image for a website based on template type and content
+ */
+async function generateHeroImage(templateType: string, title: string, description: string): Promise<string> {
+  const styleMap: Record<string, string> = {
+    'dating': 'romantic, hearts, love, soft pink and red colors, dreamy atmosphere',
+    'creative': 'artistic, colorful, whimsical, fantasy, magical, creative',
+    'personal': 'professional portrait style, friendly, approachable, warm lighting',
+    'startup': 'modern tech, futuristic, clean design, professional, blue tones',
+    'saas': 'dashboard interface, data visualization, professional, modern',
+    'restaurant': 'delicious food photography, warm lighting, appetizing',
+    'ecommerce': 'product showcase, clean background, professional photography',
+    'fitness': 'athletic, energetic, healthy lifestyle, dynamic',
+    'healthcare': 'medical, clean, trustworthy, caring, professional',
+    'education': 'learning, books, knowledge, bright, inspiring',
+  };
+  
+  const style = styleMap[templateType] || 'modern, professional, clean design';
+  const prompt = `Hero image for ${title}: ${description}. Style: ${style}. High quality, professional, suitable for website hero section.`;
+  
+  return await generateImage(prompt, 1200, 800);
+}
+
+/**
+ * Generate logo for a website
+ */
+async function generateLogo(title: string, templateType: string, primaryColor: string): Promise<string> {
+  const styleMap: Record<string, string> = {
+    'dating': 'romantic, heart shape, elegant',
+    'creative': 'artistic, colorful, unique, playful',
+    'personal': 'minimalist, professional, monogram style',
+    'startup': 'modern, tech, geometric, clean',
+    'restaurant': 'elegant, food-related, warm',
+    'fitness': 'dynamic, energetic, strong',
+  };
+  
+  const style = styleMap[templateType] || 'modern, minimalist, professional';
+  const prompt = `Logo design for "${title}". Style: ${style}. Clean vector-style logo, simple, memorable, ${primaryColor} color scheme. White background, centered.`;
+  
+  return await generateImage(prompt, 512, 512);
+}
+
 export interface GenerationResult {
   type: 'website' | 'app' | 'document' | 'code';
   templateType: string;
@@ -41,17 +103,34 @@ export async function generateFromContent(
     const templateType = detectWebsiteTemplate(goal);
     console.log(`[Template] Using website template: ${templateType}`);
     
+    const title = contentData.title || extractTitle(goal);
+    const tagline = contentData.tagline || extractTagline(goal);
+    const description = contentData.description || goal;
+    const primaryColor = contentData.primaryColor || getDefaultColor(templateType);
+    
+    // Generate images in parallel for speed
+    console.log('[Template] Generating hero image and logo...');
+    const [heroImage, logoImage] = await Promise.all([
+      generateHeroImage(templateType, title, description),
+      generateLogo(title, templateType, primaryColor)
+    ]);
+    console.log(`[Template] Images generated: hero=${!!heroImage}, logo=${!!logoImage}`);
+    
     const websiteData: WebsiteData = {
-      title: contentData.title || extractTitle(goal),
-      tagline: contentData.tagline || extractTagline(goal),
-      description: contentData.description || goal,
-      primaryColor: contentData.primaryColor || getDefaultColor(templateType),
-      accentColor: contentData.accentColor || getAccentColor(contentData.primaryColor || getDefaultColor(templateType)),
+      title,
+      tagline,
+      description,
+      primaryColor,
+      accentColor: contentData.accentColor || getAccentColor(primaryColor),
       features: contentData.features || generateDefaultFeatures(goal),
       pricing: contentData.pricing,
       testimonials: contentData.testimonials || generateDefaultTestimonials(),
       cta: contentData.cta || { text: 'Get Started', secondaryText: 'Learn More' },
-      images: contentData.images,
+      images: {
+        hero: heroImage || contentData.images?.hero,
+        logo: logoImage || contentData.images?.logo,
+        ...contentData.images
+      },
       socialLinks: contentData.socialLinks,
       contact: contentData.contact,
       year,

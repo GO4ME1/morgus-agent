@@ -16,6 +16,8 @@ export type WebsiteTemplateType =
   | 'event'
   | 'startup'
   | 'personal'
+  | 'dating'
+  | 'creative'
   | 'product'
   | 'nonprofit'
   | 'education'
@@ -58,6 +60,8 @@ export function detectWebsiteTemplate(message: string): WebsiteTemplateType {
     { type: 'blog', keywords: ['blog', 'news', 'articles', 'magazine', 'publication', 'journal'] },
     { type: 'event', keywords: ['event', 'conference', 'meetup', 'webinar', 'summit', 'festival', 'concert', 'workshop'] },
     { type: 'startup', keywords: ['startup', 'launch', 'coming soon', 'waitlist', 'beta', 'pre-launch'] },
+    { type: 'dating', keywords: ['dating', 'love', 'looking for', 'match', 'single', 'relationship', 'romance', 'soulmate', 'partner', 'meet', 'unicorn love', 'find love'] },
+    { type: 'creative', keywords: ['creative', 'art', 'artist', 'musician', 'band', 'character', 'story', 'fantasy', 'fun', 'whimsical', 'quirky', 'unique'] },
     { type: 'personal', keywords: ['personal', 'about me', 'bio', 'profile', 'personal brand'] },
     { type: 'product', keywords: ['product', 'feature', 'new release', 'announcement'] },
     { type: 'nonprofit', keywords: ['nonprofit', 'charity', 'donation', 'cause', 'volunteer', 'foundation'] },
@@ -1162,18 +1166,30 @@ function getTypeSpecificStyles(type: WebsiteTemplateType): string {
 }
 
 function generateHTML(type: WebsiteTemplateType, data: WebsiteData): string {
-  const nav = generateNav(data);
+  const nav = generateNav(data, type);
   const hero = generateHero(type, data);
-  const features = data.features && data.features.length > 0 ? generateFeatures(data) : '';
-  const pricing = data.pricing && data.pricing.length > 0 ? generatePricing(data) : '';
-  const testimonials = data.testimonials && data.testimonials.length > 0 ? generateTestimonials(data) : '';
-  const cta = generateCTA(data);
+  
+  // Dating and creative templates have different structure (no pricing)
+  const isPersonalType = type === 'dating' || type === 'creative' || type === 'personal';
+  
+  const features = data.features && data.features.length > 0 ? generateFeatures(data, type) : '';
+  // No pricing for personal/dating/creative templates
+  const pricing = !isPersonalType && data.pricing && data.pricing.length > 0 ? generatePricing(data) : '';
+  const testimonials = data.testimonials && data.testimonials.length > 0 ? generateTestimonials(data, type) : '';
+  const cta = generateCTA(data, type);
   const footer = generateFooter(data);
   
   return nav + hero + features + pricing + testimonials + cta + footer;
 }
 
-function generateNav(data: WebsiteData): string {
+function generateNav(data: WebsiteData, type: WebsiteTemplateType): string {
+  const isPersonalType = type === 'dating' || type === 'creative' || type === 'personal';
+  
+  // Different nav labels for personal/dating templates
+  const aboutLabel = isPersonalType ? 'About Me' : 'Features';
+  const testimonialsLabel = isPersonalType ? 'What Others Say' : 'Testimonials';
+  const ctaText = data.cta?.text || (isPersonalType ? 'Say Hello' : 'Get Started');
+  
   return `
   <nav class="nav">
     <div class="container nav-content">
@@ -1181,11 +1197,11 @@ function generateNav(data: WebsiteData): string {
         ${data.images?.logo ? `<img src="${escapeHtml(data.images.logo)}" alt="${escapeHtml(data.title)}">` : escapeHtml(data.title)}
       </a>
       <ul class="nav-links">
-        <li><a href="#features">Features</a></li>
-        ${data.pricing ? '<li><a href="#pricing">Pricing</a></li>' : ''}
-        ${data.testimonials ? '<li><a href="#testimonials">Testimonials</a></li>' : ''}
+        <li><a href="#features">${aboutLabel}</a></li>
+        ${!isPersonalType && data.pricing ? '<li><a href="#pricing">Pricing</a></li>' : ''}
+        ${data.testimonials ? `<li><a href="#testimonials">${testimonialsLabel}</a></li>` : ''}
         <li><a href="#contact">Contact</a></li>
-        <li><a href="#" class="nav-cta">${data.cta?.text || 'Get Started'}</a></li>
+        <li><a href="#" class="nav-cta">${ctaText}</a></li>
       </ul>
       <div class="menu-toggle">
         <span></span>
@@ -1226,13 +1242,19 @@ function generateHero(type: WebsiteTemplateType, data: WebsiteData): string {
   </section>`;
 }
 
-function generateFeatures(data: WebsiteData): string {
+function generateFeatures(data: WebsiteData, type: WebsiteTemplateType): string {
+  const isPersonalType = type === 'dating' || type === 'creative' || type === 'personal';
+  
+  // Different section labels for personal/dating templates
+  const sectionBadge = isPersonalType ? 'About Me' : 'Features';
+  const sectionTitle = isPersonalType ? 'Get to Know Me' : 'Everything You Need';
+  
   return `
   <section class="section" id="features">
     <div class="container">
       <div class="section-header animate-on-scroll">
-        <span class="section-badge">Features</span>
-        <h2>Everything You Need</h2>
+        <span class="section-badge">${sectionBadge}</span>
+        <h2>${sectionTitle}</h2>
         <p class="section-subtitle">${escapeHtml(data.description)}</p>
       </div>
       <div class="features-grid">
@@ -1276,14 +1298,23 @@ function generatePricing(data: WebsiteData): string {
   </section>`;
 }
 
-function generateTestimonials(data: WebsiteData): string {
+function generateTestimonials(data: WebsiteData, type: WebsiteTemplateType): string {
+  const isPersonalType = type === 'dating' || type === 'creative' || type === 'personal';
+  
+  // Different section labels for personal/dating templates
+  const sectionBadge = isPersonalType ? 'What Others Say' : 'Testimonials';
+  const sectionTitle = isPersonalType ? 'Kind Words' : 'Loved by Thousands';
+  const sectionSubtitle = isPersonalType 
+    ? 'Here\'s what friends and colleagues have to say.' 
+    : 'Don\'t just take our word for it. Here\'s what our customers say.';
+  
   return `
   <section class="section" id="testimonials">
     <div class="container">
       <div class="section-header animate-on-scroll">
-        <span class="section-badge">Testimonials</span>
-        <h2>Loved by Thousands</h2>
-        <p class="section-subtitle">Don't just take our word for it. Here's what our customers say.</p>
+        <span class="section-badge">${sectionBadge}</span>
+        <h2>${sectionTitle}</h2>
+        <p class="section-subtitle">${sectionSubtitle}</p>
       </div>
       <div class="testimonials-grid">
         ${data.testimonials!.map((t, i) => `
@@ -1306,13 +1337,19 @@ function generateTestimonials(data: WebsiteData): string {
   </section>`;
 }
 
-function generateCTA(data: WebsiteData): string {
+function generateCTA(data: WebsiteData, type: WebsiteTemplateType): string {
+  const isPersonalType = type === 'dating' || type === 'creative' || type === 'personal';
+  
+  // Different CTA for personal/dating templates
+  const ctaTitle = isPersonalType ? 'Let\'s Connect!' : 'Ready to Get Started?';
+  const ctaButton = data.cta?.text || (isPersonalType ? 'Say Hello' : 'Start Free Trial');
+  
   return `
   <section class="cta">
     <div class="container cta-content">
-      <h2>Ready to Get Started?</h2>
+      <h2>${ctaTitle}</h2>
       <p>${escapeHtml(data.tagline)}</p>
-      <a href="${data.cta?.url || '#'}" class="btn btn-primary btn-lg">${data.cta?.text || 'Start Free Trial'} →</a>
+      <a href="${data.cta?.url || '#'}" class="btn btn-primary btn-lg">${ctaButton} →</a>
     </div>
   </section>`;
 }
@@ -1384,6 +1421,8 @@ function getHeroBadge(type: WebsiteTemplateType): string {
     'event': 'Limited Seats Available',
     'startup': 'Now in Public Beta',
     'personal': 'Nice to Meet You',
+    'dating': 'Looking for Love',
+    'creative': 'Something Special',
     'product': 'Just Launched',
     'nonprofit': 'Making a Difference',
     'education': 'Start Learning Today',
@@ -1408,6 +1447,8 @@ function generatePlaceholderHero(type: WebsiteTemplateType): string {
     'event': '🎉',
     'startup': '🚀',
     'personal': '👤',
+    'dating': '💕',
+    'creative': '🦄',
     'product': '✨',
     'nonprofit': '💚',
     'education': '📚',
