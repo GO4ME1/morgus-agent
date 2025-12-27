@@ -157,6 +157,61 @@ class NotebookLMService {
   }
 
   /**
+   * Get list of notebooks
+   */
+  getNotebooks(): any[] {
+    try {
+      const key = 'notebooklm_notebooks';
+      const stored = localStorage.getItem(key);
+      const notebooks = stored ? JSON.parse(stored) : [];
+      
+      // Add default notebook if none exist
+      if (notebooks.length === 0) {
+        const defaultNotebook = {
+          id: NOTEBOOKLM_CONFIG.defaultNotebookId,
+          name: 'Morgus Conversations',
+          sourceCount: 0,
+          type: 'personal' as const,
+          createdAt: new Date()
+        };
+        notebooks.push(defaultNotebook);
+        localStorage.setItem(key, JSON.stringify(notebooks));
+      }
+      
+      return notebooks;
+    } catch (error) {
+      console.error('Failed to get notebooks:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Create a new notebook
+   */
+  createNotebook(name: string, type: 'personal' | 'shared' | 'public' = 'personal'): any {
+    try {
+      const notebook = {
+        id: `notebook-${Date.now()}`,
+        name,
+        sourceCount: 0,
+        type,
+        createdAt: new Date()
+      };
+      
+      const key = 'notebooklm_notebooks';
+      const stored = localStorage.getItem(key);
+      const notebooks = stored ? JSON.parse(stored) : [];
+      notebooks.push(notebook);
+      localStorage.setItem(key, JSON.stringify(notebooks));
+      
+      return notebook;
+    } catch (error) {
+      console.error('Failed to create notebook:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Check if NotebookLM integration is available
    */
   async checkAvailability(): Promise<boolean> {
