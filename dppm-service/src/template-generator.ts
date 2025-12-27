@@ -27,16 +27,16 @@ export function setOpenAIKey(key: string) {
 }
 
 /**
- * Generate an image using OpenAI DALL-E 3
+ * Generate an image using OpenAI GPT-Image-1.5
  */
-async function generateImageWithDALLE(prompt: string, size: '1024x1024' | '1792x1024' | '1024x1792' = '1792x1024'): Promise<string> {
+async function generateImageWithGPT(prompt: string, size: '1024x1024' | '1792x1024' | '1024x1792' = '1792x1024'): Promise<string> {
   if (!openaiApiKey) {
     console.log('[Image] No OpenAI API key, skipping image generation');
     return '';
   }
   
   try {
-    console.log(`[Image] Generating with DALL-E: ${prompt.substring(0, 50)}...`);
+    console.log(`[Image] Generating with GPT-Image-1.5: ${prompt.substring(0, 50)}...`);
     
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
@@ -45,7 +45,7 @@ async function generateImageWithDALLE(prompt: string, size: '1024x1024' | '1792x
         'Authorization': `Bearer ${openaiApiKey}`,
       },
       body: JSON.stringify({
-        model: 'dall-e-3',
+        model: 'gpt-image-1.5',
         prompt: prompt,
         n: 1,
         size: size,
@@ -56,7 +56,7 @@ async function generateImageWithDALLE(prompt: string, size: '1024x1024' | '1792x
     
     if (!response.ok) {
       const error = await response.text();
-      console.error('[Image] DALL-E API error:', error);
+      console.error('[Image] GPT-Image-1.5 API error:', error);
       return '';
     }
     
@@ -64,11 +64,11 @@ async function generateImageWithDALLE(prompt: string, size: '1024x1024' | '1792x
     const imageUrl = data.data?.[0]?.url;
     
     if (imageUrl) {
-      console.log('[Image] DALL-E generated successfully');
+      console.log('[Image] GPT-Image-1.5 generated successfully');
       return imageUrl;
     }
   } catch (e) {
-    console.error('[Image] DALL-E generation failed:', e);
+    console.error('[Image] GPT-Image-1.5 generation failed:', e);
   }
   return '';
 }
@@ -93,7 +93,76 @@ async function generateHeroImage(templateType: string, title: string, descriptio
   const style = styleMap[templateType] || 'modern professional clean design illustration';
   const prompt = `Create a hero illustration for "${title}": ${description.substring(0, 100)}. Style: ${style}. Make it suitable for a website hero section, no text in the image.`;
   
-  return await generateImageWithDALLE(prompt, '1792x1024');
+  return await generateImageWithGPT(prompt, '1792x1024');
+}
+
+/**
+ * Generate a video using OpenAI Sora 2
+ */
+async function generateVideoWithSora(prompt: string, duration: number = 5): Promise<string> {
+  if (!openaiApiKey) {
+    console.log('[Video] No OpenAI API key, skipping video generation');
+    return '';
+  }
+  
+  try {
+    console.log(`[Video] Generating with Sora 2: ${prompt.substring(0, 50)}...`);
+    
+    const response = await fetch('https://api.openai.com/v1/videos/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openaiApiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'sora-2',
+        prompt: prompt,
+        duration: duration,
+        quality: 'standard',
+        response_format: 'url',
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('[Video] Sora 2 API error:', error);
+      return '';
+    }
+    
+    const data = await response.json() as { data: Array<{ url: string }> };
+    const videoUrl = data.data?.[0]?.url;
+    
+    if (videoUrl) {
+      console.log('[Video] Sora 2 generated successfully');
+      return videoUrl;
+    }
+  } catch (e) {
+    console.error('[Video] Sora 2 generation failed:', e);
+  }
+  return '';
+}
+
+/**
+ * Generate hero video for a website based on template type and content
+ */
+async function generateHeroVideo(templateType: string, title: string, description: string): Promise<string> {
+  const styleMap: Record<string, string> = {
+    'dating': 'romantic dreamy atmosphere with hearts floating, soft pink lighting, magical sparkles, love theme',
+    'creative': 'artistic colorful paint splashes, creative energy, vibrant colors flowing, whimsical magical atmosphere',
+    'personal': 'professional modern office environment, friendly welcoming vibe, warm natural lighting',
+    'startup': 'futuristic tech environment, holographic interfaces, blue neon lights, innovation and progress',
+    'saas': 'animated dashboard with data flowing, charts updating, modern software interface, professional blue tones',
+    'restaurant': 'delicious food being prepared, steam rising, warm inviting kitchen, appetizing presentation',
+    'ecommerce': 'products showcased elegantly, smooth camera movement, clean modern environment',
+    'fitness': 'energetic workout scenes, dynamic movement, healthy lifestyle, motivating atmosphere',
+    'healthcare': 'clean medical environment, caring professionals, trustworthy calming atmosphere',
+    'education': 'inspiring learning environment, books and knowledge, bright encouraging atmosphere',
+  };
+  
+  const style = styleMap[templateType] || 'modern professional clean environment with smooth camera movement';
+  const prompt = `Create a cinematic hero video for "${title}": ${description.substring(0, 100)}. Style: ${style}. Smooth camera movement, no text, suitable for website hero background. High quality, professional.`;
+  
+  return await generateVideoWithSora(prompt, 5);
 }
 
 /**
@@ -112,7 +181,7 @@ async function generateLogo(title: string, templateType: string, primaryColor: s
   const style = styleMap[templateType] || 'modern minimalist professional logo';
   const prompt = `Create a simple ${style} for "${title}". Clean vector-style, memorable design, ${primaryColor} color scheme, white background, centered, no text.`;
   
-  return await generateImageWithDALLE(prompt, '1024x1024');
+  return await generateImageWithGPT(prompt, '1024x1024');
 }
 
 export interface GenerationResult {
@@ -151,13 +220,14 @@ export async function generateFromContent(
     const description = contentData.description || goal;
     const primaryColor = contentData.primaryColor || getDefaultColor(templateType);
     
-    // Generate images in parallel for speed
-    console.log('[Template] Generating hero image and logo with DALL-E...');
-    const [heroImage, logoImage] = await Promise.all([
+    // Generate images and video in parallel for speed
+    console.log('[Template] Generating hero image, logo, and video with GPT-Image-1.5 and Sora 2...');
+    const [heroImage, logoImage, heroVideo] = await Promise.all([
       generateHeroImage(templateType, title, description),
-      generateLogo(title, templateType, primaryColor)
+      generateLogo(title, templateType, primaryColor),
+      generateHeroVideo(templateType, title, description)
     ]);
-    console.log(`[Template] Images generated: hero=${!!heroImage}, logo=${!!logoImage}`);
+    console.log(`[Template] Media generated: hero=${!!heroImage}, logo=${!!logoImage}, video=${!!heroVideo}`);
     
     const websiteData: WebsiteData = {
       title,
@@ -172,6 +242,7 @@ export async function generateFromContent(
       images: {
         hero: heroImage || contentData.images?.hero,
         logo: logoImage || contentData.images?.logo,
+        heroVideo: heroVideo || contentData.images?.heroVideo,
         ...contentData.images
       },
       socialLinks: contentData.socialLinks,
@@ -450,4 +521,71 @@ function generateDefaultTestimonials(): Array<{ quote: string; author: string; r
       role: "CTO at InnovateCo",
     },
   ];
+}
+
+/**
+ * Get content generation prompt for AI
+ */
+export function getContentGenerationPrompt(goal: string): string {
+  const outputType = detectOutputType(goal);
+  const year = new Date().getFullYear();
+  
+  if (outputType === 'website') {
+    const templateType = detectWebsiteTemplate(goal);
+    
+    return `You are generating CONTENT for a ${templateType} website. Do NOT generate any HTML, CSS, or code.
+
+User Request: ${goal}
+
+Generate a JSON object with the following content:
+{
+  "title": "The website/company name",
+  "tagline": "A compelling one-line tagline (max 100 chars)",
+  "description": "A brief description (max 200 chars)",
+  "primaryColor": "A hex color that fits the brand (e.g., #6366f1)",
+  "accentColor": "A complementary hex color",
+  "features": [
+    { "title": "Feature Name", "description": "Feature description", "icon": "emoji" }
+  ],
+  "pricing": [
+    { "name": "Plan Name", "price": "$X", "features": ["Feature 1", "Feature 2"], "highlighted": false }
+  ],
+  "testimonials": [
+    { "name": "Person Name", "role": "Job Title", "company": "Company", "quote": "Testimonial text" }
+  ],
+  "cta": { "text": "Primary button text", "secondaryText": "Secondary button text" }
+}
+
+IMPORTANT:
+- Return ONLY the JSON object, no markdown, no code blocks, no explanations
+- Make the content relevant to: ${goal}
+- Use appropriate colors for ${templateType} template
+- Generate 4-6 features
+- Include 2-3 pricing tiers if relevant (omit if not applicable)
+- Include 3 testimonials with realistic names and roles
+- Make it professional and compelling`;
+  }
+  
+  if (outputType === 'app') {
+    const templateType = detectAppTemplate(goal);
+    
+    return `You are generating CONTENT for a ${templateType} app. Do NOT generate any code.
+
+User Request: ${goal}
+
+Generate a JSON object with the following content:
+{
+  "name": "App name",
+  "description": "App description",
+  "primaryColor": "#hex",
+  "accentColor": "#hex",
+  "features": [
+    { "title": "Feature Name", "description": "Feature description" }
+  ]
+}
+
+Return ONLY the JSON object, no markdown, no explanations.`;
+  }
+  
+  return `Generate content for: ${goal}`;
 }

@@ -36,7 +36,7 @@ export interface WebsiteData {
   pricing?: Array<{ name: string; price: string; features: string[]; highlighted?: boolean; period?: string }>;
   testimonials?: Array<{ name: string; role: string; quote: string; avatar?: string; company?: string }>;
   cta?: { text: string; url?: string; secondaryText?: string; secondaryUrl?: string };
-  images?: { hero?: string; logo?: string; screenshots?: string[]; gallery?: string[] };
+  images?: { hero?: string; logo?: string; heroVideo?: string; screenshots?: string[]; gallery?: string[] };
   sections?: Array<{ type: string; data: any }>;
   socialLinks?: { twitter?: string; github?: string; linkedin?: string; instagram?: string; facebook?: string };
   contact?: { email?: string; phone?: string; address?: string };
@@ -502,14 +502,27 @@ body {
   animation: fadeIn 1s ease-out 0.3s both;
 }
 
-.hero-image img {
+    .hero-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    
+    .hero-image img {
   width: 100%;
   height: auto;
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl);
 }
 
-.hero-image-decoration {
+    .hero-image video {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .hero-image-decoration {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -1233,9 +1246,13 @@ function generateHero(type: WebsiteTemplateType, data: WebsiteData): string {
         </div>
       </div>
       <div class="hero-image">
-        ${data.images?.hero 
-          ? `<img src="${escapeHtml(data.images.hero)}" alt="${escapeHtml(data.title)}">`
-          : generatePlaceholderHero(type)}
+        ${data.images?.heroVideo 
+          ? `<video autoplay loop muted playsinline class="hero-video">
+               <source src="${escapeHtml(data.images.heroVideo)}" type="video/mp4">
+             </video>`
+          : data.images?.hero 
+            ? `<img src="${escapeHtml(data.images.hero)}" alt="${escapeHtml(data.title)}">`
+            : generatePlaceholderHero(type)}
         <div class="hero-image-decoration"></div>
       </div>
     </div>
