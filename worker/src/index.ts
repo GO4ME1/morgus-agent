@@ -716,6 +716,51 @@ export default {
           if ((complexityAnalysis.isComplex || forceTemplateMode) && !body.skip_dppm) {
             console.log('[MOE-CHAT] 🧠 Complex task detected - routing to Deep Thinking mode on Fly.dev');
             
+            // Check if user has sufficient credits for image/video generation
+            let creditCheckPassed = true;
+            let creditMessage = '';
+            
+            if (body.user_id && (isWebsiteRequest || isAppRequest)) {
+              try {
+                console.log('[CREDITS] Checking user credits before DPPM...');
+                const creditResponse = await fetch(`https://morgus-deploy.fly.dev/api/credits/balance?user_id=${body.user_id}`, {
+                  method: 'GET',
+                  headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (creditResponse.ok) {
+                  const creditData = await creditResponse.json() as any;
+                  const imageCredits = creditData.balance?.images?.remaining || 0;
+                  const videoCredits = creditData.balance?.videos?.remaining || 0;
+                  
+                  console.log(`[CREDITS] User has ${imageCredits} image credits, ${videoCredits} video credits`);
+                  
+                  // Check if user has at least 1 image credit (required for website generation)
+                  if (imageCredits < 1) {
+                    creditCheckPassed = false;
+                    creditMessage = `\n\n⚠️ **Insufficient Credits**\n\nYou need at least 1 image credit to generate a website with hero images.\n\n**Your Balance:**\n- Image credits: ${imageCredits}\n- Video credits: ${videoCredits}\n\n**Upgrade Options:**\n- Image Pack: 50 images for $10\n- Creator Bundle: 50 images + 20 videos for $20 (best value!)\n\nVisit the pricing page to purchase credits.`;
+                    console.log('[CREDITS] Insufficient image credits, blocking DPPM');
+                  }
+                } else {
+                  console.log('[CREDITS] Failed to check credits, proceeding anyway');
+                }
+              } catch (creditError: any) {
+                console.error('[CREDITS] Error checking credits:', creditError.message);
+                // Don't block on credit check errors
+              }
+            }
+            
+            // If credit check failed, return upgrade message
+            if (!creditCheckPassed) {
+              return new Response(JSON.stringify({
+                message: creditMessage,
+                requiresUpgrade: true,
+                upgradeUrl: '/pricing'
+              }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              });
+            }
+            
             try {
               // Call Fly.dev DPPM service (no time limit)
               const dppmResponse = await fetch('https://morgus-deploy.fly.dev/dppm', {
