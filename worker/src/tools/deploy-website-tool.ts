@@ -1,14 +1,13 @@
 /**
- * Deploy Website Tool - Simplified website deployment via GitHub Pages
+ * Deploy Website Tool - Cloudflare Pages deployment (preferred) with GitHub Pages fallback
  */
 
 import { Tool } from '../tools';
-// Deployment now handled by Fly.io service via GitHub Pages
-type DeploymentFile = { path: string; content: string };
+import { deployToCloudflarePages, DeploymentFile } from './deploy-website';
 
 export const deployWebsiteTool: Tool = {
   name: 'deploy_website',
-  description: 'Deploy a website to GitHub Pages. Use this when user asks to BUILD or CREATE a website. Provide HTML, CSS, and optionally JS files.',
+  description: 'Deploy a website to Cloudflare Pages (preferred) or GitHub Pages (fallback). Use this when user asks to BUILD or CREATE a website. Provide HTML, CSS, and optionally JS files.',
   parameters: {
     type: 'object',
     properties: {
@@ -81,15 +80,57 @@ Please try again and ensure the HTML is properly formatted.`;
         files.push({ path: 'script.js', content: args.js });
       }
 
-      // Get GitHub token from environment
+      // Check for Cloudflare credentials (preferred deployment method)
+      const cfApiToken = env.CLOUDFLARE_API_TOKEN;
+      const cfAccountId = env.CLOUDFLARE_ACCOUNT_ID;
+
+      if (cfApiToken && cfAccountId) {
+        // Use Cloudflare Pages (preferred - better security, faster CDN)
+        console.log('[DEPLOY_WEBSITE] Using Cloudflare Pages deployment...');
+        try {
+          const deploymentUrl = await deployToCloudflarePages(projectName, files, cfApiToken, cfAccountId);
+          
+          return `🚀 **WEBSITE DEPLOYED SUCCESSFULLY!**
+
+**Live URL:** ${deploymentUrl}
+
+Your website is now live on **Cloudflare Pages**!
+
+**Benefits:**
+- 🛡️ DDoS protection & WAF security
+- ⚡ Global CDN for fast loading
+- 🔒 Automatic HTTPS
+- 🌐 Easy custom domain setup
+
+**Files deployed:**
+- index.html (${args.html.length} bytes)
+- style.css (${args.css.length} bytes)
+${args.js ? `- script.js (${args.js.length} bytes)` : ''}
+
+**To connect a custom domain:**
+1. Go to https://dash.cloudflare.com
+2. Navigate to Pages > ${projectName}
+3. Click "Custom domains" tab
+4. Add your domain (e.g., mybusiness.com)
+
+**Next steps:**
+- Visit the URL to see your live website
+- Updates can be made by deploying again with the same project name`;
+        } catch (cfError: any) {
+          console.error('[DEPLOY_WEBSITE] Cloudflare Pages failed, falling back to GitHub Pages:', cfError.message);
+          // Fall through to GitHub Pages
+        }
+      }
+
+      // Fallback to GitHub Pages
       const githubToken = env.GITHUB_TOKEN;
 
       if (!githubToken) {
-        throw new Error('GitHub token not configured in Worker environment');
+        throw new Error('No deployment credentials configured (neither Cloudflare nor GitHub)');
       }
 
       // Deploy via Fly.io service to GitHub Pages
-      console.log('[DEPLOY_WEBSITE] Calling GitHub Pages deployment service...');
+      console.log('[DEPLOY_WEBSITE] Using GitHub Pages deployment (fallback)...');
       const response = await fetch('https://morgus-deploy.fly.dev/deploy-github', {
         method: 'POST',
         headers: {
@@ -124,7 +165,9 @@ ${args.js ? `- script.js (${args.js.length} bytes)` : ''}
 **Next steps:**
 - Visit the URL to see your live website
 - The site is automatically HTTPS-secured
-- Updates can be made by deploying again with the same project name`;
+- Updates can be made by deploying again with the same project name
+
+💡 **Tip:** For better security and custom domains, ask your admin to configure Cloudflare Pages credentials.`;
 
     } catch (error: any) {
       console.error('[DEPLOY_WEBSITE] Error:', error);
@@ -133,7 +176,7 @@ ${args.js ? `- script.js (${args.js.length} bytes)` : ''}
 Error: ${error.message}
 
 **Troubleshooting:**
-- Check that GitHub token is configured
+- Check that deployment credentials are configured
 - Ensure project name is valid (lowercase, hyphens only)
 - Verify HTML and CSS are valid
 

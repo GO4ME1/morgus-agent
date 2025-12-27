@@ -15,6 +15,19 @@ import express from 'express';
 import cors from 'cors';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { deployToGitHubPages, GitHubDeployRequest } from './github-pages-deploy';
+import { 
+  detectOutputType, 
+  detectWebsiteTemplate, 
+  detectAppTemplate,
+  generateWebsite, 
+  generateApp,
+  generateFromTemplate,
+  getContentPrompt,
+  parseAIContent,
+  WebsiteData,
+  AppData
+} from './templates';
+import { generateFromContent, getContentGenerationPrompt } from './template-generator';
 
 const app = express();
 app.use(cors());
@@ -777,29 +790,99 @@ app.post('/dppm', async (req, res) => {
   console.log('[DPPM] Starting deep thinking for:', request.message.substring(0, 100));
   
   try {
-    // Phase 1: Decompose (fast - single model)
-    const subtasks = await decompose(request.message, request.config);
-    console.log(`[DPPM] Decomposed into ${subtasks.length} subtasks`);
+    // Detect output type to determine processing path
+    const outputType = detectOutputType(request.message);
+    console.log(`[DPPM] Detected output type: ${outputType}`);
     
-    // Phase 2: Execute (parallel where possible)
-    const subtaskResults = await executeSubtasks(subtasks, request.message, request.config);
-    console.log(`[DPPM] Executed ${subtaskResults.filter(r => r.status === 'success').length}/${subtasks.length} subtasks`);
+    let finalOutput: string;
+    let subtasks: Subtask[];
+    let subtaskResults: SubtaskResult[];
+    let artifacts: CodeArtifact[] = [];
+    let projectType: 'website' | 'app' | 'script' | 'document' = 'document';
+    let requiresDeployment = false;
     
-    // Get the final output from the last subtask (synthesis)
-    const finalSubtask = subtaskResults.find(r => r.id === Math.max(...subtaskResults.map(s => s.id)));
-    const finalOutput = finalSubtask?.output || subtaskResults.map(r => r.output).join('\n\n');
+    // For websites and apps, use template-based generation
+    if (outputType === 'website' || outputType === 'app') {
+      console.log(`[DPPM] Using template-based generation for ${outputType}`);
+      
+      // Phase 1: Generate content prompt for AI
+      const contentPrompt = getContentGenerationPrompt(request.message);
+      
+      // Phase 2: Get content from AI (fast single model)
+      const contentResult = await queryFast(
+        contentPrompt,
+        'You are a content strategist. Generate only JSON, no explanations.',
+        request.config
+      );
+      console.log('[DPPM] AI generated content for template');
+      
+      // Phase 3: Generate from template
+      const templateResult = await generateFromContent(
+        request.message,
+        contentResult,
+        request.config
+      );
+      console.log(`[DPPM] Generated ${outputType} using ${templateResult.templateType} template`);
+      
+      // Create artifacts from template output
+      if (templateResult.html) {
+        artifacts = [{
+          language: 'html',
+          filename: 'index.html',
+          content: templateResult.html
+        }];
+        finalOutput = `Here's your ${outputType} built with the ${templateResult.templateType} template:\n\n\`\`\`html\n${templateResult.html}\n\`\`\``;
+      } else if (templateResult.code) {
+        artifacts = [{
+          language: 'tsx',
+          filename: 'App.tsx',
+          content: templateResult.code
+        }];
+        finalOutput = `Here's your ${outputType} built with the ${templateResult.templateType} template:\n\n\`\`\`tsx\n${templateResult.code}\n\`\`\``;
+      } else {
+        finalOutput = 'Template generation completed.';
+      }
+      
+      projectType = outputType as 'website' | 'app';
+      requiresDeployment = outputType === 'website';
+      
+      // Create synthetic subtask results for consistency
+      subtasks = [
+        { id: 1, title: 'Content Generation', description: 'Generate content for template', dependencies: [] },
+        { id: 2, title: 'Template Application', description: 'Apply template with content', dependencies: [1] }
+      ];
+      subtaskResults = [
+        { id: 1, title: 'Content Generation', output: contentResult, model: 'fast', latency: 0, status: 'success' },
+        { id: 2, title: 'Template Application', output: finalOutput, model: 'template', latency: 0, status: 'success' }
+      ];
+      
+    } else {
+      // For documents and code, use the standard DPPM flow
+      console.log('[DPPM] Using standard DPPM flow');
+      
+      // Phase 1: Decompose (fast - single model)
+      subtasks = await decompose(request.message, request.config);
+      console.log(`[DPPM] Decomposed into ${subtasks.length} subtasks`);
+      
+      // Phase 2: Execute (parallel where possible)
+      subtaskResults = await executeSubtasks(subtasks, request.message, request.config);
+      console.log(`[DPPM] Executed ${subtaskResults.filter(r => r.status === 'success').length}/${subtasks.length} subtasks`);
+      
+      // Get the final output from the last subtask (synthesis)
+      const finalSubtask = subtaskResults.find(r => r.id === Math.max(...subtaskResults.map(s => s.id)));
+      finalOutput = finalSubtask?.output || subtaskResults.map(r => r.output).join('\n\n');
+      
+      // Extract code artifacts from subtask outputs
+      artifacts = extractCodeArtifacts(subtaskResults);
+      projectType = detectProjectType(request.message, artifacts);
+      requiresDeployment = projectType === 'website' && artifacts.length > 0;
+    }
     
     // Phase 3: Quick reflection
     const { reflection, lessons } = await quickReflect(request.message, subtaskResults, request.config);
     
     const totalTime = Date.now() - startTime;
     console.log(`[DPPM] Completed in ${totalTime}ms`);
-    
-    // Extract code artifacts from subtask outputs
-    const artifacts = extractCodeArtifacts(subtaskResults);
-    const projectType = detectProjectType(request.message, artifacts);
-    const requiresDeployment = projectType === 'website' && artifacts.length > 0;
-    
     console.log(`[DPPM] Extracted ${artifacts.length} code artifacts, projectType: ${projectType}, requiresDeployment: ${requiresDeployment}`);
     
     // Phase 4: Store learning data (non-blocking)

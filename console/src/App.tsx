@@ -81,7 +81,7 @@ const API_URL = 'https://morgus-orchestrator.morgan-426.workers.dev';
 
 function App() {
   const navigate = useNavigate();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, loading: authLoading } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -164,9 +164,15 @@ function App() {
     scrollToBottom();
   }, [messages]);
 
+  // Load tasks when user changes (including on initial auth restore)
   useEffect(() => {
-    loadTasks();
-  }, []);
+    if (user) {
+      loadTasks();
+    } else {
+      // Clear tasks when logged out
+      setTasks([]);
+    }
+  }, [user]);
 
   // Initialize MCP client when user is authenticated
   useEffect(() => {
@@ -239,10 +245,13 @@ function App() {
   };
 
   const loadTasks = async () => {
-    // Load conversations (recent chats)
+    if (!user) return; // Don't load if not authenticated
+    
+    // Load conversations (recent chats) for the current user
     const { data, error } = await supabase
       .from('conversations')
       .select('id, title, created_at, updated_at')
+      .eq('user_id', user.id) // Filter by user
       .order('updated_at', { ascending: false })
       .limit(20);
 
@@ -795,6 +804,18 @@ function App() {
       setIsLoading(false);
     }
   };
+
+  // Show loading state while auth is initializing
+  if (authLoading) {
+    return (
+      <div className={`app ${darkMode ? 'dark-mode' : 'light-mode'}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="logo-icon" style={{ fontSize: '48px', marginBottom: '16px' }}>M</div>
+          <p style={{ color: '#666' }}>Loading Morgus...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`app ${darkMode ? 'dark-mode' : 'light-mode'}`}>
