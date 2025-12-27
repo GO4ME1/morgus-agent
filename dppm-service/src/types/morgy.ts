@@ -71,6 +71,7 @@ export interface MorgySkills {
 export interface Morgy {
   id: string;
   creator_id: string;
+  user_id: string; // Same as creator_id, for compatibility
   name: string;
   slug: string;
   description: string;
@@ -304,6 +305,7 @@ export interface CreatorBalance {
 export interface CreatorPayout {
   id: string;
   creator_id: string;
+  user_id: string; // Same as creator_id, for compatibility
   amount_cents: number;
   stripe_payout_id?: string;
   status: 'pending' | 'completed' | 'failed';

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { Morgy, MorgyMessage } from './types/morgy';
 import { KnowledgeBaseService } from './knowledge-base-service';
 

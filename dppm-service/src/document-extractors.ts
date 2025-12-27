@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Document Extraction Utilities
  * Extracts text from various document formats

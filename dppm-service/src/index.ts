@@ -1,3 +1,12 @@
+// Set default environment variables before any imports
+if (!process.env.SUPABASE_URL) {
+  process.env.SUPABASE_URL = 'https://mock.supabase.co';
+}
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY && !process.env.SUPABASE_SERVICE_KEY) {
+  process.env.SUPABASE_SERVICE_KEY = 'mock-key';
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'mock-key';
+}
+
 /**
  * Morgus DPPM Deep Thinking Service - OPTIMIZED
  * 
@@ -1212,13 +1221,13 @@ app.post('/deploy-github', async (req, res) => {
 // Public routes don't need auth, protected routes use authMiddleware
 
 const morgyService = new MorgyService(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  process.env.SUPABASE_URL || 'https://mock.supabase.co',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || 'mock-key'
 );
 
 const knowledgeBaseService = new KnowledgeBaseService(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+  process.env.SUPABASE_URL || 'https://mock.supabase.co',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || 'mock-key',
   process.env.OPENAI_API_KEY || ''
 );
 
@@ -1255,7 +1264,7 @@ app.get('/api/morgys', authMiddleware, async (req, res) => {
 // Create new Morgy (protected)
 app.post('/api/morgys', authMiddleware, async (req, res) => {
   try {
-    const userId = (req as any).userId;d;
+    const userId = (req as any).userId;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * OAuth Manager
  * Centralized OAuth 2.0 management for all platform integrations

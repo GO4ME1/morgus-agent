@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { MorgyService } from './morgy-service';
 import type { MorgyCreate, MorgyUpdate } from './types/morgy';

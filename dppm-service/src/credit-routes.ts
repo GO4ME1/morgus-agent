@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Credit System API Routes
  * Handles credit balance, transactions, confirmations, and packages

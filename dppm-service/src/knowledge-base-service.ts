@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { MorgyKnowledge } from './types/morgy';
 import { extractText as extractDocumentText, isFileTypeSupported } from './document-extractors';

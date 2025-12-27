@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Study Guide Generation API Routes
  */

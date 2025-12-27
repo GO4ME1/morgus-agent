@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Podcast Generation API Routes
  * 

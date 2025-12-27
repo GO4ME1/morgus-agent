@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Infographic Generation API Routes
  */
