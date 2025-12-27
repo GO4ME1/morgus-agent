@@ -265,8 +265,8 @@ function getChartConfig(type: ChartTemplateType, data: ChartData, colors: string
   
   // Type-specific adjustments
   if (type === 'pie' || type === 'doughnut') {
-    baseConfig.data.datasets[0].backgroundColor = colors.map(c => c + 'cc');
-    baseConfig.data.datasets[0].borderColor = colors;
+    (baseConfig.data.datasets[0] as any).backgroundColor = colors.map(c => c + 'cc');
+    (baseConfig.data.datasets[0] as any).borderColor = colors;
     baseConfig.data.datasets[0].borderWidth = 2;
     if (type === 'doughnut') {
       (baseConfig.options as any).cutout = '60%';

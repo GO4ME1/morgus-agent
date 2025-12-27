@@ -12,7 +12,8 @@ import {
   generateWebsite,
   generateApp,
   WebsiteData,
-  AppData
+  AppData,
+  OutputType
 } from './templates';
 
 /**
@@ -78,7 +79,7 @@ async function generateLogo(title: string, templateType: string, primaryColor: s
 }
 
 export interface GenerationResult {
-  type: 'website' | 'app' | 'document' | 'code';
+  type: OutputType;
   templateType: string;
   html?: string;
   code?: string;
@@ -171,9 +172,9 @@ export async function generateFromContent(
     };
   }
   
-  // For documents and code, return the AI content as-is
+  // For other types (chart, spreadsheet, email, presentation, document, code), return as-is
   return {
-    type: outputType,
+    type: outputType as OutputType,
     templateType: 'custom',
     files: [],
   };

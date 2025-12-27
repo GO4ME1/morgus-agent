@@ -526,7 +526,7 @@ border = Border(
 )
 
 # Title
-ws.merge_cells('A1:${get_column_letter(data.headers.length)}1')
+ws.merge_cells('A1:' + get_column_letter(${data.headers.length}) + '1')
 ws['A1'] = "${escapeHtml(data.title)}"
 ws['A1'].font = Font(name='Arial', size=16, bold=True, color=NEON_MAGENTA)
 ws['A1'].alignment = Alignment(horizontal='center')
