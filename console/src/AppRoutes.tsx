@@ -12,6 +12,8 @@ import { Terms } from './pages/Terms';
 import { Privacy } from './pages/Privacy';
 import { Landing } from './pages/Landing';
 import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
+import { CreateMorgyPage } from './pages/CreateMorgyPage';
+import { MarketplacePage } from './pages/MarketplacePage';
 import App from './App';
 import './LoadingScreen.css';
 import { useEffect, useState } from 'react';
@@ -151,6 +153,18 @@ export function AppRoutes() {
       <Route path="/knowledge-base" element={
         <ProtectedRoute>
           <KnowledgeBasePage />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/create-morgy" element={
+        <ProtectedRoute>
+          <CreateMorgyPage />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/marketplace" element={
+        <ProtectedRoute>
+          <MarketplacePage />
         </ProtectedRoute>
       } />
       
