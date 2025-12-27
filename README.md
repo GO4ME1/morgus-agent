@@ -1,49 +1,81 @@
-# Morgus Autonomous Agent System
+# Morgus - Agentic AI Platform with Morgy System
 
-**Morgus** is an autonomous AI agent system that creates and deploys websites, landing pages, apps, and presentations using AI-powered templates. The system uses a Mixture of Experts (MOE) architecture with multiple AI models, deploys to Cloudflare Pages, and includes template-based generation with AI-generated images and videos.
+**Morgus** is an autonomous AI platform that creates websites, apps, presentations, AND deploys customizable AI employees (Morgys) that can autonomously perform tasks across multiple platforms.
 
-## 🎯 Current Status: Building Phase (Pre-Production)
+## 🎯 Current Status: Morgy System MVP (Production-Ready)
 
-**Last Updated:** December 26, 2024
+**Last Updated:** December 27, 2024
 
 ### ✅ Completed Features
+
+**Core Platform:**
 - Template-based website generation (18+ templates, 5 visual styles each)
 - GPT-Image-1.5 integration for AI-generated images
 - Cloudflare Pages deployment
 - Credit system database (Supabase)
-- Affordable pricing ($5, $10, $15, $25 tiers)
 - User authentication and profiles
 - Task history and monitoring
 
-### 🚧 In Progress (Priority Order)
-1. **NotebookLM Integration** - AI-powered research and note-taking
-2. **Agentic Morgys** - Truly autonomous AI companions with personality, memory, and skills
-3. **MCP Servers** - Model Context Protocol for extensibility and persistent memory
-4. **Morgy Market** - Marketplace for custom Morgys, tools, and templates
+**Morgy System (NEW!):**
+- 🐷 **Agentic Morgys** - Customizable AI employees with unique personalities
+- 🎨 **Avatar System** - Cyberpunk pig characters with DALL-E 3 generation
+- 💬 **Smart Execution** - Auto-routing between Fast/MOE/Agent/DPPM modes
+- 📚 **Knowledge Base** - Upload documents, semantic search with pgvector, RAG
+- 🏪 **Morgy Market** - Buy, sell, and license custom Morgys
+- 🔌 **MCP Export** - Export Morgys to Claude Desktop and other platforms
+- 🐦 **Social Media Integration** - Twitter, TikTok, YouTube, Reddit (in progress)
+- 📧 **Email Integration** - Gmail sending and automation (in progress)
 
-### 📋 See Full Roadmap
-Check [MORGUS_ROADMAP.md](./MORGUS_ROADMAP.md) for complete task breakdown, effort estimates, and success metrics.
+### 🚧 In Progress (Priority Order)
+
+1. **Platform Integrations** - Twitter, TikTok, YouTube, Reddit, Gmail APIs
+2. **OAuth System** - User authorization for platform connections
+3. **Video Creation** - Sally can create and post TikTok videos
+4. **Scheduling System** - Schedule posts and tasks
+5. **Analytics Dashboard** - Track Morgy performance and engagement
 
 ---
 
-## Overview
+## 🐷 What Are Morgys?
 
-Morgus is designed to **deliver results** – producing running applications, professional websites, and presentations autonomously. The system analyzes user requests, selects appropriate templates, generates visual assets, and deploys to production with minimal human intervention.
+**Morgys are autonomous AI employees** - not just chatbots, but true agents that can:
 
-### Key Features
+- 💬 **Chat** with personality and context
+- 📚 **Learn** from uploaded documents and websites
+- 🤖 **Execute** tasks autonomously
+- 🐦 **Post** to social media (Twitter, TikTok, LinkedIn, Facebook)
+- 📧 **Send** emails and manage communications
+- 📊 **Analyze** data and generate reports
+- 🎥 **Create** videos and visual content
+- 🔄 **Schedule** recurring tasks
 
-- **Template-Based Generation**: 18+ professional templates (startup, SaaS, dating, e-commerce, restaurant, portfolio, creative, etc.)
-- **Visual Style Variants**: 5 different visual styles per template type (modern-minimal, bold-dynamic, classic-professional, creative-artistic, elegant-luxury)
-- **AI-Generated Assets**: Automatic hero images and logos using GPT-Image-1.5
-- **Video Generation**: Sora 2 integration framework (ready for opt-in)
-- **Cloudflare Pages Deployment**: Automated deployment with correct hash calculation
-- **Keyword-Based Detection**: Automatically selects template type and visual style from user prompts
-- **Multi-Model Support**: Flexible model routing (GPT-4, GPT-5.1, future Gemini/Grok)
-- **Real-Time Updates**: Live task monitoring via Supabase subscriptions
-- **Credit System**: À la carte pricing for images and videos
-- **Agentic Morgys**: AI companions with personality, memory, and autonomous capabilities (coming soon)
-- **NotebookLM Integration**: AI-powered research and note-taking (coming soon)
-- **MCP Servers**: Extensible tool system via Model Context Protocol (coming soon)
+### Meet the Starter Morgys
+
+**Bill the Marketing Hog** 🟢
+- Enthusiastic business strategist (lovable oaf energy!)
+- Sometimes gets ahead of himself with big ideas
+- Needs Sally to refine his strategies
+- Color: Neon green with pink sunglasses
+
+**Sally the Promo Pig** 🩷
+- Vibrant social media expert (gentle mentor)
+- Polishes Bill's ideas into actionable plans
+- Creates and posts TikTok videos!
+- Color: Hot pink with purple robot parts
+
+**Professor Hogsworth** 🔵
+- Distinguished research scholar
+- Academic and thorough
+- Finds credible sources and citations
+- Color: Cyan with monocle and tweed jacket
+
+**Maxine** 💜
+- Marketing automation specialist
+- Data-driven and results-focused
+- ROI-obsessed with creative flair
+- Color: Vibrant magenta with orange accents
+
+---
 
 ## Architecture
 
@@ -51,190 +83,323 @@ Morgus uses a **distributed architecture** with multiple specialized services:
 
 ### Services
 
-1. **Cloudflare Worker** (`morgus-orchestrator`)
+1. **Cloudflare Pages** (Frontend)
+   - React-based web console
+   - Morgy Pen interface (expandable 320px-1080px)
+   - Avatar customizer
+   - Market and creator tools
+   - URL: https://morgus-console.pages.dev
+
+2. **Fly.io Backend** (`dppm-service`)
+   - Morgy execution engine
+   - Platform integrations (Twitter, TikTok, YouTube, Reddit, Gmail)
+   - OAuth manager
+   - Video creation (D-ID integration)
+   - Knowledge base service
+   - URL: https://morgus-deploy.fly.dev
+
+3. **Cloudflare Worker** (`morgus-orchestrator`)
    - Main orchestrator for routing requests
    - Analyzes complexity and routes to appropriate service
-   - Handles chat interface and user interactions
+   - Handles chat interface
    - URL: https://morgus-orchestrator.morgan-426.workers.dev
-
-2. **Fly.io DPPM Service** (`morgus-deploy`)
-   - Template generation and deployment service
-   - URL: https://morgus-deploy.fly.dev
-   - Handles website/app/presentation generation
-   - Integrates with OpenAI for image/video generation
-
-3. **Cloudflare Pages**
-   - Deployment target for generated websites
-   - Automatic SSL and CDN
-   - Custom domains supported
 
 4. **Supabase Backend**
    - User authentication and data storage
-   - Task history and learning system
+   - Morgy database (30+ tables)
    - Vector-based knowledge base (pgvector)
-   - Credit system (user_credits, credit_transactions, credit_packages)
+   - Platform connections and OAuth tokens
+   - Credit system
 
-5. **Console** (`morgus-console`)
-   - React-based web interface
-   - URL: https://morgus-console.pages.dev
-   - User dashboard, pricing, settings
+---
 
-### Template System
+## Morgy System Architecture
 
-The template system provides professional, production-ready designs:
+### Database Schema
 
-- **18+ Template Types**: startup, saas, mobile-app, game, portfolio, ecommerce, restaurant, agency, blog, event, dating, creative, personal, product, nonprofit, education, healthcare, realestate, fitness, entertainment
-- **5 Visual Styles**: Each template type has 5 visual style variants
-  - **modern-minimal**: Clean, lots of whitespace, centered content
-  - **bold-dynamic**: Asymmetric layouts, large images, vibrant colors
-  - **classic-professional**: Traditional grid, balanced sections, corporate feel
-  - **creative-artistic**: Unique layouts, overlapping elements, playful
-  - **elegant-luxury**: Sophisticated, refined, premium feel
-- **Keyword Detection**: Automatically selects style based on prompt keywords
-  - "luxury", "spa", "elegant" → elegant-luxury
-  - "cutting-edge", "bold", "dynamic" → bold-dynamic
-  - "professional", "corporate" → classic-professional
-  - "creative", "artistic", "fun" → creative-artistic
-  - "modern", "minimal", "clean" → modern-minimal
+**Core Tables:**
+- `morgys` - Morgy configurations and metadata
+- `morgy_conversations` - Chat conversations
+- `morgy_messages` - Individual messages
+- `morgy_knowledge_base` - Uploaded documents and embeddings
+- `morgy_platform_connections` - OAuth tokens for platforms
+- `morgy_platform_actions` - Audit log of platform actions
+- `morgy_market_listings` - Marketplace listings
+- `morgy_purchases` - Purchase history
+- `morgy_reviews` - User reviews and ratings
 
-### Credit System
+### Execution Modes
 
-**Affordable Pricing Structure:**
+Morgys automatically choose the best execution mode:
 
-**Video Packs:**
-- Small: $5 for 5 videos ($1.00 each)
-- Medium: $10 for 15 videos ($0.67 each) ⭐ POPULAR
-- Large: $15 for 25 videos ($0.60 each) 💎 BEST VALUE
+1. **Fast Mode** (Default)
+   - Gemini 2.0 Flash
+   - Cost: **$0 (FREE)**
+   - Latency: 1-2 seconds
+   - Use: 90% of queries
 
-**Image Packs:**
-- Small: $5 for 25 images ($0.20 each)
-- Medium: $10 for 60 images ($0.17 each) ⭐ POPULAR
-- Large: $15 for 100 images ($0.15 each) 💎 BEST VALUE
+2. **Quality Mode** (MOE)
+   - 6 models compete (Nash Equilibrium)
+   - Cost: ~$0.0005 per query
+   - Latency: 2-5 seconds
+   - Use: When quality matters
 
-**Bundles:**
-- Starter: $10 (25 images + 5 videos)
-- Creator: $15 (60 images + 15 videos) ⭐ SAVE $5
-- Pro: $25 (100 images + 25 videos) 💎 SAVE $5
+3. **Agent Mode**
+   - GPT-4o-mini with tools
+   - Cost: ~$0.001-0.01 per task
+   - Latency: 5-30 seconds
+   - Use: When tools needed (search, code, etc.)
 
-**Subscription Plans:**
-- Free: 3 images/day, no videos
-- Day Pass ($3): Unlimited images, 2 videos
-- Weekly ($21/week): Unlimited images, 10 videos/day
-- Monthly ($75/month): Unlimited everything
+4. **DPPM Mode**
+   - Deep parallel processing
+   - Cost: ~$0.01-0.05 per task
+   - Latency: 30-60 seconds
+   - Use: Complex multi-step tasks
+
+### Platform Integrations
+
+**Twitter API v2:**
+- Read tweets, user profiles, timelines
+- Post tweets, reply, retweet
+- OAuth 2.0 authentication
+- Cost: Free tier (1,500 tweets/month) or $100/month
+
+**TikTok API:**
+- Create videos with D-ID (Sally's avatar talks!)
+- Post videos to TikTok
+- Generate captions and hashtags
+- OAuth 2.0 authentication
+- Cost: Free API + $0.30 per video (D-ID)
+
+**YouTube API:**
+- Search videos and channels
+- Get video metadata
+- Upload videos (future)
+- OAuth 2.0 authentication
+- Cost: Free (10,000 quota units/day)
+
+**Reddit API:**
+- Read subreddit posts
+- Post to subreddits
+- Comment on posts
+- OAuth 2.0 authentication
+- Cost: Free
+
+**Gmail API:**
+- Send emails
+- Read emails
+- Manage inbox
+- OAuth 2.0 authentication
+- Cost: Free
+
+### Knowledge Base (RAG)
 
 **Features:**
-- Credits never expire
-- Subscription users can buy add-on packs
-- Unlimited flags for testing/admin
-- Complete transaction audit trail
+- Upload text files, PDFs, Word documents
+- Scrape websites for content
+- Semantic search with pgvector
+- Automatic chunking and embedding
+- Context injection into AI responses
 
-### AI-Powered Asset Generation
+**How it works:**
+1. User uploads document or URL
+2. System extracts text content
+3. Chunks text into manageable pieces
+4. Generates embeddings (OpenAI)
+5. Stores in Supabase with pgvector
+6. Searches semantically when Morgy responds
+7. Injects relevant context into prompt
 
-- **Images**: GPT-Image-1.5 for hero images and logos
-- **Videos**: Sora 2 framework ready (opt-in with user confirmation)
-- **Credit Tracking**: Automatic deduction with unlimited bypass for subscriptions
+### Avatar System
+
+**Generation:**
+- DALL-E 3 HD quality
+- Cyberpunk pig characters
+- 100+ customization options
+- Cost: $0.08 per avatar
+
+**Customization:**
+- 10 vibrant colors (neon green, hot pink, cyan, etc.)
+- Character types (business, creative, technical, academic, casual)
+- Glasses (sunglasses, round, monocle, none)
+- Headwear (hat, cap, headphones, none)
+- Clothing (suit, hoodie, t-shirt, jacket, robot body)
+- Personality (energetic, professional, friendly, serious, playful)
+
+### Pig Name Generator
+
+**Features:**
+- 3 auto-generated suggestions per category
+- Clever pig names (Hamsworth, Pigcasso, Hamlet)
+- Robot names (Byte-hog, Swinebot, Cyberpork)
+- Hybrid names (Technohog, Pixelpig, Viral-hog)
+- Category-specific pools (business, creative, technical, social media, research, marketing)
+- Custom name validation
+- Name availability checking
+
+**Examples:**
+- **Business:** Hamsworth, Porkinton, Baconberg, Snoutford, Bristlewood
+- **Creative:** Pigcasso, Hamvinci, Snoutsy, Oinkmuse, Truffart
+- **Technical:** Byte-hog, Cyberpork, Swinebot, Technohog, Pixelpig
+- **Social Media:** Squeakfluencer, Viral-hog, Trendypig, Hashtagham, Likesalot
+- **Research:** Professor Hogsworth, Dr. Snoutstein, Hamlet, Bristlebury, Dataswine
+- **Marketing:** Brandpig, Campaignham, Conversionpork, Growthog, Funnelpig
+
+---
 
 ## Technology Stack
 
-- **Backend**: Node.js + TypeScript (DPPM service)
-- **Worker**: Cloudflare Workers (orchestrator)
-- **Database**: Supabase (PostgreSQL + pgvector)
-- **Frontend**: React + TypeScript + Vite
-- **Deployment**: 
-  - Cloudflare Pages (websites, console)
-  - Fly.io (DPPM service)
-  - Cloudflare Workers (orchestrator)
-- **AI Models**: 
-  - OpenAI GPT-Image-1.5 (images)
-  - OpenAI Sora 2 (videos)
-  - OpenAI GPT-4/GPT-5.1 (reasoning)
-  - Google NotebookLM (research, coming soon)
+**Backend:**
+- Node.js + TypeScript (DPPM service)
+- Twitter API v2 (twitter-api-v2 npm package)
+- TikTok API (Content Posting API)
+- YouTube Data API v3 (googleapis npm package)
+- Reddit API (snoowrap npm package)
+- Gmail API (googleapis npm package)
+- D-ID API (video creation)
+
+**Worker:**
+- Cloudflare Workers (orchestrator)
+
+**Database:**
+- Supabase (PostgreSQL + pgvector)
+- Row Level Security policies
+- Real-time subscriptions
+
+**Frontend:**
+- React + TypeScript + Vite
+- TailwindCSS (styling)
+- React Router (navigation)
+
+**Deployment:**
+- Cloudflare Pages (frontend, websites)
+- Fly.io (DPPM service)
+- Cloudflare Workers (orchestrator)
+
+**AI Models:**
+- OpenAI GPT-4 (reasoning)
+- OpenAI GPT-4o-mini (agent mode)
+- Gemini 2.0 Flash (fast mode, FREE)
+- OpenAI text-embedding-3-small (embeddings)
+- DALL-E 3 (avatar generation)
+- D-ID (video creation)
+
+---
 
 ## Project Structure
 
 ```
 morgus-agent/
-├── dppm-service/              # Node.js DPPM service with template system
+├── dppm-service/              # Node.js backend service
 │   ├── src/
-│   │   ├── template-generator.ts          # Main template generation logic
-│   │   ├── cloudflare-pages-deployer.ts   # Cloudflare Pages deployment
-│   │   ├── image-generator.ts             # GPT-Image-1.5 integration
-│   │   ├── video-generator.ts             # Sora 2 integration (framework)
-│   │   ├── credit-service.ts              # Credit tracking and validation
-│   │   ├── credit-routes.ts               # Credit API endpoints
-│   │   └── templates/
-│   │       ├── website-templates.ts       # 18+ website templates
-│   │       ├── website-styles.ts          # 5 visual style variants
-│   │       ├── app-templates.ts           # App templates
-│   │       └── index.ts                   # Template exports
+│   │   ├── morgy-service.ts              # Core Morgy business logic
+│   │   ├── morgy-execution.ts            # Smart execution engine
+│   │   ├── knowledge-base-service.ts     # RAG implementation
+│   │   ├── avatar-generator.ts           # DALL-E 3 avatar creation
+│   │   ├── pig-name-generator.ts         # Clever name generation
+│   │   ├── document-extractors.ts        # PDF/Word extraction
+│   │   ├── error-handler.ts              # Error handling & logging
+│   │   ├── auth-middleware.ts            # Supabase authentication
+│   │   ├── integrations/
+│   │   │   ├── twitter-client.ts         # Twitter API v2 client
+│   │   │   ├── tiktok-client.ts          # TikTok API client
+│   │   │   ├── video-creator.ts          # D-ID video creation
+│   │   │   ├── youtube-client.ts         # YouTube API client
+│   │   │   ├── reddit-client.ts          # Reddit API client
+│   │   │   └── gmail-client.ts           # Gmail API client
+│   │   ├── oauth/
+│   │   │   └── oauth-manager.ts          # OAuth 2.0 flow manager
+│   │   └── types/
+│   │       └── morgy.ts                  # TypeScript interfaces
 │   └── fly.toml
 ├── worker/                    # Cloudflare Worker orchestrator
 │   ├── src/
-│   │   ├── index.ts                       # Main worker logic
+│   │   ├── index.ts
 │   │   └── tools/
-│   │       └── deploy-website.ts          # Cloudflare Pages API
 │   └── wrangler.toml
 ├── console/                   # React web console
 │   ├── src/
-│   │   ├── components/                    # UI components
+│   │   ├── components/
+│   │   │   ├── MorgyPenExpandable.tsx    # Main Morgy interface
+│   │   │   ├── MorgyChat.tsx             # Chat component
+│   │   │   ├── MorgyCreator.tsx          # Morgy creation form
+│   │   │   ├── MorgyDashboard.tsx        # Morgy list view
+│   │   │   ├── MorgyMarket.tsx           # Marketplace
+│   │   │   ├── MorgyKnowledgeBase.tsx    # Knowledge management
+│   │   │   └── AvatarCustomizer.tsx      # Avatar customization
 │   │   ├── pages/
-│   │   │   ├── Pricing.tsx                # Pricing page with credit packs
-│   │   │   └── PricingCreditPacks.css     # Credit packs styling
-│   │   ├── lib/                           # Utilities
-│   │   └── App.tsx                        # Main app
-│   └── wrangler.toml
-├── supabase/                  # Supabase schema and migrations
+│   │   │   └── Pricing.tsx               # Pricing page
+│   │   ├── lib/
+│   │   └── App.tsx
+│   └── public/
+│       └── avatars/
+│           ├── bill.png                  # Bill's avatar
+│           ├── sally.png                 # Sally's avatar
+│           ├── professor.png             # Hogsworth's avatar
+│           └── maxine.png                # Maxine's avatar
+├── supabase/                  # Database schema and migrations
 │   └── migrations/
-│       └── 20251226_credit_system.sql     # Credit system tables
-├── MORGUS_ROADMAP.md          # Complete development roadmap
-├── CHANGELOG.md               # Version history
+│       ├── 20251226_credit_system.sql
+│       └── 20251227_morgy_system.sql     # Complete Morgy schema
+├── setup-morgy-system.sh      # Automated setup script
+├── MORGY_SYSTEM_HANDOFF.md    # Complete handoff document
+├── MORGY_README.md            # Morgy system guide
 └── README.md                  # This file
 ```
 
-## Recent Updates
-
-### December 26, 2024 - Credit System & Roadmap
-- ✅ **Implemented complete credit system** with Supabase migration
-- ✅ **Created affordable pricing** ($5, $10, $15, $25 tiers)
-- ✅ **Added credit packs to pricing page** (9 packs: video, image, bundles)
-- ✅ **Implemented unlimited credits** for subscriptions and testing
-- ✅ **Created comprehensive roadmap** with priority tasks
-- ✅ **Committed all changes to GitHub**
-- 🚧 **NotebookLM integration** (starting now)
-- 🚧 **Agentic Morgys system** (next)
-- 🚧 **MCP servers** (next)
-- 🚧 **Morgy Market** (next)
-
-### December 26, 2024 - GPT-Image-1.5 & Templates
-- ✅ **Updated to GPT-Image-1.5** for image generation (from DALL-E 3)
-- ✅ **Fixed Cloudflare Pages hash calculation** (SHA-256 of base64Content + extension, truncated to 32 hex chars)
-- ✅ **Verified visual style system** working correctly with keyword detection
-- ✅ **Deployed DPPM service** to Fly.io (https://morgus-deploy.fly.dev)
-- ✅ **Created comprehensive template system** with 18+ types and 5 visual styles each
-
-### Successful Deployments
-- **Sweet Dreams Bakery**: https://sweet-dreams-bakery.pages.dev
-- **Carl the Unicorn (dating page)**: https://create-a-landing-page-for-carl-mjnnw1n8.pages.dev
+---
 
 ## Setup and Installation
 
 ### Prerequisites
+
 - Node.js 18+
 - Cloudflare account with API token
-- Fly.io account (for DPPM service)
+- Fly.io account (for backend)
 - Supabase project
 - OpenAI API key
-- Google NotebookLM account (for research features)
+- Platform API keys:
+  - Twitter API v2 (https://developer.twitter.com/)
+  - TikTok for Developers (https://developers.tiktok.com/)
+  - Google Cloud (YouTube + Gmail APIs)
+  - Reddit API (https://www.reddit.com/prefs/apps)
+  - D-ID API (https://www.d-id.com/)
 
 ### Environment Variables
 
 **DPPM Service** (`dppm-service/.env`):
 ```bash
+# OpenAI
 OPENAI_API_KEY=your_openai_key
+
+# Cloudflare
 CLOUDFLARE_API_TOKEN=your_cloudflare_token
 CLOUDFLARE_ACCOUNT_ID=your_account_id
+
+# Supabase
 SUPABASE_URL=your_supabase_url
 SUPABASE_SERVICE_KEY=your_supabase_service_key
+
+# Twitter API v2
+TWITTER_API_KEY=your_twitter_api_key
+TWITTER_API_SECRET=your_twitter_api_secret
+TWITTER_BEARER_TOKEN=your_twitter_bearer_token
+
+# TikTok API
+TIKTOK_CLIENT_KEY=your_tiktok_client_key
+TIKTOK_CLIENT_SECRET=your_tiktok_client_secret
+
+# YouTube API
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_API_KEY=your_google_api_key
+
+# Reddit API
+REDDIT_CLIENT_ID=your_reddit_client_id
+REDDIT_CLIENT_SECRET=your_reddit_client_secret
+
+# D-ID (Video Creation)
+DID_API_KEY=your_did_api_key
 ```
 
 **Worker** (configured as secrets):
@@ -255,161 +420,204 @@ VITE_API_URL=https://morgus-orchestrator.morgan-426.workers.dev
 
 ### Database Setup
 
-**Apply Credit System Migration:**
-1. Go to Supabase SQL Editor: https://supabase.com/dashboard/project/YOUR_PROJECT/sql
-2. Run the migration: `supabase/migrations/20251226_credit_system.sql`
-3. Verify tables created: `user_credits`, `credit_transactions`, `credit_packages`, `credit_confirmations`
+**1. Apply Morgy System Migration:**
+```bash
+cd supabase
+supabase db push
+```
 
-**Grant Unlimited Credits (for testing):**
+Or manually in Supabase SQL Editor:
+1. Go to: https://supabase.com/dashboard/project/YOUR_PROJECT/sql
+2. Run: `supabase/migrations/20251227_morgy_system.sql`
+3. Verify tables created (30+ tables)
+
+**2. Enable pgvector Extension:**
 ```sql
-UPDATE user_credits
-SET unlimited_image_credits = true,
-    unlimited_video_credits = true
-WHERE user_id = auth.uid();
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+**3. Initialize Starter Morgys:**
+```bash
+curl -X POST https://morgus-deploy.fly.dev/api/morgys/init-starters \
+  -H "Authorization: Bearer YOUR_SUPABASE_TOKEN"
 ```
 
 ### Deployment
 
-**Deploy DPPM Service to Fly.io**:
+**1. Deploy DPPM Service to Fly.io:**
 ```bash
 cd dppm-service
-flyctl deploy
+fly deploy
 ```
 
-**Deploy Worker to Cloudflare**:
+**2. Deploy Worker to Cloudflare:**
 ```bash
 cd worker
-npm install
-npx wrangler deploy
+wrangler deploy
 ```
 
-**Deploy Console to Cloudflare Pages**:
+**3. Deploy Console to Cloudflare Pages:**
 ```bash
 cd console
-npm install
 npm run build
-npx wrangler pages deploy dist
+wrangler pages deploy dist
 ```
-
-## Usage
-
-### Creating a Website
-
-Send a natural language request to the Morgus system:
-
-```
-"Create a landing page for a luxury spa retreat called Serenity Springs"
-```
-
-The system will:
-1. Detect template type: `restaurant` (spa/retreat keywords)
-2. Detect visual style: `elegant-luxury` (luxury keyword)
-3. Check user credits (or bypass if unlimited)
-4. Generate hero image and logo using GPT-Image-1.5
-5. Deduct image credits (if not unlimited)
-6. Generate professional HTML/CSS from template
-7. Deploy to Cloudflare Pages
-8. Record transaction in credit_transactions
-9. Return deployment URL
-
-### Example Prompts
-
-- "Create a startup landing page for NeuralMind AI" → startup template, bold-dynamic style
-- "Build a dating profile page for Carl the Unicorn" → dating template, creative-artistic style
-- "Make a professional portfolio for a photographer" → portfolio template, modern-minimal style
-- "Create an e-commerce site for handmade jewelry" → ecommerce template, elegant-luxury style
-
-### Using NotebookLM (Coming Soon)
-
-```
-"Create a research notebook about AI agents"
-"Add this PDF to my notebook"
-"Generate an audio overview of my notebook"
-"What does my notebook say about MCP servers?"
-```
-
-### Interacting with Morgys (Coming Soon)
-
-```
-"Morgy, help me brainstorm startup ideas"
-"Morgy, remember that I prefer modern minimal designs"
-"Morgy, proactively suggest improvements to my website"
-```
-
-## Learning System
-
-The Morgus learning system enables the agent to learn from its experiences and improve over time:
-
-- **`dppm_reflections`**: Stores task outcomes and lessons learned
-- **`model_performance`**: Tracks aggregate performance metrics by task category
-- **`user_learning_preferences`**: Stores personalized preferences
-- **`task_patterns`**: Remembers successful task decomposition patterns
-- **Answer Caching**: Semantic search for frequently accessed answers
-- **Morgy Memory**: Per-user, per-Morgy persistent memory (coming soon)
-
-## Development Roadmap
-
-See [MORGUS_ROADMAP.md](./MORGUS_ROADMAP.md) for the complete roadmap.
-
-### 🔥 Priority Tasks (Next 24 Hours)
-
-1. **NotebookLM Integration** (2-3 hours)
-   - [ ] Research NotebookLM API
-   - [ ] Create NotebookLM service wrapper
-   - [ ] Add notebook creation from chat
-   - [ ] Implement Q&A from notebooks
-   - [ ] Test end-to-end
-
-2. **Agentic Morgys Foundation** (3-4 hours)
-   - [ ] Design Morgy architecture
-   - [ ] Implement Morgy types
-   - [ ] Add Morgy memory system
-   - [ ] Create personality engine
-   - [ ] Test proactive behaviors
-
-3. **MCP Server Architecture** (2-3 hours)
-   - [ ] Research MCP protocol
-   - [ ] Set up MCP infrastructure
-   - [ ] Implement core MCP servers
-   - [ ] Test extensibility
-
-### 📊 Success Metrics
-
-- Daily Active Users (DAU)
-- Websites generated per day
-- Credit pack conversion rate
-- Morgy Market transactions
-- User retention (D1, D7, D30)
-- Monthly Recurring Revenue (MRR)
-
-## Known Issues
-
-### Current Blockers
-- **Fly.io Deployment**: `flyctl deploy` sometimes hangs on "Waiting for depot builder" (Fly.io infrastructure issue)
-- **Worker Deployment**: Needs Cloudflare API token for automated deployment
-
-### Workarounds
-- Code is committed to GitHub, can redeploy when Fly.io is responsive
-- Worker can be deployed manually with `npx wrangler deploy`
-- DPPM service already has GPT-Image-1.5 (verified via SSH)
-
-## Contributing
-
-Contributions are welcome! Please ensure:
-- Code follows TypeScript best practices
-- Templates are responsive and accessible
-- Security checks pass (pre-commit hooks)
-- Documentation is updated
-- Tests are included for new features
-
-## License
-
-MIT License - See LICENSE file for details
-
-## Credits
-
-Inspired by the Manus autonomous agent system and built with modern web technologies.
 
 ---
 
-**Built with ❤️ by the Morgus team. Let's build the future of AI agents together!** 🚀
+## Usage
+
+### Creating a Morgy
+
+1. Open Morgy Pen (click pig icon)
+2. Click "✨ Create" tab
+3. Fill in details:
+   - **Name:** Click 🎲 for suggestions or enter custom name
+   - **Description:** What your Morgy does
+   - **Category:** Business, Marketing, Development, etc.
+   - **System Prompt:** Define personality and behavior
+   - **Traits:** Add personality traits
+   - **Expertise:** Add skills and knowledge areas
+4. Customize avatar (optional)
+5. Click "Create Morgy"
+
+### Chatting with a Morgy
+
+1. Open Morgy Pen
+2. Click on a Morgy card
+3. Chat interface opens automatically
+4. Type your message and press Enter
+5. Morgy responds with personality!
+
+### Adding Knowledge
+
+1. Open Morgy Pen
+2. Select a Morgy
+3. Click "📚 Knowledge" tab
+4. Upload files or add website URLs
+5. Morgy learns from your content!
+
+### Connecting Platforms
+
+1. Open Morgy Pen
+2. Select a Morgy
+3. Click "🔌 Connect" button
+4. Choose platform (Twitter, TikTok, etc.)
+5. Authorize with OAuth
+6. Morgy can now post autonomously!
+
+### Sally Creates a TikTok Video
+
+1. Chat with Sally
+2. Say: "Create a TikTok video about [topic]"
+3. Sally generates script
+4. Sally creates video (her avatar talks!)
+5. Sally generates caption + hashtags
+6. Sally posts to TikTok
+7. Sally reports engagement!
+
+---
+
+## Pricing
+
+### Morgy System
+
+**Free Tier:**
+- 3 Morgys
+- 100 messages/day
+- Basic knowledge base (10 documents)
+- Read-only social media
+
+**Pro Tier ($15/month):**
+- Unlimited Morgys
+- Unlimited messages
+- Unlimited knowledge base
+- Full social media posting
+- Video creation (100 videos/month)
+- Priority support
+
+**Enterprise (Custom):**
+- Custom Morgy count
+- Dedicated infrastructure
+- White-label option
+- Custom integrations
+- SLA guarantee
+
+### Platform Costs (Pass-through)
+
+- **Twitter API:** Free tier or $100/month
+- **TikTok Videos:** $0.30 per video (D-ID)
+- **YouTube/Reddit/Gmail:** Free
+- **Avatar Generation:** $0.08 per avatar
+
+---
+
+## Roadmap
+
+### Phase 1: Foundation (Weeks 1-2) ✅ COMPLETE
+- [x] Database schema
+- [x] Backend service layer
+- [x] Execution engine
+- [x] Chat interface
+- [x] Character personalities
+- [x] API endpoints
+- [x] Knowledge base service
+- [x] Marketplace structure
+
+### Phase 2: Platform Integrations (Weeks 3-4) 🚧 IN PROGRESS
+- [ ] Twitter API v2 integration
+- [ ] TikTok video creation (D-ID)
+- [ ] TikTok posting API
+- [ ] YouTube API integration
+- [ ] Reddit API integration
+- [ ] Gmail API integration
+- [ ] OAuth system
+
+### Phase 3: Advanced Features (Weeks 5-6)
+- [ ] Scheduling system
+- [ ] Analytics dashboard
+- [ ] Multi-platform cross-posting
+- [ ] Video templates
+- [ ] Email templates
+- [ ] Workflow automation
+
+### Phase 4: Market & Community (Weeks 7-8)
+- [ ] Morgy Market launch
+- [ ] Creator dashboard
+- [ ] Revenue sharing
+- [ ] Reviews and ratings
+- [ ] Featured Morgys
+- [ ] Creator certification
+
+---
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+
+---
+
+## License
+
+MIT License - see [LICENSE](./LICENSE) for details.
+
+---
+
+## Support
+
+- **Documentation:** https://docs.morgus.ai
+- **Discord:** https://discord.gg/morgus
+- **Email:** support@morgus.ai
+- **Twitter:** @MorgusAI
+
+---
+
+## Acknowledgments
+
+- Inspired by Sintra AI's specialized AI employees
+- Built with love by the Morgus team
+- Special thanks to Bill, Sally, and Professor Hogsworth for being such good sports! 🐷
+
+---
+
+**Made with 🐷 by Morgus**
