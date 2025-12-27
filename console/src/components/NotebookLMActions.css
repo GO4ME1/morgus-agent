@@ -1,0 +1,169 @@
+/**
+ * NotebookLM Actions Styles
+ */
+
+.notebooklm-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.action-button-wrapper {
+  position: relative;
+}
+
+.btn-add-to-notebook,
+.btn-pull-from-notebook {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #2a2a2a;
+  color: #aaa;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-add-to-notebook:hover,
+.btn-pull-from-notebook:hover {
+  background: #3a3a3a;
+  border-color: #666;
+  color: #fff;
+}
+
+.btn-add-to-notebook:disabled,
+.btn-pull-from-notebook:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-add-to-notebook.success {
+  background: #10b981;
+  border-color: #059669;
+  color: #fff;
+}
+
+/* Action Menu */
+.action-menu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 8px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  min-width: 240px;
+  z-index: 100;
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.menu-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #333;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.menu-content {
+  padding: 16px;
+}
+
+.menu-content p {
+  margin: 0 0 16px 0;
+  font-size: 13px;
+  color: #aaa;
+  line-height: 1.5;
+}
+
+.menu-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.menu-actions button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #2a2a2a;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.menu-actions button:hover {
+  background: #3a3a3a;
+  border-color: #666;
+}
+
+.menu-actions button.primary {
+  background: #7c3aed;
+  border-color: #8b5cf6;
+}
+
+.menu-actions button.primary:hover {
+  background: #8b5cf6;
+}
+
+.menu-warning {
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  font-size: 12px;
+  color: #fca5a5;
+}
+
+/* Input Action Button */
+.btn-notebook-input-action {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #2a2a2a;
+  color: #aaa;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-notebook-input-action:hover:not(:disabled) {
+  background: #3a3a3a;
+  border-color: #666;
+  color: #fff;
+}
+
+.btn-notebook-input-action:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .action-menu {
+    left: auto;
+    right: 0;
+    min-width: 200px;
+  }
+}
