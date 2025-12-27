@@ -12,6 +12,8 @@ export interface CreditBalance {
   videoCreditsUsed: number;
   imageCreditsTotal: number;
   videoCreditsTotal: number;
+  unlimitedImages: boolean;
+  unlimitedVideos: boolean;
 }
 
 export interface CreditCheckResult {
@@ -19,6 +21,7 @@ export interface CreditCheckResult {
   available: number;
   required: number;
   creditType: 'image' | 'video';
+  unlimited: boolean;
 }
 
 export interface CreditConfirmation {
@@ -62,7 +65,9 @@ export class CreditService {
       imageCreditsUsed: data.image_credits_used,
       videoCreditsUsed: data.video_credits_used,
       imageCreditsTotal: data.image_credits_total,
-      videoCreditsTotal: data.image_credits_total
+      videoCreditsTotal: data.video_credits_total,
+      unlimitedImages: data.unlimited_image_credits || false,
+      unlimitedVideos: data.unlimited_video_credits || false
     };
   }
 
@@ -109,12 +114,14 @@ export class CreditService {
     }
 
     const available = creditType === 'image' ? balance.imageCredits : balance.videoCredits;
+    const unlimited = creditType === 'image' ? balance.unlimitedImages : balance.unlimitedVideos;
 
     return {
-      hasCredits: available >= amount,
-      available,
+      hasCredits: unlimited || available >= amount,
+      available: unlimited ? Infinity : available,
       required: amount,
-      creditType
+      creditType,
+      unlimited
     };
   }
 

@@ -18,6 +18,10 @@ CREATE TABLE IF NOT EXISTS user_credits (
   video_credits_used INTEGER NOT NULL DEFAULT 0,
   video_credits_remaining INTEGER GENERATED ALWAYS AS (video_credits_total - video_credits_used) STORED,
   
+  -- Unlimited credits flags (for subscription plans, testing, admins)
+  unlimited_image_credits BOOLEAN NOT NULL DEFAULT false,
+  unlimited_video_credits BOOLEAN NOT NULL DEFAULT false,
+  
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -393,7 +397,25 @@ CREATE OR REPLACE FUNCTION check_credits(
 RETURNS BOOLEAN AS $$
 DECLARE
   v_available INTEGER;
+  v_unlimited_images BOOLEAN;
+  v_unlimited_videos BOOLEAN;
 BEGIN
+  -- Get unlimited flags
+  SELECT unlimited_image_credits, unlimited_video_credits
+  INTO v_unlimited_images, v_unlimited_videos
+  FROM user_credits
+  WHERE user_id = p_user_id;
+  
+  -- Check if user has unlimited for this credit type
+  IF p_credit_type = 'image' AND v_unlimited_images = true THEN
+    RETURN true;
+  END IF;
+  
+  IF p_credit_type = 'video' AND v_unlimited_videos = true THEN
+    RETURN true;
+  END IF;
+  
+  -- Otherwise check actual balance
   IF p_credit_type = 'image' THEN
     SELECT image_credits_remaining INTO v_available
     FROM user_credits
