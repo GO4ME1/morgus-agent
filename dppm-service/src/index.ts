@@ -1025,7 +1025,10 @@ app.post('/deploy', async (req, res) => {
       if (file.path.endsWith('.json')) contentType = 'application/json';
 
       const base64Content = Buffer.from(file.content).toString('base64');
-      const hash = crypto.createHash('sha256').update(base64Content + file.path).digest('hex');
+      // Hash = SHA-256(base64Content + extension), truncated to 32 hex chars
+      // Reference: https://developers.cloudflare.com/workers/static-assets/direct-upload/
+      const extension = file.path.includes('.') ? file.path.split('.').pop() || '' : '';
+      const hash = crypto.createHash('sha256').update(base64Content + extension).digest('hex').slice(0, 32);
 
       fileData.push({
         path: file.path.startsWith('/') ? file.path : `/${file.path}`,
