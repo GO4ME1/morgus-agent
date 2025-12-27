@@ -15,6 +15,7 @@ import {
   AppData,
   OutputType
 } from './templates';
+import { detectVisualStyle } from './templates/website-styles';
 
 // Store OpenAI API key for image generation
 let openaiApiKey: string = '';
@@ -36,7 +37,7 @@ async function generateImageWithGPT(prompt: string, size: '1024x1024' | '1792x10
   }
   
   try {
-    console.log(`[Image] Generating with GPT-Image-1.5: ${prompt.substring(0, 50)}...`);
+    console.log(`[Image] Generating with DALL-E 3: ${prompt.substring(0, 50)}...`);
     
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
@@ -45,18 +46,17 @@ async function generateImageWithGPT(prompt: string, size: '1024x1024' | '1792x10
         'Authorization': `Bearer ${openaiApiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-image-1.5',
+        model: 'dall-e-3',
         prompt: prompt,
         n: 1,
         size: size,
         quality: 'standard',
-        response_format: 'url',
       }),
     });
     
     if (!response.ok) {
       const error = await response.text();
-      console.error('[Image] GPT-Image-1.5 API error:', error);
+      console.log('[Image] DALL-E 3 API error:', error);
       return '';
     }
     
@@ -64,11 +64,11 @@ async function generateImageWithGPT(prompt: string, size: '1024x1024' | '1792x10
     const imageUrl = data.data?.[0]?.url;
     
     if (imageUrl) {
-      console.log('[Image] GPT-Image-1.5 generated successfully');
+      console.log('[Image] DALL-E 3 generated successfully');
       return imageUrl;
     }
   } catch (e) {
-    console.error('[Image] GPT-Image-1.5 generation failed:', e);
+    console.error('[Image] DALL-E 3 generation failed:', e);
   }
   return '';
 }
@@ -214,7 +214,8 @@ export async function generateFromContent(
   
   if (outputType === 'website') {
     const templateType = detectWebsiteTemplate(goal);
-    console.log(`[Template] Using website template: ${templateType}`);
+    const visualStyle = detectVisualStyle(goal, templateType);
+    console.log(`[Template] Using website template: ${templateType}, visual style: ${visualStyle}`);
     
     const title = contentData.title || extractTitle(goal);
     const tagline = contentData.tagline || extractTagline(goal);
@@ -266,6 +267,7 @@ export async function generateFromContent(
         },
         socialLinks: contentData.socialLinks,
         contact: contentData.contact,
+        visualStyle,
         year,
       };
       
@@ -302,6 +304,7 @@ export async function generateFromContent(
         },
         socialLinks: contentData.socialLinks,
         contact: contentData.contact,
+        visualStyle,
         year,
       };
       

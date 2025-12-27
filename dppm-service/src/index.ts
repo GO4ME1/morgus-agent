@@ -834,14 +834,14 @@ app.post('/dppm', async (req, res) => {
           filename: 'index.html',
           content: templateResult.html
         }];
-        finalOutput = `Here's your ${outputType} built with the ${templateResult.templateType} template:\n\n\`\`\`html\n${templateResult.html}\n\`\`\``;
+        finalOutput = `✨ Your ${outputType} has been generated using the **${templateResult.templateType}** template!\n\nThe site will be deployed automatically.`;
       } else if (templateResult.code) {
         artifacts = [{
           language: 'tsx',
           filename: 'App.tsx',
           content: templateResult.code
         }];
-        finalOutput = `Here's your ${outputType} built with the ${templateResult.templateType} template:\n\n\`\`\`tsx\n${templateResult.code}\n\`\`\``;
+        finalOutput = `✨ Your ${outputType} has been generated using the **${templateResult.templateType}** template!\n\nThe app is ready to deploy.`;
       } else {
         finalOutput = 'Template generation completed.';
       }
