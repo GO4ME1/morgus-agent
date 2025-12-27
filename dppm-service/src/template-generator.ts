@@ -222,16 +222,31 @@ export async function generateFromContent(
     const primaryColor = contentData.primaryColor || getDefaultColor(templateType);
     
     // Generate images (and optionally video) in parallel for speed
+    // Use Promise.race with timeout to avoid blocking deployment
     const shouldGenerateVideo = options?.generateVideo ?? false;
+    const IMAGE_TIMEOUT = 15000; // 15 seconds max for images
     
-    if (shouldGenerateVideo) {
-      console.log('[Template] Generating hero image, logo, and video with GPT-Image-1.5 and Sora 2...');
-      const [heroImage, logoImage, heroVideo] = await Promise.all([
+    console.log('[Template] Starting image generation (non-blocking, 15s timeout)...');
+    
+    // Race image generation against timeout
+    const imagePromises = Promise.race([
+      Promise.all([
         generateHeroImage(templateType, title, description),
         generateLogo(title, templateType, primaryColor),
-        generateHeroVideo(templateType, title, description)
-      ]);
-      console.log(`[Template] Media generated: hero=${!!heroImage}, logo=${!!logoImage}, video=${!!heroVideo}`);
+        shouldGenerateVideo ? generateHeroVideo(templateType, title, description) : Promise.resolve('')
+      ]),
+      new Promise<[string, string, string]>((resolve) => 
+        setTimeout(() => {
+          console.log('[Template] Image generation timeout, using placeholders');
+          resolve(['', '', '']);
+        }, IMAGE_TIMEOUT)
+      )
+    ]);
+    
+    const [heroImage, logoImage, heroVideo] = await imagePromises;
+    console.log(`[Template] Media generated: hero=${!!heroImage}, logo=${!!logoImage}, video=${!!heroVideo}`);
+    
+    if (shouldGenerateVideo) {
       
       const websiteData: WebsiteData = {
         title,

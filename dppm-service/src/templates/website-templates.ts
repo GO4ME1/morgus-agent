@@ -4,6 +4,8 @@
  * ALL websites MUST use these templates. AI only fills in content.
  */
 
+import { detectVisualStyle, getStyleCSS, getLayoutStructure, VisualStyle } from './website-styles';
+
 export type WebsiteTemplateType = 
   | 'saas' 
   | 'mobile-app' 
@@ -32,6 +34,7 @@ export interface WebsiteData {
   description: string;
   primaryColor?: string;
   accentColor?: string;
+  visualStyle?: VisualStyle;
   features?: Array<{ title: string; description: string; icon?: string }>;
   pricing?: Array<{ name: string; price: string; features: string[]; highlighted?: boolean; period?: string }>;
   testimonials?: Array<{ name: string; role: string; quote: string; avatar?: string; company?: string }>;
@@ -86,8 +89,17 @@ export function detectWebsiteTemplate(message: string): WebsiteTemplateType {
  * Generate a complete website HTML from template
  */
 export function generateWebsite(type: WebsiteTemplateType, data: WebsiteData): string {
-  const css = generateCSS(data.primaryColor || '#6366f1', data.accentColor || '#8b5cf6', type);
-  const html = generateHTML(type, data);
+  // Detect visual style if not provided
+  const visualStyle = data.visualStyle || detectVisualStyle(data.description + ' ' + data.title, type);
+  console.log(`[Website] Using visual style: ${visualStyle} for template type: ${type}`);
+  
+  const primaryColor = data.primaryColor || '#6366f1';
+  const accentColor = data.accentColor || '#8b5cf6';
+  
+  // Generate CSS with visual style variables
+  const styleCSS = getStyleCSS(visualStyle, primaryColor, accentColor);
+  const css = generateCSS(primaryColor, accentColor, type) + '\n' + styleCSS;
+  const html = generateHTML(type, { ...data, visualStyle });
   
   return `<!DOCTYPE html>
 <html lang="en">
