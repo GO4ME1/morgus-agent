@@ -2,6 +2,30 @@
 
 **Morgus** is an autonomous AI agent system that creates and deploys websites, landing pages, apps, and presentations using AI-powered templates. The system uses a Mixture of Experts (MOE) architecture with multiple AI models, deploys to Cloudflare Pages, and includes template-based generation with AI-generated images and videos.
 
+## 🎯 Current Status: Building Phase (Pre-Production)
+
+**Last Updated:** December 26, 2024
+
+### ✅ Completed Features
+- Template-based website generation (18+ templates, 5 visual styles each)
+- GPT-Image-1.5 integration for AI-generated images
+- Cloudflare Pages deployment
+- Credit system database (Supabase)
+- Affordable pricing ($5, $10, $15, $25 tiers)
+- User authentication and profiles
+- Task history and monitoring
+
+### 🚧 In Progress (Priority Order)
+1. **NotebookLM Integration** - AI-powered research and note-taking
+2. **Agentic Morgys** - Truly autonomous AI companions with personality, memory, and skills
+3. **MCP Servers** - Model Context Protocol for extensibility and persistent memory
+4. **Morgy Market** - Marketplace for custom Morgys, tools, and templates
+
+### 📋 See Full Roadmap
+Check [MORGUS_ROADMAP.md](./MORGUS_ROADMAP.md) for complete task breakdown, effort estimates, and success metrics.
+
+---
+
 ## Overview
 
 Morgus is designed to **deliver results** – producing running applications, professional websites, and presentations autonomously. The system analyzes user requests, selects appropriate templates, generates visual assets, and deploys to production with minimal human intervention.
@@ -17,6 +41,9 @@ Morgus is designed to **deliver results** – producing running applications, pr
 - **Multi-Model Support**: Flexible model routing (GPT-4, GPT-5.1, future Gemini/Grok)
 - **Real-Time Updates**: Live task monitoring via Supabase subscriptions
 - **Credit System**: À la carte pricing for images and videos
+- **Agentic Morgys**: AI companions with personality, memory, and autonomous capabilities (coming soon)
+- **NotebookLM Integration**: AI-powered research and note-taking (coming soon)
+- **MCP Servers**: Extensible tool system via Model Context Protocol (coming soon)
 
 ## Architecture
 
@@ -28,6 +55,7 @@ Morgus uses a **distributed architecture** with multiple specialized services:
    - Main orchestrator for routing requests
    - Analyzes complexity and routes to appropriate service
    - Handles chat interface and user interactions
+   - URL: https://morgus-orchestrator.morgan-426.workers.dev
 
 2. **Fly.io DPPM Service** (`morgus-deploy`)
    - Template generation and deployment service
@@ -44,6 +72,12 @@ Morgus uses a **distributed architecture** with multiple specialized services:
    - User authentication and data storage
    - Task history and learning system
    - Vector-based knowledge base (pgvector)
+   - Credit system (user_credits, credit_transactions, credit_packages)
+
+5. **Console** (`morgus-console`)
+   - React-based web interface
+   - URL: https://morgus-console.pages.dev
+   - User dashboard, pricing, settings
 
 ### Template System
 
@@ -63,14 +97,42 @@ The template system provides professional, production-ready designs:
   - "creative", "artistic", "fun" → creative-artistic
   - "modern", "minimal", "clean" → modern-minimal
 
+### Credit System
+
+**Affordable Pricing Structure:**
+
+**Video Packs:**
+- Small: $5 for 5 videos ($1.00 each)
+- Medium: $10 for 15 videos ($0.67 each) ⭐ POPULAR
+- Large: $15 for 25 videos ($0.60 each) 💎 BEST VALUE
+
+**Image Packs:**
+- Small: $5 for 25 images ($0.20 each)
+- Medium: $10 for 60 images ($0.17 each) ⭐ POPULAR
+- Large: $15 for 100 images ($0.15 each) 💎 BEST VALUE
+
+**Bundles:**
+- Starter: $10 (25 images + 5 videos)
+- Creator: $15 (60 images + 15 videos) ⭐ SAVE $5
+- Pro: $25 (100 images + 25 videos) 💎 SAVE $5
+
+**Subscription Plans:**
+- Free: 3 images/day, no videos
+- Day Pass ($3): Unlimited images, 2 videos
+- Weekly ($21/week): Unlimited images, 10 videos/day
+- Monthly ($75/month): Unlimited everything
+
+**Features:**
+- Credits never expire
+- Subscription users can buy add-on packs
+- Unlimited flags for testing/admin
+- Complete transaction audit trail
+
 ### AI-Powered Asset Generation
 
 - **Images**: GPT-Image-1.5 for hero images and logos
 - **Videos**: Sora 2 framework ready (opt-in with user confirmation)
-- **Credit System**: 
-  - Images: 50 for $10 ($0.20 each)
-  - Videos: 20 for $15 ($0.75 each, 5-sec)
-  - Bundle: 50 images + 20 videos for $20
+- **Credit Tracking**: Automatic deduction with unlimited bypass for subscriptions
 
 ## Technology Stack
 
@@ -86,6 +148,7 @@ The template system provides professional, production-ready designs:
   - OpenAI GPT-Image-1.5 (images)
   - OpenAI Sora 2 (videos)
   - OpenAI GPT-4/GPT-5.1 (reasoning)
+  - Google NotebookLM (research, coming soon)
 
 ## Project Structure
 
@@ -97,6 +160,8 @@ morgus-agent/
 │   │   ├── cloudflare-pages-deployer.ts   # Cloudflare Pages deployment
 │   │   ├── image-generator.ts             # GPT-Image-1.5 integration
 │   │   ├── video-generator.ts             # Sora 2 integration (framework)
+│   │   ├── credit-service.ts              # Credit tracking and validation
+│   │   ├── credit-routes.ts               # Credit API endpoints
 │   │   └── templates/
 │   │       ├── website-templates.ts       # 18+ website templates
 │   │       ├── website-styles.ts          # 5 visual style variants
@@ -112,16 +177,35 @@ morgus-agent/
 ├── console/                   # React web console
 │   ├── src/
 │   │   ├── components/                    # UI components
+│   │   ├── pages/
+│   │   │   ├── Pricing.tsx                # Pricing page with credit packs
+│   │   │   └── PricingCreditPacks.css     # Credit packs styling
 │   │   ├── lib/                           # Utilities
 │   │   └── App.tsx                        # Main app
 │   └── wrangler.toml
-└── supabase/                  # Supabase schema and migrations
-    └── migrations/
+├── supabase/                  # Supabase schema and migrations
+│   └── migrations/
+│       └── 20251226_credit_system.sql     # Credit system tables
+├── MORGUS_ROADMAP.md          # Complete development roadmap
+├── CHANGELOG.md               # Version history
+└── README.md                  # This file
 ```
 
 ## Recent Updates
 
-### December 26, 2025
+### December 26, 2024 - Credit System & Roadmap
+- ✅ **Implemented complete credit system** with Supabase migration
+- ✅ **Created affordable pricing** ($5, $10, $15, $25 tiers)
+- ✅ **Added credit packs to pricing page** (9 packs: video, image, bundles)
+- ✅ **Implemented unlimited credits** for subscriptions and testing
+- ✅ **Created comprehensive roadmap** with priority tasks
+- ✅ **Committed all changes to GitHub**
+- 🚧 **NotebookLM integration** (starting now)
+- 🚧 **Agentic Morgys system** (next)
+- 🚧 **MCP servers** (next)
+- 🚧 **Morgy Market** (next)
+
+### December 26, 2024 - GPT-Image-1.5 & Templates
 - ✅ **Updated to GPT-Image-1.5** for image generation (from DALL-E 3)
 - ✅ **Fixed Cloudflare Pages hash calculation** (SHA-256 of base64Content + extension, truncated to 32 hex chars)
 - ✅ **Verified visual style system** working correctly with keyword detection
@@ -140,6 +224,7 @@ morgus-agent/
 - Fly.io account (for DPPM service)
 - Supabase project
 - OpenAI API key
+- Google NotebookLM account (for research features)
 
 ### Environment Variables
 
@@ -148,6 +233,8 @@ morgus-agent/
 OPENAI_API_KEY=your_openai_key
 CLOUDFLARE_API_TOKEN=your_cloudflare_token
 CLOUDFLARE_ACCOUNT_ID=your_account_id
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_KEY=your_supabase_service_key
 ```
 
 **Worker** (configured as secrets):
@@ -157,6 +244,28 @@ wrangler secret put CLOUDFLARE_API_TOKEN
 wrangler secret put CLOUDFLARE_ACCOUNT_ID
 wrangler secret put SUPABASE_URL
 wrangler secret put SUPABASE_SERVICE_KEY
+```
+
+**Console** (`console/.env`):
+```bash
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_API_URL=https://morgus-orchestrator.morgan-426.workers.dev
+```
+
+### Database Setup
+
+**Apply Credit System Migration:**
+1. Go to Supabase SQL Editor: https://supabase.com/dashboard/project/YOUR_PROJECT/sql
+2. Run the migration: `supabase/migrations/20251226_credit_system.sql`
+3. Verify tables created: `user_credits`, `credit_transactions`, `credit_packages`, `credit_confirmations`
+
+**Grant Unlimited Credits (for testing):**
+```sql
+UPDATE user_credits
+SET unlimited_image_credits = true,
+    unlimited_video_credits = true
+WHERE user_id = auth.uid();
 ```
 
 ### Deployment
@@ -195,10 +304,13 @@ Send a natural language request to the Morgus system:
 The system will:
 1. Detect template type: `restaurant` (spa/retreat keywords)
 2. Detect visual style: `elegant-luxury` (luxury keyword)
-3. Generate hero image and logo using GPT-Image-1.5
-4. Generate professional HTML/CSS from template
-5. Deploy to Cloudflare Pages
-6. Return deployment URL
+3. Check user credits (or bypass if unlimited)
+4. Generate hero image and logo using GPT-Image-1.5
+5. Deduct image credits (if not unlimited)
+6. Generate professional HTML/CSS from template
+7. Deploy to Cloudflare Pages
+8. Record transaction in credit_transactions
+9. Return deployment URL
 
 ### Example Prompts
 
@@ -206,6 +318,23 @@ The system will:
 - "Build a dating profile page for Carl the Unicorn" → dating template, creative-artistic style
 - "Make a professional portfolio for a photographer" → portfolio template, modern-minimal style
 - "Create an e-commerce site for handmade jewelry" → ecommerce template, elegant-luxury style
+
+### Using NotebookLM (Coming Soon)
+
+```
+"Create a research notebook about AI agents"
+"Add this PDF to my notebook"
+"Generate an audio overview of my notebook"
+"What does my notebook say about MCP servers?"
+```
+
+### Interacting with Morgys (Coming Soon)
+
+```
+"Morgy, help me brainstorm startup ideas"
+"Morgy, remember that I prefer modern minimal designs"
+"Morgy, proactively suggest improvements to my website"
+```
 
 ## Learning System
 
@@ -216,27 +345,53 @@ The Morgus learning system enables the agent to learn from its experiences and i
 - **`user_learning_preferences`**: Stores personalized preferences
 - **`task_patterns`**: Remembers successful task decomposition patterns
 - **Answer Caching**: Semantic search for frequently accessed answers
+- **Morgy Memory**: Per-user, per-Morgy persistent memory (coming soon)
+
+## Development Roadmap
+
+See [MORGUS_ROADMAP.md](./MORGUS_ROADMAP.md) for the complete roadmap.
+
+### 🔥 Priority Tasks (Next 24 Hours)
+
+1. **NotebookLM Integration** (2-3 hours)
+   - [ ] Research NotebookLM API
+   - [ ] Create NotebookLM service wrapper
+   - [ ] Add notebook creation from chat
+   - [ ] Implement Q&A from notebooks
+   - [ ] Test end-to-end
+
+2. **Agentic Morgys Foundation** (3-4 hours)
+   - [ ] Design Morgy architecture
+   - [ ] Implement Morgy types
+   - [ ] Add Morgy memory system
+   - [ ] Create personality engine
+   - [ ] Test proactive behaviors
+
+3. **MCP Server Architecture** (2-3 hours)
+   - [ ] Research MCP protocol
+   - [ ] Set up MCP infrastructure
+   - [ ] Implement core MCP servers
+   - [ ] Test extensibility
+
+### 📊 Success Metrics
+
+- Daily Active Users (DAU)
+- Websites generated per day
+- Credit pack conversion rate
+- Morgy Market transactions
+- User retention (D1, D7, D30)
+- Monthly Recurring Revenue (MRR)
 
 ## Known Issues
 
 ### Current Blockers
 - **Fly.io Deployment**: `flyctl deploy` sometimes hangs on "Waiting for depot builder" (Fly.io infrastructure issue)
-- **Worker DNS**: Need to verify worker deployment and DNS configuration
+- **Worker Deployment**: Needs Cloudflare API token for automated deployment
 
 ### Workarounds
 - Code is committed to GitHub, can redeploy when Fly.io is responsive
-- Worker secrets are configured, only CLI operations affected
-
-## Development Status
-
-The project is under active development. Recent focus areas:
-
-- ✅ Template system with 18+ types and 5 visual styles
-- ✅ GPT-Image-1.5 integration for images
-- ✅ Cloudflare Pages deployment with correct hash calculation
-- 🚧 Sora 2 video generation (framework ready, not enabled)
-- 🚧 Credit system implementation (designed, not deployed)
-- 🚧 User confirmation for video generation
+- Worker can be deployed manually with `npx wrangler deploy`
+- DPPM service already has GPT-Image-1.5 (verified via SSH)
 
 ## Contributing
 
@@ -245,6 +400,7 @@ Contributions are welcome! Please ensure:
 - Templates are responsive and accessible
 - Security checks pass (pre-commit hooks)
 - Documentation is updated
+- Tests are included for new features
 
 ## License
 
@@ -253,3 +409,7 @@ MIT License - See LICENSE file for details
 ## Credits
 
 Inspired by the Manus autonomous agent system and built with modern web technologies.
+
+---
+
+**Built with ❤️ by the Morgus team. Let's build the future of AI agents together!** 🚀
