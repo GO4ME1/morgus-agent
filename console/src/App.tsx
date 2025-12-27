@@ -3,7 +3,7 @@ import { marked } from 'marked';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { useAuth } from './lib/auth';
-import { NotebooksPanel } from './components/NotebooksPanel';
+import { NotebooksPanelSimple as NotebooksPanel } from './components/NotebooksPanelSimple';
 import { VoiceInput, speakText, stopSpeaking } from './components/VoiceInput';
 import { MOEHeader } from './components/MOEHeader';
 import { MOELeaderboard } from './components/MOELeaderboard';
@@ -16,6 +16,7 @@ import { DeepResearchPanel } from './components/DeepResearchPanel';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { runDeepResearch } from './lib/research-orchestrator';
 import type { ResearchSession, ResearchStep } from './lib/research-orchestrator';
+import { notebooklmService } from './services/notebooklm';
 import { getMCPClient } from './lib/mcp-client';
 import type { MCPClient, MCPToolResult } from './lib/mcp-client';
 import './App.css';
@@ -1140,22 +1141,23 @@ function App() {
                       </button>
                       <button 
                         className="icon-button" 
-                        onClick={() => saveMessageToThought(message)}
-                        title="Save to thought"
+                        onClick={() => {
+                          // Get insights from NotebookLM
+                          notebooklmService.openNotebook(notebooklmService.getPrimaryNotebookId());
+                        }}
+                        title="Get insights from NotebookLM"
                       >
                         💭
                       </button>
                       <button 
                         className="icon-button" 
                         onClick={() => {
-                          // Quick add to current thought
-                          if (currentThoughtId) {
-                            saveMessageToThought(message);
-                          } else {
-                            alert('Please select a thought first!');
-                          }
+                          // Save message to NotebookLM
+                          const notebookId = notebooklmService.getPrimaryNotebookId();
+                          notebooklmService.addMessageToNotebook(notebookId, message.content);
+                          alert('✅ Message copied! Paste it into NotebookLM.');
                         }}
-                        title="Quick add to current thought"
+                        title="Save to NotebookLM"
                       >
                         ➕
                       </button>
