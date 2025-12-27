@@ -36,6 +36,9 @@ import { authMiddleware, optionalAuthMiddleware, adminMiddleware } from './auth-
 import avatarRoutes from './avatar-routes';
 import nameGeneratorRoutes from './name-generator-routes';
 import oauthRoutes from './oauth-routes';
+import marketplaceRoutes from './marketplace-routes';
+import mcpRoutes from './mcp-routes';
+import knowledgeRoutes from './knowledge-routes';
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -1531,9 +1534,14 @@ app.post('/api/morgys/:id/knowledge/scrape', async (req, res) => {
   }
 });
 
+// Register new routes
+app.use('/api/marketplace', marketplaceRoutes);
+app.use('/api/mcp', mcpRoutes);
+app.use('/api/knowledge', knowledgeRoutes);
+
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', service: 'morgus-dppm', version: '2.4.0-knowledge-base' });
+  res.json({ status: 'healthy', service: 'morgus-dppm', version: '2.5.0-creator-economy' });
 });
 
 // Start server
