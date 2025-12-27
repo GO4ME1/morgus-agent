@@ -34,6 +34,7 @@ import { KnowledgeBaseService } from './knowledge-base-service';
 import multer from 'multer';
 import { authMiddleware, optionalAuthMiddleware, adminMiddleware } from './auth-middleware';
 import avatarRoutes from './avatar-routes';
+import nameGeneratorRoutes from './name-generator-routes';
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -1220,6 +1221,7 @@ const knowledgeBaseService = new KnowledgeBaseService(
 // Avatar routes
 app.use('/api/morgys', avatarRoutes);
 app.use('/api/avatar', avatarRoutes);
+app.use('/api/morgys', nameGeneratorRoutes);
 
 // Get starter Morgys (public)
 app.get('/api/morgys/starters', async (req, res) => {
