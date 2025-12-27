@@ -760,16 +760,37 @@ export default {
                     .replace(/[^a-z0-9]+/g, '-')
                     .substring(0, 30) + '-' + Date.now().toString(36);
                   
-                  // Call GitHub Pages deployment service
-                  const deployResponse = await fetch('https://morgus-deploy.fly.dev/deploy-github', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      projectName,
-                      files: files.map((f: any) => ({ path: f.name, content: f.content })),
-                      githubToken: env.GITHUB_TOKEN
-                    })
-                  });
+                  // Call Cloudflare Pages deployment (preferred) or fall back to GitHub Pages
+                  let deployResponse: Response;
+                  let useCloudflare = true;
+                  
+                  if (env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_ACCOUNT_ID) {
+                    // Use Cloudflare Pages (faster, better performance)
+                    console.log('[DPPM] Deploying to Cloudflare Pages...');
+                    deployResponse = await fetch('https://morgus-deploy.fly.dev/deploy', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        projectName,
+                        files: files.map((f: any) => ({ path: f.name, content: f.content })),
+                        apiToken: env.CLOUDFLARE_API_TOKEN,
+                        accountId: env.CLOUDFLARE_ACCOUNT_ID
+                      })
+                    });
+                  } else {
+                    // Fallback to GitHub Pages
+                    console.log('[DPPM] Falling back to GitHub Pages...');
+                    useCloudflare = false;
+                    deployResponse = await fetch('https://morgus-deploy.fly.dev/deploy-github', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        projectName,
+                        files: files.map((f: any) => ({ path: f.name, content: f.content })),
+                        githubToken: env.GITHUB_TOKEN
+                      })
+                    });
+                  }
                   
                   if (deployResponse.ok) {
                     const deployResult = await deployResponse.json() as any;
