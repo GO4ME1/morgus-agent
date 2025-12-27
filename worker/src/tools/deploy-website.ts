@@ -108,16 +108,19 @@ export async function deployToCloudflarePages(
     const encoder = new TextEncoder();
     const data = encoder.encode(file.content);
     
-    // Calculate hash from raw content (SHA-256)
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    
     // Base64 encode content for upload
     const base64Content = btoa(String.fromCharCode(...data));
+    
+    // Calculate hash from (base64 content + path) as per Cloudflare Pages API
+    // Reference: https://hunterashaw.com/reverse-engineering-the-cloudflare-pages-deployment-api/
+    const filePath = file.path.startsWith('/') ? file.path : `/${file.path}`;
+    const hashInput = base64Content + filePath;
+    const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(hashInput));
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
     fileData.push({
-      path: file.path.startsWith('/') ? file.path : `/${file.path}`,
+      path: filePath,
       hash,
       content: base64Content,
       contentType,
