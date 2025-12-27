@@ -104,16 +104,17 @@ export async function deployToCloudflarePages(
     if (file.path.endsWith('.js')) contentType = 'application/javascript';
     if (file.path.endsWith('.json')) contentType = 'application/json';
 
-    // Base64 encode content
+    // Encode content to bytes
     const encoder = new TextEncoder();
     const data = encoder.encode(file.content);
-    const base64Content = btoa(String.fromCharCode(...data));
-
-    // Calculate hash (using SHA-256 since we don't have blake3)
-    const hashData = encoder.encode(base64Content + file.path);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', hashData);
+    
+    // Calculate hash from raw content (SHA-256)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    // Base64 encode content for upload
+    const base64Content = btoa(String.fromCharCode(...data));
 
     fileData.push({
       path: file.path.startsWith('/') ? file.path : `/${file.path}`,
