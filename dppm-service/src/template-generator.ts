@@ -16,15 +16,31 @@ import {
   OutputType
 } from './templates';
 import { detectVisualStyle } from './templates/website-styles';
+import { CreditService } from './credit-service';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 // Store OpenAI API key for image generation
 let openaiApiKey: string = '';
+
+// Store credit service instance
+let creditService: CreditService | null = null;
+
+// Store current user ID for credit tracking
+let currentUserId: string | null = null;
 
 /**
  * Set the OpenAI API key for image generation
  */
 export function setOpenAIKey(key: string) {
   openaiApiKey = key;
+}
+
+/**
+ * Set the credit service for tracking usage
+ */
+export function setCreditService(service: CreditService, userId: string) {
+  creditService = service;
+  currentUserId = userId;
 }
 
 /**
@@ -37,6 +53,15 @@ async function generateImageWithGPT(prompt: string, size: '1024x1024' | '1792x10
   }
   
   try {
+    // Check credits before generating
+    if (creditService && currentUserId) {
+      const check = await creditService.checkCredits(currentUserId, 'image', 1);
+      if (!check.hasCredits) {
+        console.log(`[Image] Insufficient credits: ${check.available}/${check.required}`);
+        return '';
+      }
+    }
+    
     console.log(`[Image] Generating with GPT-Image-1.5: ${prompt.substring(0, 50)}...`);
     
     const response = await fetch('https://api.openai.com/v1/images/generations', {
@@ -65,6 +90,23 @@ async function generateImageWithGPT(prompt: string, size: '1024x1024' | '1792x10
     
     if (imageUrl) {
       console.log('[Image] GPT-Image-1.5 generated successfully');
+      
+      // Deduct credit after successful generation
+      if (creditService && currentUserId) {
+        const result = await creditService.useCredits(
+          currentUserId,
+          'image',
+          1,
+          undefined,
+          `Generated image: ${prompt.substring(0, 50)}...`
+        );
+        if (result.success) {
+          console.log('[Image] Credit deducted successfully');
+        } else {
+          console.error('[Image] Failed to deduct credit:', result.error);
+        }
+      }
+      
       return imageUrl;
     }
   } catch (e) {
@@ -98,14 +140,36 @@ async function generateHeroImage(templateType: string, title: string, descriptio
 
 /**
  * Generate a video using OpenAI Sora 2
+ * Requires user confirmation and credit check
  */
-async function generateVideoWithSora(prompt: string, duration: number = 5): Promise<string> {
+async function generateVideoWithSora(prompt: string, duration: number = 5, confirmationId?: string): Promise<string> {
   if (!openaiApiKey) {
     console.log('[Video] No OpenAI API key, skipping video generation');
     return '';
   }
   
   try {
+    // Check credits before generating
+    if (creditService && currentUserId) {
+      const check = await creditService.checkCredits(currentUserId, 'video', 1);
+      if (!check.hasCredits) {
+        console.log(`[Video] Insufficient credits: ${check.available}/${check.required}`);
+        return '';
+      }
+      
+      // Verify confirmation if provided
+      if (confirmationId) {
+        const confirmation = await creditService.getConfirmation(confirmationId);
+        if (!confirmation || confirmation.status !== 'approved') {
+          console.log('[Video] No valid confirmation, skipping video generation');
+          return '';
+        }
+      } else {
+        console.log('[Video] No confirmation provided, skipping video generation');
+        return '';
+      }
+    }
+    
     console.log(`[Video] Generating with Sora 2: ${prompt.substring(0, 50)}...`);
     
     const response = await fetch('https://api.openai.com/v1/videos/generations', {
@@ -134,6 +198,23 @@ async function generateVideoWithSora(prompt: string, duration: number = 5): Prom
     
     if (videoUrl) {
       console.log('[Video] Sora 2 generated successfully');
+      
+      // Deduct credit after successful generation
+      if (creditService && currentUserId) {
+        const result = await creditService.useCredits(
+          currentUserId,
+          'video',
+          1,
+          undefined,
+          `Generated video: ${prompt.substring(0, 50)}...`
+        );
+        if (result.success) {
+          console.log('[Video] Credit deducted successfully');
+        } else {
+          console.error('[Video] Failed to deduct credit:', result.error);
+        }
+      }
+      
       return videoUrl;
     }
   } catch (e) {
