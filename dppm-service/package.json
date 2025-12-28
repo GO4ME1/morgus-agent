@@ -21,6 +21,7 @@
     "googleapis": "^169.0.0",
     "mammoth": "^1.11.0",
     "multer": "^2.0.2",
+    "openai": "^6.15.0",
     "pdf-parse": "^2.4.5",
     "stripe": "^20.1.0"
   },
