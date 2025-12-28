@@ -54,12 +54,28 @@ import supportRoutes from './support-routes';
 import morgyCrudRoutes from './morgy-crud-routes';
 import morgyMarketplaceRoutes from './morgy-marketplace-routes';
 import morgyRevenueRoutes from './morgy-revenue-routes';
+import mcpExportRoutes from './mcp-export-routes';
+import apiKeyRoutes from './api-key-routes';
+import knowledgeBaseRoutes from './knowledge-base-routes';
+import { securityHeaders, corsMiddleware, sanitizeInput, requestId, requestLogger, errorHandler, notFoundHandler, healthCheck } from './middleware/security';
+import { rateLimitMiddleware, strictRateLimitMiddleware } from './middleware/rate-limiting';
+import { usageTrackingMiddleware, quotaCheckMiddleware } from './middleware/usage-tracking';
+import { optionalAuth, requireAuth } from './middleware/auth';
 
 const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
-app.use(cors());
+
+// Security middleware (must be first)
+app.use(requestId);
+app.use(requestLogger);
+app.use(securityHeaders);
+app.use(corsMiddleware);
 app.use(express.json({ limit: '10mb' }));
+app.use(sanitizeInput);
+
+// Rate limiting (global)
+app.use(rateLimitMiddleware);
 
 const PORT = process.env.PORT || 8080;
 
@@ -1549,24 +1565,36 @@ app.post('/api/morgys/:id/knowledge/scrape', async (req, res) => {
   }
 });
 
-// Register new routes
-app.use('/api/marketplace', marketplaceRoutes);
-app.use('/api/mcp', mcpRoutes);
-app.use('/api/knowledge', knowledgeRoutes);
-app.use('/api/billing', billingRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/support', supportRoutes);
+// Register new routes with middleware
 
-// New Morgy Creator routes
-app.use('/api/morgys', morgyCrudRoutes);
-app.use('/api/marketplace', morgyMarketplaceRoutes);
-app.use('/api/creators', morgyRevenueRoutes);
-app.use('/api/morgys', morgyRevenueRoutes); // For morgy-specific analytics
+// Public routes (no auth required)
+app.get('/health', healthCheck);
+app.use('/api/marketplace', optionalAuth, marketplaceRoutes);
+app.get('/api/mcp-exports/:shareId', mcpExportRoutes); // Public MCP downloads
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', service: 'morgus-dppm', version: '2.5.0-creator-economy' });
-});
+// Protected routes (auth required)
+app.use('/api/mcp', requireAuth, usageTrackingMiddleware, quotaCheckMiddleware, mcpRoutes);
+app.use('/api/knowledge', requireAuth, usageTrackingMiddleware, quotaCheckMiddleware, knowledgeRoutes);
+app.use('/api/knowledge-base', requireAuth, usageTrackingMiddleware, quotaCheckMiddleware, knowledgeBaseRoutes);
+app.use('/api/billing', requireAuth, billingRoutes);
+app.use('/api/analytics', requireAuth, analyticsRoutes);
+app.use('/api/support', requireAuth, supportRoutes);
+
+// API key management (strict rate limiting)
+app.use('/api/api-keys', requireAuth, strictRateLimitMiddleware, apiKeyRoutes);
+
+// MCP export routes
+app.use('/api/morgys/:morgyId/mcp-export', requireAuth, usageTrackingMiddleware, mcpExportRoutes);
+app.use('/api/mcp-exports', requireAuth, mcpExportRoutes);
+
+// Morgy Creator routes
+app.use('/api/morgys', optionalAuth, usageTrackingMiddleware, morgyCrudRoutes);
+app.use('/api/marketplace', optionalAuth, morgyMarketplaceRoutes);
+app.use('/api/creators', requireAuth, morgyRevenueRoutes);
+
+// Error handlers (must be last)
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {

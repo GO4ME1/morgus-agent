@@ -256,7 +256,8 @@ router.post('/morgys/:morgyId/purchase', requireAuth, async (req: Request, res: 
     
     // Calculate revenue split
     const price = parseFloat(morgy.price);
-    const { platformFee, creatorRevenue } = calculateRevenue(price);  try {
+    const { platformFee, creatorRevenue } = calculateRevenue(price);
+    
     if (!stripe) {
       return res.status(500).json({ 
         success: false, 
@@ -265,7 +266,8 @@ router.post('/morgys/:morgyId/purchase', requireAuth, async (req: Request, res: 
     }
 
     // Create Stripe payment intent
-    const paymentIntent = await stripe.paymentIntents.create({     amount: Math.round(price * 100), // Convert to cents
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(price * 100), // Convert to cents
       currency: 'usd',
       payment_method: paymentMethodId,
       confirm: true,
