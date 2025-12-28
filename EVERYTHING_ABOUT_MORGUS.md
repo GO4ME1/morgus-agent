@@ -9,14 +9,52 @@
 
 ## 🎯 What is Morgus?
 
-**Morgus** is an autonomous AI agent platform that enables users to create, customize, and deploy AI agents (called "Morgys") for various tasks. Think of it as "Zapier meets Claude meets GitHub Copilot" - but more powerful.
+**Morgus** is an **autonomous AI agent platform** that can execute complex, multi-step tasks without human intervention. Think of it as "Claude/ChatGPT that can actually DO things" - not just chat, but execute.
 
 ### Core Value Proposition
 
-1. **Create Custom AI Agents** - Users can create specialized "Morgys" with custom instructions, knowledge bases, and capabilities
-2. **Autonomous Task Execution** - Morgys can execute complex multi-step tasks autonomously using 50+ tools
-3. **Marketplace** - Buy and sell custom Morgys, templates, and workflows
-4. **Enterprise-Ready** - Team collaboration, billing, security (SOC2 in progress)
+**PRIMARY VALUE: Autonomous Agent Execution**
+
+Morgus is fundamentally an **autonomous agent** that:
+- Takes a high-level goal ("Build me a todo app and deploy it")
+- Plans the steps autonomously (using DPPM planning)
+- Executes using 50+ tools (code, browser, files, media, etc.)
+- Recovers from errors intelligently
+- Delivers the completed result
+
+**No hand-holding. No back-and-forth. Just results.**
+
+**DIFFERENTIATORS: Extensibility & Marketplace**
+
+What makes Morgus unique:
+
+1. **Morgy System** - Create custom AI agents with specialized knowledge and capabilities
+   - Custom instructions and personality
+   - Private knowledge bases (RAG)
+   - Specific tool access
+   - Shareable and reusable
+
+2. **MCP Integration** - Export Morgys as Claude Desktop MCP servers
+   - Use your custom Morgys in Claude Desktop
+   - Share with team or community
+   - Version control and updates
+
+3. **Marketplace** - Monetize and discover
+   - Buy/sell custom Morgys
+   - Templates and workflows
+   - Revenue sharing (70/30)
+   - Creator economy
+
+4. **Enterprise-Ready** - Scale to teams
+   - Team collaboration
+   - Billing and subscriptions
+   - Security (SOC2 in progress)
+   - API access
+
+**In short:**
+- **Core:** Autonomous agent that gets shit done
+- **Extension:** Customize with Morgys and knowledge
+- **Scale:** Marketplace and enterprise features
 
 ---
 
