@@ -1,5 +1,5 @@
 import React from 'react';
-import { MorgyCreatorWizard } from '../components/MorgyCreatorWizard';
+import { EnhancedMorgyCreator } from '../components/EnhancedMorgyCreator';
 import { CreatorNav } from '../components/CreatorNav';
 import { MorgyStatsDashboard } from '../components/MorgyStatsDashboard';
 import { QuickActionsPanel } from '../components/QuickActionsPanel';
@@ -8,9 +8,14 @@ import { useNavigate } from 'react-router-dom';
 export const CreateMorgyPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const handleComplete = (morgyId: string) => {
+  const handleComplete = (morgyData: any) => {
     // Navigate to the new Morgy's chat page or show success
-    alert(`✅ Morgy created successfully! ID: ${morgyId}`);
+    console.log('Morgy created:', morgyData);
+    alert(`✅ Morgy "${morgyData.name}" created successfully!`);
+    navigate('/');
+  };
+
+  const handleCancel = () => {
     navigate('/');
   };
 
@@ -60,7 +65,7 @@ export const CreateMorgyPage: React.FC = () => {
           }}>
             Build your custom AI agent in 5 easy steps. Add knowledge, customize personality, and choose how to use it!
           </p>
-          <MorgyCreatorWizard onComplete={handleComplete} />
+          <EnhancedMorgyCreator onComplete={handleComplete} onCancel={handleCancel} />
         </div>
       </div>
     </div>
