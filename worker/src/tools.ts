@@ -756,6 +756,9 @@ export class ToolRegistry {
     
     // MCP tools - for connecting to external MCP servers
     this.registerMCPTools();
+    
+    // Account automation tools - for signing up and posting
+    this.registerAccountAutomationTools();
   }
 
   register(tool: Tool) {
@@ -821,6 +824,15 @@ export class ToolRegistry {
     }
   }
 
+  /**
+   * Register account automation tools
+   */
+  private registerAccountAutomationTools() {
+    const { signupAccountTool, postContentTool } = require('./tools/account-signup-tool');
+    this.register(signupAccountTool);
+    this.register(postContentTool);
+  }
+  
   /**
    * Register MCP-related tools
    */
