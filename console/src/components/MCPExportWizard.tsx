@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Download, Copy, Check, Terminal, FileCode, Share2, Info } from 'lucide-react';
+import { exportToMCP } from '../lib/api-client';
 
 interface MCPExportWizardProps {
   morgyId: string;
@@ -41,16 +42,12 @@ export const MCPExportWizard: React.FC<MCPExportWizardProps> = ({
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const response = await fetch('/api/mcp/export', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          morgyId,
-          options,
-        }),
+      const data = await exportToMCP(morgyId, {
+        includeKnowledge: options.includeKnowledge,
+        includeTemplates: options.includeTemplates,
+        shareWithTeam: options.shareWithTeam,
       });
-
-      const data = await response.json();
+      
       setExportPackage(data);
       setCurrentStep(2);
     } catch (error) {
