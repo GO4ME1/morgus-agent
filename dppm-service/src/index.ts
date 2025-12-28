@@ -50,6 +50,7 @@ import mcpRoutes from './mcp-routes';
 import knowledgeRoutes from './knowledge-routes';
 import billingRoutes from './billing-routes';
 import analyticsRoutes from './analytics-routes';
+import supportRoutes from './support-routes';
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -1551,6 +1552,7 @@ app.use('/api/mcp', mcpRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/support', supportRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
