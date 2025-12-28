@@ -57,6 +57,7 @@ import morgyRevenueRoutes from './morgy-revenue-routes';
 import mcpExportRoutes from './mcp-export-routes';
 import apiKeyRoutes from './api-key-routes';
 import knowledgeBaseRoutes from './knowledge-base-routes';
+import memoryRoutes from './routes/memory-routes';
 import { securityHeaders, corsMiddleware, sanitizeInput, requestId, requestLogger, errorHandler, notFoundHandler, healthCheck } from './middleware/security';
 import { rateLimitMiddleware, strictRateLimitMiddleware } from './middleware/rate-limiting';
 import { usageTrackingMiddleware, quotaCheckMiddleware } from './middleware/usage-tracking';
@@ -1576,6 +1577,7 @@ app.get('/api/mcp-exports/:shareId', mcpExportRoutes); // Public MCP downloads
 app.use('/api/mcp', requireAuth, usageTrackingMiddleware, quotaCheckMiddleware, mcpRoutes);
 app.use('/api/knowledge', requireAuth, usageTrackingMiddleware, quotaCheckMiddleware, knowledgeRoutes);
 app.use('/api/knowledge-base', requireAuth, usageTrackingMiddleware, quotaCheckMiddleware, knowledgeBaseRoutes);
+app.use('/api/memory', requireAuth, usageTrackingMiddleware, memoryRoutes);
 app.use('/api/billing', requireAuth, billingRoutes);
 app.use('/api/analytics', requireAuth, analyticsRoutes);
 app.use('/api/support', requireAuth, supportRoutes);
