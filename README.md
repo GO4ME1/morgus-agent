@@ -1,4 +1,4 @@
-# Morgus - AI Agent Platform
+# Morgus - Autonomous Agent Platform
 
 🚀 **Production Status**: LIVE AND OPERATIONAL
 
@@ -22,31 +22,36 @@
 ### Marketplace
 - Browse and purchase custom Morgys
 - List your own Morgys for sale
+- **Approval workflow** for new listings
 - Revenue sharing for creators
 - Ratings and reviews
 
 ### Billing & Subscriptions
 - 4 pricing tiers: Free, Pro, Business, Enterprise
 - Stripe integration for payments
-- Usage tracking and limits
+- **Usage tracking and cost calculation** in credits
+- **Monthly quota management**
 - Subscription management
 
-### Analytics
-- Platform-wide metrics (admin)
-- User usage statistics
-- Performance monitoring
-- Revenue tracking
+### Knowledge Base
+- **File uploads** (PDF, TXT, MD, DOCX) for knowledge sources
+- **URL scraping** and text input
+- **Automatic chunking** for RAG
+- Secure and scalable knowledge management
 
-### Support
-- Integrated ticketing system
-- Priority levels and categories
-- Admin management tools
-- Audit logging
+### API & Integrations
+- **API Key Management**: Securely generate, manage, and revoke API keys
+- **Scoped Permissions**: Control API key access to specific resources
+- **MCP Export**: Export Morgys as Claude Desktop MCP servers
+- **Usage Tracking**: Monitor API usage and costs
 
-### MCP Export
-- Export Morgys as Claude Desktop MCP servers
-- Integration with Claude Desktop
-- Tool definitions and schemas
+### Security & Stability
+- **Authentication**: JWT and API key authentication with Supabase
+- **Rate Limiting**: Tier-based rate limiting to prevent abuse
+- **Security Headers**: CSP, XSS protection, and other security headers
+- **Input Validation**: Strict validation on all API inputs
+- **Error Handling**: Centralized error handling and logging
+- **CORS**: Secure cross-origin resource sharing configuration
 
 ## Tech Stack
 
@@ -62,6 +67,7 @@
 - Express.js
 - Supabase (PostgreSQL + pgvector)
 - Stripe payments
+- **bcrypt** for API key hashing
 - Fly.io deployment
 
 ## Project Structure
@@ -78,6 +84,7 @@ morgus-agent/
 ├── dppm-service/         # Backend API
 │   ├── src/
 │   │   ├── index.ts      # Main server
+│   │   ├── middleware/   # Auth, rate limiting, security
 │   │   ├── *-routes.ts   # API route handlers
 │   │   └── *-service.ts  # Business logic services
 │   └── Dockerfile        # Container config
@@ -112,21 +119,22 @@ npx wrangler pages deploy dist --project-name=morgus-console
 ### Backend (Fly.io)
 ```bash
 cd dppm-service
-flyctl deploy
+flyctl auth login
+flyctl deploy --ha=false
 ```
 
 ## Environment Variables
 
 ### Frontend (.env)
 ```
-VITE_SUPABASE_URL=https://dnxqgphaisdxvdyeiwnb.supabase.co
+VITE_SUPABASE_URL=https://dnxqgphaisdxvdyeiwnh.supabase.co
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 VITE_API_URL=https://morgus-deploy.fly.dev
 ```
 
 ### Backend (fly.toml)
 ```
-SUPABASE_URL=https://dnxqgphaisdxvdyeiwnb.supabase.co
+SUPABASE_URL=https://dnxqgphaisdxvdyeiwnh.supabase.co
 SUPABASE_SERVICE_KEY=your_service_key
 STRIPE_SECRET_KEY=your_stripe_key
 STRIPE_WEBHOOK_SECRET=your_webhook_secret
@@ -134,28 +142,34 @@ STRIPE_WEBHOOK_SECRET=your_webhook_secret
 
 ## API Endpoints
 
-### Billing
-- `GET /api/billing/pricing` - Get pricing tiers
-- `GET /api/billing/info` - Get subscription info
-- `POST /api/billing/checkout` - Create checkout session
-- `POST /api/billing/portal` - Customer portal
+### Knowledge Base
+- `POST /api/knowledge-base/:morgyId/sources` - Add knowledge source (file, URL, text)
+- `GET /api/knowledge-base/:morgyId/sources` - List knowledge sources
+- `GET /api/knowledge-base/sources/:sourceId` - Get a specific source
+- `PUT /api/knowledge-base/sources/:sourceId` - Update a source
+- `DELETE /api/knowledge-base/sources/:sourceId` - Delete a source
+
+### MCP Export
+- `POST /api/morgys/:morgyId/mcp-export` - Create MCP export
+- `GET /api/mcp-exports/:shareId` - Download MCP configuration
+- `GET /api/morgys/:morgyId/mcp-exports` - List exports for a Morgy
+- `DELETE /api/mcp-exports/:exportId` - Delete an export
+
+### API Keys
+- `POST /api/api-keys` - Generate new API key
+- `GET /api/api-keys` - List user's API keys
+- `GET /api/api-keys/:keyId` - Get specific key details
+- `PUT /api/api-keys/:keyId` - Update API key
+- `DELETE /api/api-keys/:keyId` - Revoke API key
 
 ### Marketplace
-- `GET /api/marketplace/browse` - Browse Morgys
-- `POST /api/marketplace/create` - List Morgy
-- `POST /api/marketplace/purchase` - Purchase Morgy
-
-### Analytics
-- `GET /api/analytics/platform` - Platform metrics
-- `GET /api/analytics/user/:userId` - User analytics
-
-### Support
-- `GET /api/support/tickets` - List tickets
-- `POST /api/support/tickets` - Create ticket
-- `PATCH /api/support/tickets/:id` - Update ticket
-
-### MCP
-- `GET /api/mcp/export/:morgyId` - Export as MCP server
+- `POST /api/marketplace/listings` - Create a new listing (pending approval)
+- `GET /api/marketplace/listings` - Browse listings with filters
+- `GET /api/marketplace/listings/:id` - Get a single listing
+- `PUT /api/marketplace/listings/:id` - Update a listing
+- `DELETE /api/marketplace/listings/:id` - Delete a listing
+- `POST /api/marketplace/listings/:id/approve` - Approve a listing (admin)
+- `POST /api/marketplace/listings/:id/reject` - Reject a listing (admin)
 
 ## Contributing
 
@@ -167,6 +181,6 @@ Proprietary - All rights reserved
 
 ---
 
-**Version**: 2.5.0-creator-economy  
-**Last Updated**: December 27, 2025  
-**Status**: 🟢 Production Ready
+**Version**: 2.6.0-backend-complete
+**Last Updated**: December 27, 2025
+**Status**: 🟢 Backend Complete, Ready for Frontend Integration

@@ -912,3 +912,308 @@ interface Transaction {
 
 *Last Updated: December 27, 2025*
 *API Version: 1.0*
+
+
+---
+
+## Knowledge Base
+
+Manages knowledge sources for Morgys, including file uploads, URL scraping, and text input.
+
+### Add Knowledge Source
+Add a new knowledge source to a Morgy. Supports file upload, URL, or raw text.
+
+**Endpoint:** `POST /api/knowledge-base/:morgyId/sources`
+
+**Authentication:** Required
+
+**Request Body:**
+- **multipart/form-data:** `file` (PDF, TXT, MD, DOCX)
+- **application/json:**
+```json
+{
+  "url": "https://example.com/knowledge-article",
+  "title": "Optional Title",
+  "content": "(Required if URL scraping is not yet implemented)"
+}
+```
+```json
+{
+  "text": "Raw text content to be added as a knowledge source.",
+  "title": "Optional Title"
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "success": true,
+  "knowledge": {
+    "id": "knowledge-source-id",
+    "morgy_id": "550e8400-e29b-41d4-a716-446655440000",
+    "title": "Example Knowledge Source",
+    "source_type": "file",
+    "metadata": {
+      "filename": "example.pdf",
+      "size": 123456
+    },
+    "created_at": "2025-12-27T14:00:00Z"
+  },
+  "message": "Knowledge source added successfully"
+}
+```
+
+---
+
+### List Knowledge Sources
+Get a paginated list of all knowledge sources for a specific Morgy.
+
+**Endpoint:** `GET /api/knowledge-base/:morgyId/sources`
+
+**Authentication:** Required
+
+**Query Parameters:**
+- `page` (number, default: 1)
+- `limit` (number, default: 20)
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "sources": [
+    {
+      "id": "knowledge-source-id",
+      "title": "Example Knowledge Source",
+      "source_type": "file",
+      "created_at": "2025-12-27T14:00:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 1,
+    "total_pages": 1
+  }
+}
+```
+
+---
+
+### Get Knowledge Source Details
+Get the full details of a specific knowledge source.
+
+**Endpoint:** `GET /api/knowledge-base/sources/:sourceId`
+
+**Authentication:** Required
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "source": {
+    "id": "knowledge-source-id",
+    "morgy_id": "550e8400-e29b-41d4-a716-446655440000",
+    "title": "Example Knowledge Source",
+    "content": "The full text content of the knowledge source...",
+    "source_type": "file",
+    "source_url": null,
+    "metadata": {},
+    "created_at": "2025-12-27T14:00:00Z"
+  }
+}
+```
+
+---
+
+### Update Knowledge Source
+Update the title or content of a knowledge source.
+
+**Endpoint:** `PUT /api/knowledge-base/sources/:sourceId`
+
+**Authentication:** Required (must be owner)
+
+**Request Body:**
+```json
+{
+  "title": "Updated Knowledge Source Title",
+  "content": "Updated content..."
+}
+```
+
+**Response:** `200 OK`
+
+---
+
+### Delete Knowledge Source
+Delete a knowledge source.
+
+**Endpoint:** `DELETE /api/knowledge-base/sources/:sourceId`
+
+**Authentication:** Required (must be owner)
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "message": "Knowledge source deleted successfully"
+}
+```
+
+---
+
+## MCP Export
+
+Export Morgys as Claude Desktop MCP servers.
+
+### Create MCP Export
+Create a new MCP export for a Morgy.
+
+**Endpoint:** `POST /api/morgys/:morgyId/mcp-export`
+
+**Authentication:** Required
+
+**Request Body:**
+```json
+{
+  "include_knowledge": true,
+  "include_templates": true,
+  "user_id": "user-id-here"
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "success": true,
+  "export": {
+    "id": "export-id",
+    "share_url": "https://morgus-deploy.fly.dev/api/mcp-exports/some-share-id"
+  },
+  "instructions": {
+    "message": "Add this MCP server to your Claude Desktop config",
+    "config_example": {
+      "mcpServers": {
+        "morgy-name": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-fetch", "share-url-here"]
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+### Download MCP Configuration
+Download the MCP-compliant JSON configuration for a shared Morgy.
+
+**Endpoint:** `GET /api/mcp-exports/:shareId`
+
+**Authentication:** None (public)
+
+**Response:** `200 OK` (MCP JSON)
+
+---
+
+## API Key Management
+
+Manage API keys for programmatic access to the Morgus platform.
+
+### Create API Key
+Generate a new API key with specified scopes.
+
+**Endpoint:** `POST /api/api-keys`
+
+**Authentication:** Required
+
+**Request Body:**
+```json
+{
+  "user_id": "user-id-here",
+  "name": "My New API Key",
+  "scopes": ["morgys:read", "marketplace:read"],
+  "expires_in_days": 30
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "success": true,
+  "api_key": {
+    "id": "key-id",
+    "key": "morg_..." 
+  },
+  "warning": "Save this API key now. You will not be able to see it again!"
+}
+```
+
+---
+
+### List API Keys
+Get a list of all API keys for the authenticated user.
+
+**Endpoint:** `GET /api/api-keys`
+
+**Authentication:** Required
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "api_keys": [
+    {
+      "id": "key-id",
+      "name": "My New API Key",
+      "key_prefix": "morg_...",
+      "scopes": ["morgys:read"],
+      "status": "active"
+    }
+  ]
+}
+```
+
+---
+
+## Enhanced Marketplace
+
+### Submit Listing for Approval
+Create a new marketplace listing. It will start in `pending` status.
+
+**Endpoint:** `POST /api/marketplace/listings`
+
+**Authentication:** Required
+
+**Request Body:**
+```json
+{
+  "morgy_id": "550e8400-e29b-41d4-a716-446655440000",
+  "title": "My Awesome Morgy",
+  "description": "This Morgy does amazing things.",
+  "price": 19.99,
+  "pricing_model": "one_time",
+  "category": "creative",
+  "tags": ["art", "design"]
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "success": true,
+  "listing": { ... },
+  "message": "Listing created and pending approval"
+}
+```
+
+---
+
+### Approve or Reject Listing (Admin)
+
+**Endpoint:** `POST /api/marketplace/listings/:id/approve`
+**Endpoint:** `POST /api/marketplace/listings/:id/reject`
+
+**Authentication:** Required (Admin role)
+
+**Response:** `200 OK`
