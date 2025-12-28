@@ -109,7 +109,8 @@ export class CreditService {
         hasCredits: false,
         available: 0,
         required: amount,
-        creditType
+        creditType,
+        unlimited: false
       };
     }
 

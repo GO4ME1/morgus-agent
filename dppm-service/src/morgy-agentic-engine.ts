@@ -4,7 +4,7 @@
  */
 
 import { TemplateEngine, ActionTemplate } from './template-engine';
-import { WorkflowEngine, Workflow } from './workflow-engine';
+import { WorkflowEngine, WorkflowExecution } from './workflow-engine';
 import { OAuthManager } from './oauth-manager';
 import { RedditClient } from './integrations/reddit-client';
 import { GmailClient } from './integrations/gmail-client';
@@ -67,15 +67,15 @@ export class MorgyAgenticEngine {
 
   constructor() {
     this.templateEngine = new TemplateEngine();
-    this.workflowEngine = new WorkflowEngine();
+    this.workflowEngine = new WorkflowEngine(this.templateEngine);
     this.oauthManager = new OAuthManager();
     
-    // Initialize platform clients
-    this.redditClient = new RedditClient();
-    this.gmailClient = new GmailClient();
-    this.youtubeClient = new YouTubeClient();
-    this.didClient = new DIDClient();
-    this.lumaClient = new LumaClient();
+    // Initialize platform clients (will be configured per-user)
+    this.redditClient = new RedditClient({ accessToken: '', refreshToken: '' });
+    this.gmailClient = new GmailClient({ accessToken: '', refreshToken: '' });
+    this.youtubeClient = new YouTubeClient({ apiKey: '' });
+    this.didClient = new DIDClient({ apiKey: process.env.DID_API_KEY || '' });
+    this.lumaClient = new LumaClient({ apiKey: process.env.LUMA_API_KEY || '' });
   }
 
   /**
