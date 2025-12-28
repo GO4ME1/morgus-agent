@@ -51,6 +51,9 @@ import knowledgeRoutes from './knowledge-routes';
 import billingRoutes from './billing-routes';
 import analyticsRoutes from './analytics-routes';
 import supportRoutes from './support-routes';
+import morgyCrudRoutes from './morgy-crud-routes';
+import morgyMarketplaceRoutes from './morgy-marketplace-routes';
+import morgyRevenueRoutes from './morgy-revenue-routes';
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -1553,6 +1556,12 @@ app.use('/api/knowledge', knowledgeRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/support', supportRoutes);
+
+// New Morgy Creator routes
+app.use('/api/morgys', morgyCrudRoutes);
+app.use('/api/marketplace', morgyMarketplaceRoutes);
+app.use('/api/creators', morgyRevenueRoutes);
+app.use('/api/morgys', morgyRevenueRoutes); // For morgy-specific analytics
 
 // Health check
 app.get('/health', (req, res) => {
