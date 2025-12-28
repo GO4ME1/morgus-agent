@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { useState, useEffect } from 'react';
+import { getKnowledge, uploadKnowledge, addTextKnowledge, scrapeWebsite, deleteKnowledge } from '../lib/api-client';
 
 interface MorgyKnowledge {
   id: string;
@@ -39,19 +39,8 @@ export const MorgyKnowledgeBase: React.FC<MorgyKnowledgeBaseProps> = ({ morgyId,
   const loadKnowledge = async () => {
     setLoading(true);
     try {
-      const user = (await supabase.auth.getUser()).data.user;
-      if (!user) throw new Error('Not authenticated');
-
-      const response = await fetch(`/api/morgys/${morgyId}/knowledge`, {
-        headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to load knowledge');
-      
-      const data = await response.json();
-      setKnowledge(data);
+      const data = await getKnowledge(morgyId);
+      setKnowledge(data || []);
     } catch (error) {
       console.error('Failed to load knowledge:', error);
     } finally {
@@ -65,23 +54,7 @@ export const MorgyKnowledgeBase: React.FC<MorgyKnowledgeBaseProps> = ({ morgyId,
 
     setUploading(true);
     try {
-      const user = (await supabase.auth.getUser()).data.user;
-      if (!user) throw new Error('Not authenticated');
-
-      const response = await fetch(`/api/morgys/${morgyId}/knowledge`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
-        body: JSON.stringify({
-          content: textContent,
-          source: textSource || 'Manual Entry',
-          sourceType: 'text'
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to add knowledge');
+      await addTextKnowledge(morgyId, textSource || 'Manual Entry', textContent);
       
       setTextContent('');
       setTextSource('');
@@ -101,21 +74,7 @@ export const MorgyKnowledgeBase: React.FC<MorgyKnowledgeBaseProps> = ({ morgyId,
 
     setUploading(true);
     try {
-      const user = (await supabase.auth.getUser()).data.user;
-      if (!user) throw new Error('Not authenticated');
-
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-
-      const response = await fetch(`/api/morgys/${morgyId}/knowledge/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
-        body: formData
-      });
-
-      if (!response.ok) throw new Error('Failed to upload file');
+      await uploadKnowledge(morgyId, selectedFile);
       
       setSelectedFile(null);
       await loadKnowledge();
@@ -134,19 +93,7 @@ export const MorgyKnowledgeBase: React.FC<MorgyKnowledgeBaseProps> = ({ morgyId,
 
     setUploading(true);
     try {
-      const user = (await supabase.auth.getUser()).data.user;
-      if (!user) throw new Error('Not authenticated');
-
-      const response = await fetch(`/api/morgys/${morgyId}/knowledge/scrape`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
-        body: JSON.stringify({ url: websiteUrl })
-      });
-
-      if (!response.ok) throw new Error('Failed to scrape website');
+      await scrapeWebsite(morgyId, websiteUrl);
       
       setWebsiteUrl('');
       await loadKnowledge();
@@ -163,17 +110,7 @@ export const MorgyKnowledgeBase: React.FC<MorgyKnowledgeBaseProps> = ({ morgyId,
     if (!confirm('Are you sure you want to delete this knowledge?')) return;
 
     try {
-      const user = (await supabase.auth.getUser()).data.user;
-      if (!user) throw new Error('Not authenticated');
-
-      const response = await fetch(`/api/morgys/knowledge/${knowledgeId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        }
-      });
-
-      if (!response.ok) throw new Error('Failed to delete knowledge');
+      await deleteKnowledge(knowledgeId);
       
       await loadKnowledge();
     } catch (error) {

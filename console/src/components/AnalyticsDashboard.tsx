@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { TrendingUp, Users, MessageSquare, DollarSign, Activity, BarChart3, PieChart, Calendar } from 'lucide-react';
 import { useAuth } from '../lib/auth';
+import { getUserAnalytics, getPlatformAnalytics } from '../lib/api-client';
 
 interface PlatformMetrics {
   totalUsers: number;
@@ -41,12 +42,11 @@ export const AnalyticsDashboard: React.FC = () => {
   const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics | null>(null);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
 
-  const API_URL = import.meta.env.VITE_API_URL || 'https://morgus-deploy.fly.dev';
   const isAdmin = profile?.is_admin;
 
   useEffect(() => {
     loadAnalytics();
-  }, [timeRange]);
+  }, [timeRange, user]);
 
   const loadAnalytics = async () => {
     if (!user) return;
@@ -55,36 +55,21 @@ export const AnalyticsDashboard: React.FC = () => {
       setLoading(true);
 
       // Load user analytics
-      const userRes = await fetch(`${API_URL}/api/analytics/user/${user.id}?timeRange=${timeRange}`, {
-        headers: {
-          'Authorization': `Bearer ${user.id}`,
-        },
-      });
-      if (userRes.ok) {
-        const userData = await userRes.json();
-        setUserAnalytics(userData);
+      try {
+        const userData = await getUserAnalytics(user.id);
+        setUserAnalytics(userData || null);
+      } catch (error) {
+        console.error('Failed to load user analytics:', error);
       }
 
       // Load platform metrics (admin only)
       if (isAdmin) {
-        const platformRes = await fetch(`${API_URL}/api/analytics/platform?timeRange=${timeRange}`, {
-          headers: {
-            'Authorization': `Bearer ${user.id}`,
-          },
-        });
-        if (platformRes.ok) {
-          const platformData = await platformRes.json();
-          setPlatformMetrics(platformData);
-        }
-
-        const perfRes = await fetch(`${API_URL}/api/analytics/performance?timeRange=${timeRange}`, {
-          headers: {
-            'Authorization': `Bearer ${user.id}`,
-          },
-        });
-        if (perfRes.ok) {
-          const perfData = await perfRes.json();
-          setPerformanceMetrics(perfData);
+        try {
+          const platformData = await getPlatformAnalytics();
+          setPlatformMetrics(platformData || null);
+          // Note: Performance metrics endpoint not yet implemented
+        } catch (error) {
+          console.error('Failed to load platform analytics:', error);
         }
       }
     } catch (error) {

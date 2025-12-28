@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { CreditCard, DollarSign, TrendingUp, Calendar, ExternalLink, Check } from 'lucide-react';
 import { useAuth } from '../lib/auth';
+import { getBillingInfo, getPricingTiers, createCheckoutSession, createPortalSession } from '../lib/api-client';
 
 interface PricingTier {
   id: string;
@@ -34,41 +35,45 @@ export const BillingDashboard: React.FC = () => {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [processingCheckout, setProcessingCheckout] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'https://morgus-deploy.fly.dev';
-
   useEffect(() => {
     loadBillingData();
-  }, []);
+  }, [user]);
 
   const loadBillingData = async () => {
     try {
       setLoading(true);
       
-      // Load pricing tiers
-      const pricingRes = await fetch(`${API_URL}/api/billing/pricing`);
-      const pricingData = await pricingRes.json();
-      setPricingTiers(pricingData);
+      // Load pricing tiers (public endpoint)
+      const pricingData = await getPricingTiers();
+      setPricingTiers(pricingData || []);
 
-      // Load user's usage and subscription if logged in
+      // Load user's billing info if logged in
       if (user) {
-        const usageRes = await fetch(`${API_URL}/api/billing/usage`, {
-          headers: {
-            'Authorization': `Bearer ${user.id}`,
-          },
-        });
-        if (usageRes.ok) {
-          const usageData = await usageRes.json();
-          setUsage(usageData);
-        }
-
-        const subRes = await fetch(`${API_URL}/api/billing/info`, {
-          headers: {
-            'Authorization': `Bearer ${user.id}`,
-          },
-        });
-        if (subRes.ok) {
-          const subData = await subRes.json();
-          setSubscription(subData.subscription);
+        try {
+          const billingInfo = await getBillingInfo();
+          
+          // Set subscription data
+          if (billingInfo.subscription) {
+            setSubscription({
+              id: 'sub-id',
+              tier: billingInfo.subscription.tier,
+              status: billingInfo.subscription.status as 'active' | 'canceled' | 'past_due',
+              currentPeriodEnd: billingInfo.subscription.current_period_end || '',
+              cancelAtPeriodEnd: false,
+            });
+          }
+          
+          // Set usage data
+          if (billingInfo.usage) {
+            setUsage({
+              messagesUsed: billingInfo.usage.credits_used,
+              messagesLimit: billingInfo.usage.credits_limit,
+              currentPeriodStart: new Date().toISOString(),
+              currentPeriodEnd: billingInfo.subscription?.current_period_end || new Date().toISOString(),
+            });
+          }
+        } catch (error) {
+          console.error('Failed to load user billing info:', error);
         }
       }
     } catch (error) {
@@ -78,7 +83,7 @@ export const BillingDashboard: React.FC = () => {
     }
   };
 
-  const handleCheckout = async (tierId: string) => {
+  const handleCheckout = async (priceId: string) => {
     if (!user) {
       alert('Please log in to subscribe');
       return;
@@ -86,16 +91,7 @@ export const BillingDashboard: React.FC = () => {
 
     try {
       setProcessingCheckout(true);
-      const response = await fetch(`${API_URL}/api/billing/checkout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.id}`,
-        },
-        body: JSON.stringify({ tierId }),
-      });
-
-      const data = await response.json();
+      const data = await createCheckoutSession(priceId);
       
       if (data.url) {
         window.location.href = data.url;
