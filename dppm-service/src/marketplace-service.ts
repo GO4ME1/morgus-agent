@@ -204,7 +204,9 @@ export async function browseMarketplace(filters: {
   const { data, error } = await query;
 
   if (error) {
-    throw new Error('Failed to fetch listings');
+    console.error('Error fetching marketplace listings:', error);
+    // Return empty array instead of throwing - allows graceful handling of empty marketplace
+    return [];
   }
 
   return (data || []).map(listing => ({
