@@ -929,6 +929,39 @@ function App() {
           
           
           <h2>Morgus AI Agent</h2>
+          
+          {/* Navigation Buttons */}
+          <div className="nav-buttons" style={{ display: 'flex', gap: '8px', marginLeft: 'auto', marginRight: '16px' }}>
+            <button 
+              onClick={() => navigate('/marketplace')}
+              title="Marketplace"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px' }}
+            >
+              🏪
+            </button>
+            <button 
+              onClick={() => navigate('/billing')}
+              title="Billing"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px' }}
+            >
+              💳
+            </button>
+            <button 
+              onClick={() => navigate('/analytics')}
+              title="Analytics"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px' }}
+            >
+              📊
+            </button>
+            <button 
+              onClick={() => navigate('/support')}
+              title="Support"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px' }}
+            >
+              🎧
+            </button>
+          </div>
+          
           <MOELeaderboard />
           <button 
             className="settings-toggle"

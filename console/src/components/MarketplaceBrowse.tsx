@@ -73,7 +73,8 @@ export const MarketplaceBrowse: React.FC = () => {
       if (filters.search) params.append('search', filters.search);
       params.append('sortBy', filters.sortBy);
 
-      const response = await fetch(`/api/marketplace/browse?${params}`);
+      const API_URL = import.meta.env.VITE_API_URL || 'https://morgus-deploy.fly.dev';
+      const response = await fetch(`${API_URL}/api/marketplace/browse?${params}`);
       const data = await response.json();
       setListings(data);
     } catch (error) {
@@ -85,7 +86,8 @@ export const MarketplaceBrowse: React.FC = () => {
 
   const handlePurchase = async (listingId: string) => {
     try {
-      const response = await fetch('/api/marketplace/purchase', {
+      const API_URL = import.meta.env.VITE_API_URL || 'https://morgus-deploy.fly.dev';
+      const response = await fetch(`${API_URL}/api/marketplace/purchase`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ listingId }),

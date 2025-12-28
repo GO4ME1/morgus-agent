@@ -14,6 +14,9 @@ import { Landing } from './pages/Landing';
 import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
 import { CreateMorgyPage } from './pages/CreateMorgyPage';
 import { MarketplacePage } from './pages/MarketplacePage';
+import { BillingPage } from './pages/BillingPage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
+import { SupportPage } from './pages/SupportPage';
 import App from './App';
 import './LoadingScreen.css';
 import { useEffect, useState } from 'react';
@@ -165,6 +168,24 @@ export function AppRoutes() {
       <Route path="/marketplace" element={
         <ProtectedRoute>
           <MarketplacePage />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/billing" element={
+        <ProtectedRoute>
+          <BillingPage />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/analytics" element={
+        <ProtectedRoute>
+          <AnalyticsPage />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/support" element={
+        <ProtectedRoute>
+          <SupportPage />
         </ProtectedRoute>
       } />
       
