@@ -48,6 +48,7 @@ import oauthRoutes from './oauth-routes';
 import marketplaceRoutes from './marketplace-routes';
 import mcpRoutes from './mcp-routes';
 import knowledgeRoutes from './knowledge-routes';
+import billingRoutes from './billing-routes';
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -1547,6 +1548,7 @@ app.post('/api/morgys/:id/knowledge/scrape', async (req, res) => {
 app.use('/api/marketplace', marketplaceRoutes);
 app.use('/api/mcp', mcpRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
+app.use('/api/billing', billingRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
