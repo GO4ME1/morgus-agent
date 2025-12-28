@@ -4,18 +4,24 @@
 
 import { supabase } from './supabase';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://morgus-deploy.fly.dev';
 
 /**
- * Get auth headers with user ID
+ * Get auth headers with JWT token
  */
 async function getAuthHeaders(): Promise<HeadersInit> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
   
-  return {
+  const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    'x-user-id': user?.id || '',
   };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  return headers;
 }
 
 // ============================================
@@ -35,14 +41,14 @@ export interface KnowledgeItem {
 export async function uploadKnowledge(morgyId: string, file: File): Promise<KnowledgeItem> {
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('morgyId', morgyId);
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
 
-  const response = await fetch(`${API_BASE}/api/knowledge/upload`, {
+  const response = await fetch(`${API_BASE}/api/knowledge-base/${morgyId}/sources`, {
     method: 'POST',
     headers: {
-      'x-user-id': user?.id || '',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
     },
     body: formData,
   });
@@ -51,45 +57,48 @@ export async function uploadKnowledge(morgyId: string, file: File): Promise<Know
     throw new Error('Failed to upload knowledge');
   }
 
-  return response.json();
+  const result = await response.json();
+  return result.knowledge || result;
 }
 
 export async function scrapeWebsite(morgyId: string, url: string): Promise<KnowledgeItem> {
   const headers = await getAuthHeaders();
 
-  const response = await fetch(`${API_BASE}/api/knowledge/scrape`, {
+  const response = await fetch(`${API_BASE}/api/knowledge-base/${morgyId}/sources`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ morgyId, url }),
+    body: JSON.stringify({ url }),
   });
 
   if (!response.ok) {
     throw new Error('Failed to scrape website');
   }
 
-  return response.json();
+  const result = await response.json();
+  return result.knowledge || result;
 }
 
 export async function addTextKnowledge(morgyId: string, title: string, content: string): Promise<KnowledgeItem> {
   const headers = await getAuthHeaders();
 
-  const response = await fetch(`${API_BASE}/api/knowledge/text`, {
+  const response = await fetch(`${API_BASE}/api/knowledge-base/${morgyId}/sources`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ morgyId, title, content }),
+    body: JSON.stringify({ text: content, title }),
   });
 
   if (!response.ok) {
     throw new Error('Failed to add text knowledge');
   }
 
-  return response.json();
+  const result = await response.json();
+  return result.knowledge || result;
 }
 
 export async function getKnowledge(morgyId: string): Promise<KnowledgeItem[]> {
   const headers = await getAuthHeaders();
 
-  const response = await fetch(`${API_BASE}/api/knowledge/${morgyId}`, {
+  const response = await fetch(`${API_BASE}/api/knowledge-base/${morgyId}/sources`, {
     headers,
   });
 
@@ -97,13 +106,14 @@ export async function getKnowledge(morgyId: string): Promise<KnowledgeItem[]> {
     throw new Error('Failed to get knowledge');
   }
 
-  return response.json();
+  const result = await response.json();
+  return result.sources || result;
 }
 
 export async function deleteKnowledge(knowledgeId: string): Promise<void> {
   const headers = await getAuthHeaders();
 
-  const response = await fetch(`${API_BASE}/api/knowledge/${knowledgeId}`, {
+  const response = await fetch(`${API_BASE}/api/knowledge-base/sources/${knowledgeId}`, {
     method: 'DELETE',
     headers,
   });
@@ -366,6 +376,201 @@ export async function getMyMorgys(): Promise<any[]> {
 
   if (!response.ok) {
     throw new Error('Failed to get Morgys');
+  }
+
+  return response.json();
+}
+
+
+// ============================================
+// API KEY MANAGEMENT
+// ============================================
+
+export interface ApiKey {
+  id: string;
+  user_id: string;
+  name: string;
+  key_prefix: string;
+  scopes: string[];
+  is_active: boolean;
+  last_used_at?: string;
+  expires_at?: string;
+  created_at: string;
+  status: 'active' | 'revoked' | 'expired';
+}
+
+export async function createApiKey(data: {
+  user_id: string;
+  name: string;
+  scopes?: string[];
+  expires_in_days?: number;
+}): Promise<{ api_key: ApiKey & { key: string }; warning: string }> {
+  const headers = await getAuthHeaders();
+
+  const response = await fetch(`${API_BASE}/api/api-keys`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to create API key');
+  }
+
+  return response.json();
+}
+
+export async function listApiKeys(userId: string): Promise<ApiKey[]> {
+  const headers = await getAuthHeaders();
+
+  const response = await fetch(`${API_BASE}/api/api-keys?user_id=${userId}`, {
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to list API keys');
+  }
+
+  const result = await response.json();
+  return result.api_keys || [];
+}
+
+export async function updateApiKey(keyId: string, updates: {
+  user_id: string;
+  name?: string;
+  scopes?: string[];
+  is_active?: boolean;
+}): Promise<ApiKey> {
+  const headers = await getAuthHeaders();
+
+  const response = await fetch(`${API_BASE}/api/api-keys/${keyId}`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(updates),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to update API key');
+  }
+
+  const result = await response.json();
+  return result.api_key;
+}
+
+export async function revokeApiKey(keyId: string, userId: string): Promise<void> {
+  const headers = await getAuthHeaders();
+
+  const response = await fetch(`${API_BASE}/api/api-keys/${keyId}`, {
+    method: 'DELETE',
+    headers,
+    body: JSON.stringify({ user_id: userId }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to revoke API key');
+  }
+}
+
+// ============================================
+// BILLING API
+// ============================================
+
+export interface BillingInfo {
+  subscription: {
+    tier: string;
+    status: string;
+    current_period_end?: string;
+  };
+  usage: {
+    credits_used: number;
+    credits_limit: number;
+    percentage: number;
+  };
+}
+
+export async function getBillingInfo(): Promise<BillingInfo> {
+  const headers = await getAuthHeaders();
+
+  const response = await fetch(`${API_BASE}/api/billing/info`, {
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to get billing info');
+  }
+
+  return response.json();
+}
+
+export async function getPricingTiers(): Promise<any[]> {
+  const response = await fetch(`${API_BASE}/api/billing/pricing`);
+
+  if (!response.ok) {
+    throw new Error('Failed to get pricing tiers');
+  }
+
+  return response.json();
+}
+
+export async function createCheckoutSession(priceId: string): Promise<{ url: string }> {
+  const headers = await getAuthHeaders();
+
+  const response = await fetch(`${API_BASE}/api/billing/checkout`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ priceId }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to create checkout session');
+  }
+
+  return response.json();
+}
+
+export async function createPortalSession(): Promise<{ url: string }> {
+  const headers = await getAuthHeaders();
+
+  const response = await fetch(`${API_BASE}/api/billing/portal`, {
+    method: 'POST',
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to create portal session');
+  }
+
+  return response.json();
+}
+
+// ============================================
+// ANALYTICS API
+// ============================================
+
+export async function getUserAnalytics(userId: string): Promise<any> {
+  const headers = await getAuthHeaders();
+
+  const response = await fetch(`${API_BASE}/api/analytics/user/${userId}`, {
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to get user analytics');
+  }
+
+  return response.json();
+}
+
+export async function getPlatformAnalytics(): Promise<any> {
+  const headers = await getAuthHeaders();
+
+  const response = await fetch(`${API_BASE}/api/analytics/platform`, {
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to get platform analytics');
   }
 
   return response.json();

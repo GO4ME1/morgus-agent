@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Filter, Star, ShoppingCart, CheckCircle, DollarSign, Users } from 'lucide-react';
+import { browseMarketplace } from '../lib/api-client';
+import { useAuth } from '../lib/auth';
 
 interface MarketplaceListing {
   id: string;
@@ -67,18 +69,17 @@ export const MarketplaceBrowse: React.FC = () => {
   const loadListings = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (filters.category !== 'all') params.append('category', filters.category);
-      if (filters.pricingModel !== 'all') params.append('pricingModel', filters.pricingModel);
-      if (filters.search) params.append('search', filters.search);
-      params.append('sortBy', filters.sortBy);
+      const filterParams: any = {};
+      if (filters.category !== 'all') filterParams.category = filters.category;
+      if (filters.pricingModel !== 'all') filterParams.licenseType = filters.pricingModel;
+      if (filters.search) filterParams.search = filters.search;
+      filterParams.sortBy = filters.sortBy;
 
-      const API_URL = import.meta.env.VITE_API_URL || 'https://morgus-deploy.fly.dev';
-      const response = await fetch(`${API_URL}/api/marketplace/browse?${params}`);
-      const data = await response.json();
-      setListings(data);
+      const data = await browseMarketplace(filterParams);
+      setListings(data || []);
     } catch (error) {
       console.error('Failed to load listings:', error);
+      setListings([]);
     } finally {
       setLoading(false);
     }
