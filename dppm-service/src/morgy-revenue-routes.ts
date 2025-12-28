@@ -10,10 +10,12 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY || ''
 );
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-12-15.clover'
-});
+// Initialize Stripe (only if key is provided)
+const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2025-12-15.clover'
+    })
+  : null;
 
 // Middleware to verify authentication
 const requireAuth = (req: Request, res: Response, next: Function) => {

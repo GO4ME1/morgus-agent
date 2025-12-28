@@ -10,10 +10,12 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY || ''
 );
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-12-15.clover'
-});
+// Initialize Stripe (only if key is provided)
+const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2025-12-15.clover'
+    })
+  : null;
 
 // Middleware to verify authentication (optional for browse, required for purchase)
 const optionalAuth = (req: Request, res: Response, next: Function) => {
@@ -254,11 +256,16 @@ router.post('/morgys/:morgyId/purchase', requireAuth, async (req: Request, res: 
     
     // Calculate revenue split
     const price = parseFloat(morgy.price);
-    const { platformFee, creatorRevenue } = calculateRevenue(price);
-    
+    const { platformFee, creatorRevenue } = calculateRevenue(price);  try {
+    if (!stripe) {
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Payment processing not configured' 
+      });
+    }
+
     // Create Stripe payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(price * 100), // Convert to cents
+    const paymentIntent = await stripe.paymentIntents.create({     amount: Math.round(price * 100), // Convert to cents
       currency: 'usd',
       payment_method: paymentMethodId,
       confirm: true,
@@ -427,11 +434,16 @@ router.post('/morgys/:morgyId/subscribe', requireAuth, async (req: Request, res:
     const { platformFee, creatorRevenue } = calculateRevenue(price);
     
     // TODO: Get or create Stripe customer
-    const stripeCustomerId = 'cus_placeholder'; // Replace with actual customer ID
-    
+    const stripeCustomerId = 'cus_placeholder'; // Replace with actual customer I  try {
+    if (!stripe) {
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Payment processing not configured' 
+      });
+    }
+
     // Create Stripe subscription
-    const subscription = await stripe.subscriptions.create({
-      customer: stripeCustomerId,
+    const subscription = await stripe.subscriptions.create({      customer: stripeCustomerId,
       items: [{
         price_data: {
           currency: 'usd',
@@ -488,7 +500,9 @@ router.post('/morgys/:morgyId/subscribe', requireAuth, async (req: Request, res:
     if (purchaseError) {
       console.error('Error creating subscription record:', purchaseError);
       // Cancel Stripe subscription if record creation failed
-      await stripe.subscriptions.cancel(subscription.id);
+      if (stripe) {
+        await stripe.subscriptions.cancel(subscription.id);
+      }
       return res.status(500).json({ 
         success: false, 
         error: 'Failed to create subscription' 
@@ -555,7 +569,7 @@ router.post('/morgys/:morgyId/cancel-subscription', requireAuth, async (req: Req
     }
     
     // Cancel Stripe subscription
-    if (purchase.stripe_subscription_id) {
+    if (stripe && purchase.stripe_subscription_id) {
       await stripe.subscriptions.cancel(purchase.stripe_subscription_id);
     }
     
