@@ -6,6 +6,7 @@
 
 import { Router } from 'express';
 import { billingService } from './billing-service';
+import { morgyWebhookService } from './morgy-webhook-service';
 import { usageTracker } from './usage-tracking-service';
 import { authMiddleware } from './auth-middleware';
 import Stripe from 'stripe';
@@ -113,8 +114,9 @@ router.post('/webhook', async (req, res) => {
       webhookSecret
     );
 
-    // Handle event
+    // Handle event for both billing and Morgy marketplace
     await billingService.handleWebhook(event);
+    await morgyWebhookService.handleWebhookEvent(event);
 
     res.json({ received: true });
   } catch (error) {
