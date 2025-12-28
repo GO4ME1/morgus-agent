@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { notebooklmService } from '../services/notebooklm';
+import { notebookLMService } from '../services/notebooklm';
 import './NotebooksPanel.css';
 
 interface MorgusNotebook {
@@ -153,7 +153,7 @@ export const NotebooksPanelUnified: React.FC<NotebooksPanelProps> = ({
   // NotebookLM Functions
   const loadNotebookLMNotebooks = async () => {
     try {
-      const notebooks = notebooklmService.getNotebooks();
+      const notebooks = notebookLMService.getNotebooks();
       setNotebooklmNotebooks(notebooks);
     } catch (error) {
       console.error('Failed to load NotebookLM notebooks:', error);
@@ -163,13 +163,13 @@ export const NotebooksPanelUnified: React.FC<NotebooksPanelProps> = ({
   const handleCreateNotebookLM = () => {
     const name = prompt('Enter notebook name:');
     if (name) {
-      notebooklmService.createNotebook(name);
+      notebookLMService.createNotebook(name);
       loadNotebookLMNotebooks();
     }
   };
 
   const handleOpenNotebookLM = (notebookId: string) => {
-    notebooklmService.openNotebook(notebookId);
+    notebookLMService.openNotebook(notebookId);
   };
 
   // Helper Functions

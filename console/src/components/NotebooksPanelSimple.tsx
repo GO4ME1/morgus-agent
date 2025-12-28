@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { notebooklmService } from '../services/notebooklm';
+import { notebookLMService } from '../services/notebooklm';
 import './NotebooksPanel.css';
 
 interface NotebookLMNotebook {
@@ -29,7 +29,7 @@ export const NotebooksPanelSimple: React.FC<NotebooksPanelProps> = ({
 
   const loadNotebooks = async () => {
     try {
-      const notebooks = notebooklmService.getNotebooks();
+      const notebooks = notebookLMService.getNotebooks();
       setNotebooks(notebooks);
     } catch (error) {
       console.error('Failed to load NotebookLM notebooks:', error);
@@ -41,13 +41,13 @@ export const NotebooksPanelSimple: React.FC<NotebooksPanelProps> = ({
   const handleCreateNotebook = () => {
     const name = prompt('Enter notebook name:');
     if (name) {
-      notebooklmService.createNotebook(name);
+      notebookLMService.createNotebook(name);
       loadNotebooks();
     }
   };
 
   const handleOpenNotebook = (notebookId: string) => {
-    notebooklmService.openNotebook(notebookId);
+    notebookLMService.openNotebook(notebookId);
     onNotebookSelect(notebookId);
   };
 

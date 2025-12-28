@@ -16,7 +16,7 @@ import { DeepResearchPanel } from './components/DeepResearchPanel';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { runDeepResearch } from './lib/research-orchestrator';
 import type { ResearchSession, ResearchStep } from './lib/research-orchestrator';
-import { notebooklmService } from './services/notebooklm';
+import { notebookLMService } from './services/notebooklm';
 import { getMCPClient } from './lib/mcp-client';
 import type { MCPClient, MCPToolResult } from './lib/mcp-client';
 import './App.css';
@@ -1143,7 +1143,7 @@ function App() {
                         className="icon-button" 
                         onClick={() => {
                           // Get insights from NotebookLM
-                          notebooklmService.openNotebook(notebooklmService.getPrimaryNotebookId());
+                          notebookLMService.openNotebook(notebookLMService.getPrimaryNotebookId());
                         }}
                         title="Get insights from NotebookLM"
                       >
@@ -1153,8 +1153,8 @@ function App() {
                         className="icon-button" 
                         onClick={() => {
                           // Save message to NotebookLM
-                          const notebookId = notebooklmService.getPrimaryNotebookId();
-                          notebooklmService.addMessageToNotebook(notebookId, message.content);
+                          const notebookId = notebookLMService.getPrimaryNotebookId();
+                          notebookLMService.addMessageToNotebook(notebookId, message.content);
                           alert('✅ Message copied! Paste it into NotebookLM.');
                         }}
                         title="Save to NotebookLM"
