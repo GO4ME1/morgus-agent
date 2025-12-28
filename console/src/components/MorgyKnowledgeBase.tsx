@@ -3,11 +3,14 @@ import { getKnowledge, uploadKnowledge, addTextKnowledge, scrapeWebsite, deleteK
 
 interface MorgyKnowledge {
   id: string;
-  morgy_id: string;
+  morgy_id?: string;
+  title?: string;
   content: string;
-  source: string;
-  source_type: 'text' | 'pdf' | 'docx' | 'website' | 'code' | 'audio' | 'video';
-  metadata: Record<string, any>;
+  source?: string;
+  source_type: 'text' | 'pdf' | 'docx' | 'website' | 'code' | 'audio' | 'video' | 'file';
+  source_url?: string;
+  metadata?: Record<string, any>;
+  chunks?: number;
   created_at: string;
 }
 

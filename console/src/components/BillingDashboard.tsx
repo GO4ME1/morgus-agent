@@ -110,15 +110,7 @@ export const BillingDashboard: React.FC = () => {
     if (!user) return;
 
     try {
-      const response = await fetch(`${API_URL}/api/billing/portal`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.id}`,
-        },
-      });
-
-      const data = await response.json();
+      const data = await createPortalSession();
       
       if (data.url) {
         window.location.href = data.url;
