@@ -10,6 +10,8 @@ import { taskTracker, requiresTaskPlan, generateTaskPlan } from './skills/task-t
 import { formatToolResult, formatErrorForContext, deterministicStringify } from './context';
 import { factChecker } from './fact-checker';
 import { MORGUS_KERNEL } from './morgus-kernel';
+import { TaskComplexityAnalyzer } from './services/task-complexity-analyzer';
+import { DPPMAgentBridge } from './services/dppm-agent-bridge';
 
 export interface AgentConfig {
   maxIterations?: number;
@@ -78,7 +80,35 @@ export class AutonomousAgent {
     executionLogger.startExecution(userMessage);
 
     // Check if task requires planning (todo.md pattern)
-    if (requiresTaskPlan(userMessage)) {
+    const dppmEnabled = env.ENABLE_DPPM === 'true';
+    const complexity = TaskComplexityAnalyzer.analyze(userMessage);
+
+    if (dppmEnabled && complexity.useDPPM) {
+      yield {
+        type: 'status',
+        content: `🧠 Complex task detected (score: ${complexity.score.toFixed(1)}/10). Using DPPM planning system...`,
+      };
+
+      const result = await DPPMAgentBridge.executeComplexTask(
+        userMessage,
+        this,
+        env,
+        env.USER_ID || 'anonymous',
+        env.SUPABASE_CLIENT
+      );
+
+      for (const output of result.outputs) {
+        yield { type: 'response', content: output };
+      }
+
+      if (result.success) {
+        yield { type: 'complete', content: '✅ Task completed successfully!' };
+      } else {
+        yield { type: 'error', content: `❌ Task failed: ${result.error}` };
+      }
+
+      return;
+    } else if (requiresTaskPlan(userMessage)) {
       const plan = await generateTaskPlan(userMessage, env.OPENAI_API_KEY);
       if (plan) {
         taskTracker.createPlan(plan.goal, plan.steps);

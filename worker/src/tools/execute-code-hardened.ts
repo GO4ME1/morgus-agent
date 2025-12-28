@@ -11,6 +11,8 @@
  */
 
 import { sandboxHardening, SandboxMetrics } from '../sandbox/hardening';
+import { ErrorAnalyzer, ExecutionContext } from '../services/error-analyzer';
+import { AdaptiveRetry } from '../services/adaptive-retry';
 
 interface ExecuteCodeArgs {
   code: string;
@@ -122,7 +124,7 @@ The sandbox has internet access and common packages pre-installed.`;
   }
   
   /**
-   * Execute with automatic retry on transient failures
+   * Execute with intelligent retry (error analysis + fixes)
    */
   private async executeWithRetry(
     executionId: string,
@@ -133,39 +135,55 @@ The sandbox has internet access and common packages pre-installed.`;
     env: any,
     retryEnabled: boolean
   ): Promise<ExecutionResult> {
-    let lastError: any;
+    if (!retryEnabled) {
+      // No retry, just execute once
+      return await this.executeSandbox(executionId, userId, code, language, apiKey, env);
+    }
     
-    while (true) {
-      try {
-        const result = await this.executeSandbox(
+    // Use adaptive retry with error analysis
+    const adaptiveRetry = new AdaptiveRetry({
+      maxAttempts: 3,
+      onProgress: (progress) => {
+        console.log(`[SmartRetry] Attempt ${progress.attempt}/${progress.maxAttempts}`);
+        if (progress.lastFix) {
+          console.log(`[SmartRetry] Applied fix: ${progress.lastFix.description}`);
+        }
+      },
+      onFixApplied: (fix, attempt) => {
+        console.log(`[SmartRetry] Fix applied on attempt ${attempt}: ${fix.type}`);
+      }
+    });
+    
+    const context: ExecutionContext = {
+      code,
+      language: language as any,
+      tool: 'execute_code',
+    };
+    
+    const result = await adaptiveRetry.executeWithRetry(
+      async (ctx) => {
+        // If code was modified by a fix, use the updated code
+        const codeToExecute = ctx.code || code;
+        
+        // If fix installed a package, we need to execute that first
+        // This is handled by the fix application in AdaptiveRetry
+        
+        return await this.executeSandbox(
           executionId,
           userId,
-          code,
+          codeToExecute,
           language,
           apiKey,
           env
         );
-        
-        return result;
-        
-      } catch (error: any) {
-        lastError = error;
-        
-        // Check if error is retryable
-        if (!retryEnabled || !sandboxHardening.isRetryableError(error.message || String(error))) {
-          throw error;
-        }
-        
-        // Check if we can retry
-        if (!sandboxHardening.incrementRetry(executionId)) {
-          throw new Error(`Max retries exceeded. Last error: ${error.message}`);
-        }
-        
-        // Wait before retry with exponential backoff
-        const execution = sandboxHardening['activeExecutions'].get(executionId);
-        const delay = sandboxHardening.getRetryDelay(execution!.retryCount);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
+      },
+      context
+    );
+    
+    if (result.success && result.result) {
+      return result.result;
+    } else {
+      throw new Error(result.error || 'Execution failed after retries');
     }
   }
   
