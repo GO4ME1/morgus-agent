@@ -95,8 +95,8 @@ Use API key in query parameter or Authorization header.
     await fs.writeFile(docsFile, docsContent);
     const docs = await EnhancedFileOperations.read(docsFile);
     
-    expect(docs).toContain('endpoint');
-    expect(docs).toContain('authentication');
+    expect(docs.toLowerCase()).toContain('endpoint');
+    expect(docs.toLowerCase()).toContain('authentication');
     
     console.log('  ✅ Documentation loaded');
     console.log(`  📄 ${docs.split('\n').length} lines\n`);

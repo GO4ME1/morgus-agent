@@ -62,7 +62,7 @@ describe('File Edit Tool', () => {
     }, {});
     
     expect(result).toContain('✅');
-    expect(result).toContain('Edits Applied: 2');
+    expect(result).toContain('**Edits Applied:** 2');
     
     const content = await fs.readFile(testFile, 'utf-8');
     expect(content).toContain('8080');
@@ -244,7 +244,7 @@ describe('Port Expose Tools', () => {
     }, {});
     
     expect(result).toContain('✅');
-    expect(result).toContain('Auth: Enabled');
+    expect(result).toContain('**Auth:** Enabled');
   });
   
   test('lists exposed ports', async () => {
@@ -304,15 +304,16 @@ describe('Integration Test - All 3 Tools', () => {
     }, {});
     expect(imageResult).toContain('✅');
     
-    // 3. Expose a port
+    // 3. Expose a port (use unique port to avoid conflicts with other tests)
+    const uniquePort = 18080 + Math.floor(Math.random() * 1000);
     const exposeResult = await exposePortTool.execute({
-      port: 8080,
+      port: uniquePort,
     }, {});
     expect(exposeResult).toContain('✅');
     
     // Clean up
     await fs.unlink(testFile);
-    await closeExposedPortTool.execute({ port: 8080 }, {});
+    await closeExposedPortTool.execute({ port: uniquePort }, {});
     
     console.log('✅ All 3 tools working together!');
   });

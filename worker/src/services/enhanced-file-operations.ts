@@ -34,6 +34,7 @@ export interface FileMetadata {
   encoding?: string;
   mimeType?: string;
   lineCount?: number;
+  age?: string;
 }
 
 export interface ReadOptions {
@@ -88,6 +89,10 @@ export class EnhancedFileOperations {
 
     // Read with line range
     if (lineRange) {
+      const [start, end] = lineRange;
+      if (start < 1 || (end !== -1 && end < start)) {
+        throw new Error(`Invalid line range: [${start}, ${end}]. Start must be >= 1 and end must be >= start or -1.`);
+      }
       return await this.readLines(filePath, lineRange, finalEncoding);
     }
 
@@ -317,6 +322,7 @@ export class EnhancedFileOperations {
       permissions: this.formatPermissions(stats.mode),
       mimeType: this.getMimeType(parsedPath.ext),
       lineCount: stats.isFile() ? await this.countLines(filePath) : undefined,
+      age: this.formatAge(stats.mtime),
     };
   }
 
@@ -326,8 +332,8 @@ export class EnhancedFileOperations {
   static async batchRead(
     filePaths: string[],
     options: ReadOptions = {}
-  ): Promise<Map<string, string>> {
-    const results = new Map<string, string>();
+  ): Promise<Map<string, string | null>> {
+    const results = new Map<string, string | null>();
     
     await Promise.all(
       filePaths.map(async (filePath) => {
@@ -335,7 +341,8 @@ export class EnhancedFileOperations {
           const content = await this.read(filePath, options);
           results.set(filePath, content);
         } catch (error) {
-          results.set(filePath, `Error: ${error}`);
+          // Return null for missing/unreadable files
+          results.set(filePath, null);
         }
       })
     );
@@ -449,6 +456,8 @@ export class EnhancedFileOperations {
    * Helper: Format file size
    */
   private static formatSize(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    
     const units = ['B', 'KB', 'MB', 'GB', 'TB'];
     let size = bytes;
     let unitIndex = 0;
@@ -467,5 +476,27 @@ export class EnhancedFileOperations {
   private static formatPermissions(mode: number): string {
     const perms = (mode & parseInt('777', 8)).toString(8);
     return perms;
+  }
+
+  /**
+   * Helper: Format file age as human-readable string
+   */
+  private static formatAge(date: Date): string {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays > 0) {
+      return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    } else if (diffHours > 0) {
+      return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    } else if (diffMins > 0) {
+      return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    } else {
+      return `${diffSecs} second${diffSecs !== 1 ? 's' : ''} ago`;
+    }
   }
 }

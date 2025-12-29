@@ -448,9 +448,13 @@ export class ErrorAnalyzer {
     return {
       errorType: 'unknown',
       severity: 'medium',
-      isRetryable: false,
-      confidence: 0.50,
-      suggestedFix: null,
+      isRetryable: true,
+      confidence: 0.75,
+      suggestedFix: {
+        type: 'retry_with_backoff',
+        description: 'Retry with exponential backoff',
+        estimatedTime: 5
+      },
       alternativeApproaches: [
         'Review error message carefully',
         'Search for error online',

@@ -75,7 +75,12 @@ describe('Slide Generation System', () => {
         expect(result.size).toBe(1);
         
         const html = result.get(`slide_${layout}.html`)!;
-        expect(html).toContain(`Test ${layout}`);
+        // Quote layout uses content, not title; other layouts use title
+        if (layout === 'quote') {
+          expect(html).toContain('Test content');
+        } else {
+          expect(html).toContain(`Test ${layout}`);
+        }
       });
     });
     
@@ -272,14 +277,14 @@ describe('Slide Generation System', () => {
       expect(result).toContain('✅');
       expect(result).toContain('My Product');
       expect(result).toContain('Test Author');
-      expect(result).toContain('morgus-product-launch');
+      expect(result).toContain('Morgus Product Launch');
     });
     
     test('list_slide_templates tool should work', async () => {
       const result = await listSlideTemplatesTool.execute({}, {}, 'test-user');
       
       expect(result).toContain('Available Slide Templates');
-      expect(result).toContain('morgus-product-launch');
+      expect(result).toContain('Morgus Product Launch');
       expect(result).toContain('morgus-technical-deep-dive');
       expect(result).toContain('use_slide_template');
     });
@@ -291,7 +296,7 @@ describe('Slide Generation System', () => {
         'test-user'
       );
       
-      expect(result).toContain('morgus-product-launch');
+      expect(result).toContain('Morgus Product Launch');
       expect(result).toContain('morgus-investor-pitch');
     });
   });

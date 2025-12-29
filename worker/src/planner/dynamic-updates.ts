@@ -83,7 +83,10 @@ export class DynamicDPPM {
     
     let currentPlan = { ...plan };
     
-    for (const subtask of currentPlan.subtasks) {
+    // Sort subtasks by dependencies (topological sort)
+    const sortedSubtasks = this.topologicalSort(currentPlan.subtasks);
+    
+    for (const subtask of sortedSubtasks) {
       // Skip if already completed
       if (subtask.status === 'completed') {
         continue;
