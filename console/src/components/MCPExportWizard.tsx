@@ -50,7 +50,7 @@ export const MCPExportWizard: React.FC<MCPExportWizardProps> = ({
       
       setExportPackage(data);
       setCurrentStep(2);
-    } catch (error) {
+    } catch {
       console.error('Export failed:', error);
       alert('Export failed. Please try again.');
     } finally {

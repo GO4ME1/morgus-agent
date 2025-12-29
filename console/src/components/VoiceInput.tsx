@@ -1,5 +1,59 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import './VoiceInput.css';
+
+// Web Speech API types
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message: string;
+}
+
+interface SpeechRecognitionResult {
+  isFinal: boolean;
+  0: SpeechRecognitionAlternative;
+  length: number;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionInstance extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+}
+
+interface SpeechRecognitionConstructor {
+  new (): SpeechRecognitionInstance;
+}
+
+// Extend Window interface for Web Speech API
+declare global {
+  interface Window {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+    __currentAudio?: HTMLAudioElement | null;
+    __isAudioPlaying?: boolean;
+  }
+}
 
 interface VoiceInputProps {
   onTranscript: (text: string) => void;
@@ -9,35 +63,38 @@ interface VoiceInputProps {
 
 export function VoiceInput({ onTranscript, isListening, onListeningChange }: VoiceInputProps) {
   const [isSupported, setIsSupported] = useState(false);
-  const [recognition, setRecognition] = useState<any>(null);
+  const [recognition, setRecognition] = useState<SpeechRecognitionInstance | null>(null);
 
   useEffect(() => {
     // Check if Web Speech API is supported
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
     
-    if (SpeechRecognition) {
+    if (SpeechRecognitionAPI) {
       setIsSupported(true);
       
-      const recognitionInstance = new SpeechRecognition();
+      const recognitionInstance = new SpeechRecognitionAPI();
       recognitionInstance.continuous = false;
       recognitionInstance.interimResults = true;
       recognitionInstance.lang = 'en-US';
 
-      recognitionInstance.onresult = (event: any) => {
-        const transcript = Array.from(event.results)
-          .map((result: any) => result[0])
-          .map((result: any) => result.transcript)
-          .join('');
-
+      recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
+        const results = event.results;
+        const transcriptParts: string[] = [];
+        
+        for (let i = 0; i < results.length; i++) {
+          transcriptParts.push(results[i][0].transcript);
+        }
+        
+        const transcript = transcriptParts.join('');
         onTranscript(transcript);
 
         // If final result, stop listening
-        if (event.results[event.results.length - 1].isFinal) {
+        if (results[results.length - 1].isFinal) {
           onListeningChange(false);
         }
       };
 
-      recognitionInstance.onerror = (event: any) => {
+      recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event.error);
         onListeningChange(false);
       };
@@ -48,9 +105,9 @@ export function VoiceInput({ onTranscript, isListening, onListeningChange }: Voi
 
       setRecognition(recognitionInstance);
     }
-  }, []);
+  }, [onTranscript, onListeningChange]);
 
-  const toggleListening = () => {
+  const toggleListening = useCallback(() => {
     if (!recognition) return;
 
     if (isListening) {
@@ -60,7 +117,7 @@ export function VoiceInput({ onTranscript, isListening, onListeningChange }: Voi
       recognition.start();
       onListeningChange(true);
     }
-  };
+  }, [recognition, isListening, onListeningChange]);
 
   if (!isSupported) {
     return null; // Don't show button if not supported
@@ -83,7 +140,7 @@ let isCurrentlySpeaking = false;
 let currentSpeakingText = '';
 
 // Text-to-Speech function using ElevenLabs API
-export async function speakText(text: string) {
+export async function speakText(text: string): Promise<void> {
   // Create a hash of the text to track if we've already spoken it
   const textHash = text.substring(0, 100); // Use first 100 chars as identifier
   
@@ -124,7 +181,7 @@ export async function speakText(text: string) {
     const cleanText = text
       .replace(/\*\*/g, '') // Remove bold **
       .replace(/\*/g, '') // Remove italic *
-      .replace(/^[•\-]\s+/gm, '') // Remove bullets and list markers
+      .replace(/^[•-]\s+/gm, '') // Remove bullets and list markers
       .replace(/^#+\s+/gm, '') // Remove headings #
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Convert links to just text
       .replace(/`/g, '') // Remove code backticks
@@ -161,8 +218,8 @@ export async function speakText(text: string) {
     const audio = new Audio(audioUrl);
     
     // Store current audio for stopping
-    (window as any).__currentAudio = audio;
-    (window as any).__isAudioPlaying = true;
+    window.__currentAudio = audio;
+    window.__isAudioPlaying = true;
     
     console.log('[TTS] Playing audio...');
     await audio.play();
@@ -171,22 +228,21 @@ export async function speakText(text: string) {
     // Clean up blob URL after playing
     audio.onended = () => {
       URL.revokeObjectURL(audioUrl);
-      (window as any).__currentAudio = null;
-      (window as any).__isAudioPlaying = false;
+      window.__currentAudio = null;
+      window.__isAudioPlaying = false;
       isCurrentlySpeaking = false;
       currentSpeakingText = '';
     };
     
     audio.onerror = () => {
       URL.revokeObjectURL(audioUrl);
-      (window as any).__currentAudio = null;
-      (window as any).__isAudioPlaying = false;
+      window.__currentAudio = null;
+      window.__isAudioPlaying = false;
       isCurrentlySpeaking = false;
       currentSpeakingText = '';
     };
-  } catch (error) {
+  } catch {
     console.error('[TTS] ElevenLabs TTS failed:', error);
-    console.error('[TTS] Error details:', JSON.stringify(error, null, 2));
     // Don't fallback to browser TTS - just log the error
     console.log('[TTS] Skipping TTS due to error (no fallback to browser TTS)');
     isCurrentlySpeaking = false;
@@ -199,21 +255,21 @@ export function getVoices(): SpeechSynthesisVoice[] {
   return [];
 }
 
-export function stopSpeaking() {
+export function stopSpeaking(): void {
   // Clear spoken messages when manually stopping
   spokenMessages.clear();
   
   // Reset speaking flags
   isCurrentlySpeaking = false;
   currentSpeakingText = '';
-  (window as any).__isAudioPlaying = false;
+  window.__isAudioPlaying = false;
   
   // Stop ElevenLabs audio if playing
-  const currentAudio = (window as any).__currentAudio;
+  const currentAudio = window.__currentAudio;
   if (currentAudio) {
     currentAudio.pause();
     currentAudio.currentTime = 0;
-    (window as any).__currentAudio = null;
+    window.__currentAudio = null;
   }
   
   // Also stop browser TTS just in case

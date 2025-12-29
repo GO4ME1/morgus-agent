@@ -69,7 +69,7 @@ export function MCPServerBrowser({ userId, onServerInstalled, onServerUninstalle
 
       if (error) throw error;
       setServers(data || []);
-    } catch (error) {
+    } catch {
       console.error('Error loading MCP servers:', error);
     } finally {
       setLoading(false);
@@ -87,7 +87,7 @@ export function MCPServerBrowser({ userId, onServerInstalled, onServerUninstalle
 
       if (error) throw error;
       setInstalledServers(data || []);
-    } catch (error) {
+    } catch {
       console.error('Error loading installed servers:', error);
     }
   };
@@ -101,7 +101,7 @@ export function MCPServerBrowser({ userId, onServerInstalled, onServerUninstalle
 
       if (error) throw error;
       setCategories(['all', ...(data?.map(c => c.name) || [])]);
-    } catch (error) {
+    } catch {
       console.error('Error loading categories:', error);
       setCategories(['all', 'general', 'development', 'data', 'productivity']);
     }
@@ -141,7 +141,7 @@ export function MCPServerBrowser({ userId, onServerInstalled, onServerUninstalle
       await loadInstalledServers();
       onServerInstalled?.(server.id);
       
-    } catch (error) {
+    } catch {
       console.error('Error installing server:', error);
       alert('Failed to install server. Please try again.');
     } finally {
@@ -164,7 +164,7 @@ export function MCPServerBrowser({ userId, onServerInstalled, onServerUninstalle
       await loadInstalledServers();
       onServerUninstalled?.(serverId);
       
-    } catch (error) {
+    } catch {
       console.error('Error uninstalling server:', error);
       alert('Failed to uninstall server. Please try again.');
     }
@@ -183,7 +183,7 @@ export function MCPServerBrowser({ userId, onServerInstalled, onServerUninstalle
       if (error) throw error;
       await loadInstalledServers();
       
-    } catch (error) {
+    } catch {
       console.error('Error toggling server:', error);
     }
   };

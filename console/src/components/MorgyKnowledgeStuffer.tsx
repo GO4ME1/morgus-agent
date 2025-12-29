@@ -27,7 +27,7 @@ export const MorgyKnowledgeStuffer: React.FC<MorgyKnowledgeStufferProps> = ({
   const [activeTab, setActiveTab] = useState<'upload' | 'website' | 'text' | 'datasource'>('upload');
   const [isUploading, setIsUploading] = useState(false);
   const [testQuery, setTestQuery] = useState('');
-  const [testResults, setTestResults] = useState<any[]>([]);
+  const [testResults, setTestResults] = useState<unknown[]>([]);
 
   // File Upload
   const handleFileUpload = useCallback(async (files: FileList) => {
@@ -57,7 +57,7 @@ export const MorgyKnowledgeStuffer: React.FC<MorgyKnowledgeStufferProps> = ({
         };
 
         setKnowledge((prev) => [...prev, newItem]);
-      } catch (error) {
+      } catch {
         console.error('Upload failed:', error);
       }
     }
@@ -96,7 +96,7 @@ export const MorgyKnowledgeStuffer: React.FC<MorgyKnowledgeStufferProps> = ({
 
       setKnowledge((prev) => [...prev, newItem]);
       setWebsiteUrl('');
-    } catch (error) {
+    } catch {
       console.error('Scrape failed:', error);
     } finally {
       setIsScraping(false);
@@ -137,7 +137,7 @@ export const MorgyKnowledgeStuffer: React.FC<MorgyKnowledgeStufferProps> = ({
       setKnowledge((prev) => [...prev, newItem]);
       setTextTitle('');
       setTextContent('');
-    } catch (error) {
+    } catch {
       console.error('Save failed:', error);
     } finally {
       setIsSavingText(false);
@@ -155,7 +155,7 @@ export const MorgyKnowledgeStuffer: React.FC<MorgyKnowledgeStufferProps> = ({
 
       setKnowledge((prev) => prev.filter((item) => item.id !== id));
       onKnowledgeUpdate(knowledge.filter((item) => item.id !== id));
-    } catch (error) {
+    } catch {
       console.error('Delete failed:', error);
     }
   };
@@ -173,7 +173,7 @@ export const MorgyKnowledgeStuffer: React.FC<MorgyKnowledgeStufferProps> = ({
 
       const results = await response.json();
       setTestResults(results);
-    } catch (error) {
+    } catch {
       console.error('Test failed:', error);
     }
   };
@@ -197,7 +197,7 @@ export const MorgyKnowledgeStuffer: React.FC<MorgyKnowledgeStufferProps> = ({
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as unknown)}
               className={`
                 flex items-center gap-2 px-4 py-2 border-b-2 transition-colors
                 ${activeTab === tab.id

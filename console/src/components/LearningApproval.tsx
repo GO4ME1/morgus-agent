@@ -35,7 +35,7 @@ export const LearningApproval: React.FC = () => {
       // Load pending Morgy learnings
       const morgyRes = await apiClient.get('/api/memory/morgy/pending');
       setMorgyLearnings(morgyRes.data.learnings || []);
-    } catch (error) {
+    } catch {
       console.error('Error loading pending learnings:', error);
     } finally {
       setLoading(false);
@@ -51,7 +51,7 @@ export const LearningApproval: React.FC = () => {
         await apiClient.post(`/api/memory/morgy/${id}/approve`);
         setMorgyLearnings(prev => prev.filter(l => l.id !== id));
       }
-    } catch (error) {
+    } catch {
       console.error('Error approving learning:', error);
       alert('Failed to approve learning');
     }
@@ -68,7 +68,7 @@ export const LearningApproval: React.FC = () => {
         await apiClient.post(`/api/memory/morgy/${id}/reject`, { reason });
         setMorgyLearnings(prev => prev.filter(l => l.id !== id));
       }
-    } catch (error) {
+    } catch {
       console.error('Error rejecting learning:', error);
       alert('Failed to reject learning');
     }

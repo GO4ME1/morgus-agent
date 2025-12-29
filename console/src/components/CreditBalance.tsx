@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Credit Balance Widget
  * Displays user's image and video credits in the header
@@ -54,7 +53,7 @@ export function CreditBalance() {
       const data = await response.json();
       setBalance(data.balance);
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[Credits] Error fetching balance:', err);
       setError(err.message);
     } finally {

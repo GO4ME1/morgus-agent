@@ -53,7 +53,7 @@ export function KnowledgeBasePage() {
 
       if (error) throw error;
       setDocuments(data || []);
-    } catch (err) {
+    } catch {
       console.error('Error loading documents:', err);
       setError('Failed to load documents');
     } finally {
@@ -121,7 +121,7 @@ export function KnowledgeBasePage() {
       setSuccess(`Successfully uploaded ${files.length} file(s)`);
       loadDocuments();
       setActiveTab('documents');
-    } catch (err) {
+    } catch {
       console.error('Error uploading files:', err);
       setError('Failed to upload files. Please try again.');
     } finally {
@@ -157,7 +157,7 @@ export function KnowledgeBasePage() {
       setUrlInput('');
       loadDocuments();
       setActiveTab('documents');
-    } catch (err) {
+    } catch {
       console.error('Error adding URL:', err);
       setError('Failed to add URL. Please try again.');
     } finally {
@@ -190,7 +190,7 @@ export function KnowledgeBasePage() {
       setTextTitle('');
       loadDocuments();
       setActiveTab('documents');
-    } catch (err) {
+    } catch {
       console.error('Error adding text:', err);
       setError('Failed to add text. Please try again.');
     } finally {
@@ -218,7 +218,7 @@ export function KnowledgeBasePage() {
 
       setSuccess('Document deleted successfully');
       loadDocuments();
-    } catch (err) {
+    } catch {
       console.error('Error deleting document:', err);
       setError('Failed to delete document');
     }

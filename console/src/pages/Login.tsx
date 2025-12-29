@@ -44,7 +44,7 @@ export function Login() {
           setLoading(false);
         }, 500);
       }
-    } catch (err) {
+    } catch {
       console.error('[Login] Unexpected error:', err);
       setError('An unexpected error occurred. Please try again.');
       setLoading(false);

@@ -31,6 +31,37 @@ export function DeepResearchPanel({ sessionId, isActive, onClose }: DeepResearch
   const [steps, setSteps] = useState<ResearchStep[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  const loadSteps = async () => {
+    if (!sessionId) return;
+    
+    const { data, error } = await supabase
+      .from('research_steps')
+      .select('*')
+      .eq('session_id', sessionId)
+      .order('step_index', { ascending: true });
+
+    if (!error && data) {
+      setSteps(data);
+    }
+  };
+
+  const loadSession = async () => {
+    if (!sessionId) return;
+    setIsLoading(true);
+    
+    const { data, error } = await supabase
+      .from('research_sessions')
+      .select('*')
+      .eq('id', sessionId)
+      .single();
+
+    if (!error && data) {
+      setSession(data);
+      loadSteps();
+    }
+    setIsLoading(false);
+  };
+
   useEffect(() => {
     if (sessionId && isActive) {
       loadSession();
@@ -60,37 +91,6 @@ export function DeepResearchPanel({ sessionId, isActive, onClose }: DeepResearch
       };
     }
   }, [sessionId, isActive]);
-
-  const loadSession = async () => {
-    if (!sessionId) return;
-    setIsLoading(true);
-    
-    const { data, error } = await supabase
-      .from('research_sessions')
-      .select('*')
-      .eq('id', sessionId)
-      .single();
-
-    if (!error && data) {
-      setSession(data);
-      loadSteps();
-    }
-    setIsLoading(false);
-  };
-
-  const loadSteps = async () => {
-    if (!sessionId) return;
-    
-    const { data, error } = await supabase
-      .from('research_steps')
-      .select('*')
-      .eq('session_id', sessionId)
-      .order('step_index', { ascending: true });
-
-    if (!error && data) {
-      setSteps(data);
-    }
-  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {

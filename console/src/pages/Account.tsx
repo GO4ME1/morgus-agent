@@ -51,7 +51,7 @@ export function Account() {
       const response = await fetch(`${API_URL}/api/usage/${user.id}`);
       const data = await response.json();
       setUsage(data.usage);
-    } catch (error) {
+    } catch {
       console.error('Failed to fetch usage:', error);
     }
   };
@@ -62,7 +62,7 @@ export function Account() {
       const response = await fetch(`${API_URL}/api/referral/${user.id}`);
       const data = await response.json();
       setReferral(data);
-    } catch (error) {
+    } catch {
       console.error('Failed to fetch referral:', error);
     }
   };
@@ -93,7 +93,7 @@ export function Account() {
       } else {
         setPromoMessage({ type: 'error', text: data.message });
       }
-    } catch (error) {
+    } catch {
       setPromoMessage({ type: 'error', text: 'Failed to redeem promo code' });
     } finally {
       setPromoLoading(false);
@@ -122,7 +122,7 @@ export function Account() {
       } else {
         alert(data.error || 'Failed to open billing portal');
       }
-    } catch (error) {
+    } catch {
       alert('Failed to open billing portal');
     } finally {
       setBillingLoading(false);
@@ -147,7 +147,7 @@ export function Account() {
       } else {
         alert(data.message);
       }
-    } catch (error) {
+    } catch {
       alert('Failed to use day pass');
     }
   };

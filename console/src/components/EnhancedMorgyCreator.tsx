@@ -4,7 +4,7 @@ import {
   Rocket, MessageSquare, Upload, Check, X,
   ChevronRight, ChevronLeft, Store
 } from 'lucide-react';
-import { useAuth } from '../lib/auth';
+
 
 interface EnhancedMorgyData {
   // Basic Info
@@ -76,7 +76,6 @@ export const EnhancedMorgyCreator: React.FC<EnhancedMorgyCreatorProps> = ({
   editMode = false,
   existingMorgy,
 }) => {
-  const { user: _user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [showPreview, setShowPreview] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -153,7 +152,7 @@ export const EnhancedMorgyCreator: React.FC<EnhancedMorgyCreatorProps> = ({
       // TODO: Save to backend
       await new Promise(resolve => setTimeout(resolve, 1000));
       onComplete(morgyData as EnhancedMorgyData);
-    } catch (error) {
+    } catch {
       console.error('Failed to save Morgy:', error);
       alert('Failed to save Morgy');
     } finally {
@@ -389,7 +388,7 @@ const Step1BasicInfo: React.FC<{
           {categories.map((cat) => (
             <button
               key={cat.id}
-              onClick={() => updateMorgyData({ category: cat.id as any })}
+              onClick={() => updateMorgyData({ category: cat.id as unknown })}
               className={`
                 p-4 rounded-lg border-2 text-left transition-all
                 ${morgyData.category === cat.id
@@ -476,7 +475,7 @@ const Step2AIConfig: React.FC<{
 
   const updateAIConfig = (updates: Partial<EnhancedMorgyData['aiConfig']>) => {
     updateMorgyData({
-      aiConfig: { ...morgyData.aiConfig, ...updates } as any,
+      aiConfig: { ...morgyData.aiConfig, ...updates } as unknown,
     });
   };
 
@@ -578,7 +577,7 @@ const Step3Personality: React.FC<{
 }> = ({ morgyData, updateMorgyData }) => {
   const updatePersonality = (updates: Partial<EnhancedMorgyData['personality']>) => {
     updateMorgyData({
-      personality: { ...morgyData.personality, ...updates } as any,
+      personality: { ...morgyData.personality, ...updates } as unknown,
     });
   };
 
@@ -606,7 +605,7 @@ const Step3Personality: React.FC<{
           {tones.map((tone) => (
             <button
               key={tone.id}
-              onClick={() => updatePersonality({ tone: tone.id as any })}
+              onClick={() => updatePersonality({ tone: tone.id as unknown })}
               className={`
                 p-4 rounded-lg border-2 text-left transition-all
                 ${morgyData.personality?.tone === tone.id
@@ -631,7 +630,7 @@ const Step3Personality: React.FC<{
           {['concise', 'balanced', 'detailed'].map((level) => (
             <button
               key={level}
-              onClick={() => updatePersonality({ verbosity: level as any })}
+              onClick={() => updatePersonality({ verbosity: level as unknown })}
               className={`
                 p-4 rounded-lg border-2 text-center transition-all
                 ${morgyData.personality?.verbosity === level
@@ -655,7 +654,7 @@ const Step3Personality: React.FC<{
           {['none', 'minimal', 'moderate', 'frequent'].map((level) => (
             <button
               key={level}
-              onClick={() => updatePersonality({ emojiUsage: level as any })}
+              onClick={() => updatePersonality({ emojiUsage: level as unknown })}
               className={`
                 p-4 rounded-lg border-2 text-center transition-all
                 ${morgyData.personality?.emojiUsage === level
@@ -693,7 +692,7 @@ const Step4Appearance: React.FC<{
 }> = ({ morgyData, updateMorgyData }) => {
   const updateAppearance = (updates: Partial<EnhancedMorgyData['appearance']>) => {
     updateMorgyData({
-      appearance: { ...morgyData.appearance, ...updates } as any,
+      appearance: { ...morgyData.appearance, ...updates } as unknown,
     });
   };
 
@@ -783,7 +782,7 @@ const Step5Capabilities: React.FC<{
 }> = ({ morgyData, updateMorgyData }) => {
   const updateCapabilities = (updates: Partial<EnhancedMorgyData['capabilities']>) => {
     updateMorgyData({
-      capabilities: { ...morgyData.capabilities, ...updates } as any,
+      capabilities: { ...morgyData.capabilities, ...updates } as unknown,
     });
   };
 
@@ -850,7 +849,7 @@ const Step6Knowledge: React.FC<{
 }> = ({ morgyData, updateMorgyData }) => {
   const updateKnowledgeBase = (updates: Partial<EnhancedMorgyData['knowledgeBase']>) => {
     updateMorgyData({
-      knowledgeBase: { ...morgyData.knowledgeBase, ...updates } as any,
+      knowledgeBase: { ...morgyData.knowledgeBase, ...updates } as unknown,
     });
   };
 
@@ -945,7 +944,7 @@ const Step7Marketplace: React.FC<{
 }> = ({ morgyData, updateMorgyData }) => {
   const updateMarketplace = (updates: Partial<EnhancedMorgyData['marketplace']>) => {
     updateMorgyData({
-      marketplace: { ...morgyData.marketplace, ...updates } as any,
+      marketplace: { ...morgyData.marketplace, ...updates } as unknown,
     });
   };
 
@@ -989,7 +988,7 @@ const Step7Marketplace: React.FC<{
               {['free', 'paid', 'subscription'].map((type) => (
                 <button
                   key={type}
-                  onClick={() => updateMarketplace({ licenseType: type as any })}
+                  onClick={() => updateMarketplace({ licenseType: type as unknown })}
                   className={`
                     p-4 rounded-lg border-2 text-center transition-all
                     ${morgyData.marketplace?.licenseType === type
@@ -1130,7 +1129,7 @@ const MorgyPreview: React.FC<{ morgyData: Partial<EnhancedMorgyData> }> = ({ mor
       <div>
         <div className="text-sm font-medium text-gray-300 mb-2">Enabled Capabilities</div>
         <div className="flex flex-wrap gap-2">
-          {Object.entries(morgyData.capabilities || {}).filter(([_, enabled]) => enabled).map(([cap]) => (
+          {Object.entries(morgyData.capabilities || {}).filter(([, enabled]) => enabled).map(([cap]) => (
             <span key={cap} className="px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-sm">
               ✓ {cap.replace(/([A-Z])/g, ' $1').trim()}
             </span>

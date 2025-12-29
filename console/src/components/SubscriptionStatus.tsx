@@ -37,6 +37,46 @@ export function SubscriptionStatus({ userId, onUpgradeClick }: SubscriptionStatu
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const loadProfile = async () => {
+    if (!userId) return;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('subscription_tier, subscription_status, subscription_end_date, day_pass_balance, day_pass_expires_at')
+      .eq('id', userId)
+      .single();
+
+    if (!error && data) {
+      setProfile(data);
+    }
+  };
+
+  const loadUsage = async () => {
+    if (!userId) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    const { data, error } = await supabase
+      .from('usage_tracking')
+      .select('messages_used, builds_used, deploys_used, images_used, searches_used, videos_used')
+      .eq('user_id', userId)
+      .eq('date', today)
+      .single();
+
+    if (!error && data) {
+      setUsage(data);
+    } else {
+      // No usage record for today yet
+      setUsage({
+        messages_used: 0,
+        builds_used: 0,
+        deploys_used: 0,
+        images_used: 0,
+        searches_used: 0,
+        videos_used: 0,
+      });
+    }
+  };
+
   useEffect(() => {
     if (userId) {
       loadProfile();
@@ -87,46 +127,6 @@ export function SubscriptionStatus({ userId, onUpgradeClick }: SubscriptionStatu
 
     return () => clearInterval(interval);
   }, [profile]);
-
-  const loadProfile = async () => {
-    if (!userId) return;
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('subscription_tier, subscription_status, subscription_end_date, day_pass_balance, day_pass_expires_at')
-      .eq('id', userId)
-      .single();
-
-    if (!error && data) {
-      setProfile(data);
-    }
-  };
-
-  const loadUsage = async () => {
-    if (!userId) return;
-
-    const today = new Date().toISOString().split('T')[0];
-    const { data, error } = await supabase
-      .from('usage_tracking')
-      .select('messages_used, builds_used, deploys_used, images_used, searches_used, videos_used')
-      .eq('user_id', userId)
-      .eq('date', today)
-      .single();
-
-    if (!error && data) {
-      setUsage(data);
-    } else {
-      // No usage record for today yet
-      setUsage({
-        messages_used: 0,
-        builds_used: 0,
-        deploys_used: 0,
-        images_used: 0,
-        searches_used: 0,
-        videos_used: 0,
-      });
-    }
-  };
 
   if (!userId || !profile) {
     return null;

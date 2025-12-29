@@ -46,7 +46,7 @@ export const ThoughtsPanel: React.FC<ThoughtsPanelProps> = ({
           onThoughtChange(defaultThought.id);
         }
       }
-    } catch (error) {
+    } catch {
       console.error('Failed to load thoughts:', error);
     } finally {
       setLoading(false);
@@ -74,7 +74,7 @@ export const ThoughtsPanel: React.FC<ThoughtsPanelProps> = ({
         setNewTitle('');
         setNewDescription('');
       }
-    } catch (error) {
+    } catch {
       console.error('Failed to create thought:', error);
     }
   };
@@ -100,7 +100,7 @@ export const ThoughtsPanel: React.FC<ThoughtsPanelProps> = ({
           }
         }
       }
-    } catch (error) {
+    } catch {
       console.error('Failed to delete thought:', error);
     }
   };

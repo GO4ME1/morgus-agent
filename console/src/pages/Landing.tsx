@@ -3,10 +3,19 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Landing.css';
 
+// Pre-generate particles to avoid calling Math.random during render
+const generateParticles = () => Array.from({ length: 20 }, (_, i) => ({
+  id: i,
+  left: Math.random() * 100,
+  delay: Math.random() * 5,
+  duration: 10 + Math.random() * 10,
+}));
+
 export function Landing() {
   const [doorState, setDoorState] = useState<'open' | 'closing' | 'closed' | 'opening'>('open');
   const [showContent, setShowContent] = useState(false);
   const [stars, setStars] = useState<Array<{ id: number; x: number; y: number; size: number; delay: number }>>([]);
+  const [particles] = useState(generateParticles);
   const navigate = useNavigate();
 
   // Generate random stars on mount
@@ -58,14 +67,14 @@ export function Landing() {
 
       {/* Floating particles */}
       <div className="particles">
-        {Array.from({ length: 20 }).map((_, i) => (
+        {particles.map((p) => (
           <div
-            key={i}
+            key={p.id}
             className="particle"
             style={{
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${10 + Math.random() * 10}s`,
+              left: `${p.left}%`,
+              animationDelay: `${p.delay}s`,
+              animationDuration: `${p.duration}s`,
             }}
           />
         ))}

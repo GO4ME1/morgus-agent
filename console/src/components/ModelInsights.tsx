@@ -77,7 +77,7 @@ export function ModelInsights({ userId }: ModelInsightsProps) {
 
       const result = await response.json();
       setData(result);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching model insights:', err);
       setError(err.message || 'Failed to load insights');
     } finally {

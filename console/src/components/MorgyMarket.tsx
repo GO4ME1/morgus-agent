@@ -14,7 +14,7 @@ interface MorgyListing {
     name: string;
     description: string;
     category: string;
-    avatar_config: any;
+    avatar_config: unknown;
     tags: string[];
   };
 }
@@ -33,7 +33,7 @@ interface CreatorAnalytics {
   activeListing: number;
 }
 
-export function MorgyMarket({ onMorgyPurchased: _onMorgyPurchased }: MorgyMarketProps) {
+export function MorgyMarket({ onMorgyPurchased: _ }: MorgyMarketProps) {
   const [listings, setListings] = useState<MorgyListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -74,7 +74,7 @@ export function MorgyMarket({ onMorgyPurchased: _onMorgyPurchased }: MorgyMarket
       const response = await fetch(`/api/market/listings?${params}`);
       const data = await response.json();
       setListings(data);
-    } catch (error) {
+    } catch {
       console.error('Failed to load listings:', error);
     } finally {
       setLoading(false);
@@ -93,7 +93,7 @@ export function MorgyMarket({ onMorgyPurchased: _onMorgyPurchased }: MorgyMarket
       });
       const data = await response.json();
       setCreatorAnalytics(data);
-    } catch (error) {
+    } catch {
       console.error('Failed to load creator analytics:', error);
     }
   };

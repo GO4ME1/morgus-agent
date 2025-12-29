@@ -23,7 +23,7 @@ interface MorgyFormData {
   };
 }
 
-export const MorgyCreator: React.FC<MorgyCreatorProps> = ({ onMorgyCreated: _onMorgyCreated, onCancel: _onCancel }) => {
+export const MorgyCreator: React.FC<MorgyCreatorProps> = ({ onMorgyCreated: _, onCancel: __ }) => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditing = !!id;
@@ -87,7 +87,7 @@ export const MorgyCreator: React.FC<MorgyCreatorProps> = ({ onMorgyCreated: _onM
           max_cost_per_message: 0.01
         }
       });
-    } catch (error) {
+    } catch {
       console.error('Failed to load Morgy:', error);
       alert('Failed to load Morgy');
       navigate('/morgys');
@@ -120,7 +120,7 @@ export const MorgyCreator: React.FC<MorgyCreatorProps> = ({ onMorgyCreated: _onM
       
       const morgy = await response.json();
       navigate(`/morgys/${morgy.id}`);
-    } catch (error) {
+    } catch {
       console.error('Failed to save Morgy:', error);
       alert(`Failed to ${isEditing ? 'update' : 'create'} Morgy`);
     } finally {
@@ -417,7 +417,7 @@ export const MorgyCreator: React.FC<MorgyCreatorProps> = ({ onMorgyCreated: _onM
                   ...formData,
                   skillsConfig: {
                     ...formData.skillsConfig,
-                    execution_mode: e.target.value as any
+                    execution_mode: e.target.value as unknown
                   }
                 })}
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"

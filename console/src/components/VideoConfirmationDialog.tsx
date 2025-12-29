@@ -95,7 +95,7 @@ export function VideoConfirmationDialog({
       const confirmData = await confirmResponse.json();
       setConfirmationId(confirmData.confirmation.id);
       setExpiresAt(new Date(confirmData.confirmation.expiresAt));
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[VideoConfirmation] Error:', err);
       setError(err.message);
     } finally {
@@ -123,7 +123,7 @@ export function VideoConfirmationDialog({
       }
 
       onConfirm(confirmationId);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[VideoConfirmation] Error approving:', err);
       setError(err.message);
       setLoading(false);
@@ -140,7 +140,7 @@ export function VideoConfirmationDialog({
             headers: { 'Content-Type': 'application/json' }
           }
         );
-      } catch (err) {
+      } catch {
         console.error('[VideoConfirmation] Error rejecting:', err);
       }
     }

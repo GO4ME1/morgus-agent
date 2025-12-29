@@ -72,11 +72,11 @@ export const BillingDashboard: React.FC = () => {
               currentPeriodEnd: billingInfo.subscription?.current_period_end || new Date().toISOString(),
             });
           }
-        } catch (error) {
+        } catch {
           console.error('Failed to load user billing info:', error);
         }
       }
-    } catch (error) {
+    } catch {
       console.error('Failed to load billing data:', error);
     } finally {
       setLoading(false);
@@ -98,7 +98,7 @@ export const BillingDashboard: React.FC = () => {
       } else {
         alert('Failed to create checkout session');
       }
-    } catch (error) {
+    } catch {
       console.error('Checkout failed:', error);
       alert('Checkout failed. Please try again.');
     } finally {
@@ -115,7 +115,7 @@ export const BillingDashboard: React.FC = () => {
       if (data.url) {
         window.location.href = data.url;
       }
-    } catch (error) {
+    } catch {
       console.error('Failed to open portal:', error);
       alert('Failed to open billing portal');
     }

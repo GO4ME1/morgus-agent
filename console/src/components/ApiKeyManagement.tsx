@@ -14,7 +14,7 @@ export const ApiKeyManagement: React.FC = () => {
     expires_in_days: 30,
   });
   const [createdKey, setCreatedKey] = useState<string | null>(null);
-  const [_showKey, _setShowKey] = useState<{ [key: string]: boolean }>({});
+  const [, ] = useState<{ [key: string]: boolean }>({});
 
   const availableScopes = [
     { id: 'morgys:read', name: 'Read Morgys', description: 'View your Morgys' },
@@ -41,7 +41,7 @@ export const ApiKeyManagement: React.FC = () => {
     try {
       const keys = await listApiKeys(user.id);
       setApiKeys(keys);
-    } catch (error) {
+    } catch {
       console.error('Failed to load API keys:', error);
     } finally {
       setLoading(false);
@@ -62,7 +62,7 @@ export const ApiKeyManagement: React.FC = () => {
       setCreatedKey(result.api_key.key);
       setNewKeyData({ name: '', scopes: [], expires_in_days: 30 });
       await loadApiKeys();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create API key:', error);
       alert(error.message || 'Failed to create API key');
     }
@@ -78,7 +78,7 @@ export const ApiKeyManagement: React.FC = () => {
     try {
       await revokeApiKey(keyId, user.id);
       await loadApiKeys();
-    } catch (error) {
+    } catch {
       console.error('Failed to revoke API key:', error);
       alert('Failed to revoke API key');
     }

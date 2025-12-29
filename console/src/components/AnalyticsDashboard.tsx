@@ -39,7 +39,7 @@ export const AnalyticsDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [platformMetrics, setPlatformMetrics] = useState<PlatformMetrics | null>(null);
   const [userAnalytics, setUserAnalytics] = useState<UserAnalytics | null>(null);
-  const [performanceMetrics, _setPerformanceMetrics] = useState<PerformanceMetrics | null>(null);
+  const [performanceMetrics, ] = useState<PerformanceMetrics | null>(null);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
 
   const isAdmin = profile?.is_admin;
@@ -58,7 +58,7 @@ export const AnalyticsDashboard: React.FC = () => {
       try {
         const userData = await getUserAnalytics(user.id);
         setUserAnalytics(userData || null);
-      } catch (error) {
+      } catch {
         console.error('Failed to load user analytics:', error);
       }
 
@@ -68,11 +68,11 @@ export const AnalyticsDashboard: React.FC = () => {
           const platformData = await getPlatformAnalytics();
           setPlatformMetrics(platformData || null);
           // Note: Performance metrics endpoint not yet implemented
-        } catch (error) {
+        } catch {
           console.error('Failed to load platform analytics:', error);
         }
       }
-    } catch (error) {
+    } catch {
       console.error('Failed to load analytics:', error);
     } finally {
       setLoading(false);

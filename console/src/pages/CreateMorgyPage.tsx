@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 export const CreateMorgyPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const handleComplete = (morgyData: any) => {
+  const handleComplete = (morgyData: unknown) => {
     // Navigate to the new Morgy's chat page or show success
     console.log('Morgy created:', morgyData);
     alert(`✅ Morgy "${morgyData.name}" created successfully!`);

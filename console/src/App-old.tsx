@@ -104,7 +104,7 @@ function App() {
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
-      let statusUpdates: string[] = [];
+      const statusUpdates: string[] = [];
       let finalResponse = '';
 
       if (reader) {
@@ -139,7 +139,7 @@ function App() {
                     ));
                   }
                 }
-              } catch (e) {
+              } catch {
                 console.error('Error parsing SSE data:', e);
               }
             }
@@ -148,7 +148,7 @@ function App() {
       }
 
       loadTasks();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error:', error);
       setMessages((prev) => prev.map(msg => 
         msg.id === statusMessageId 

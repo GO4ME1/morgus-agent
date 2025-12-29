@@ -177,7 +177,7 @@ export const MorgyCreatorWizard: React.FC<MorgyCreatorWizardProps> = ({
 const Step1BasicInfo: React.FC<{
   morgyData: Partial<CustomMorgyData>;
   setMorgyData: (data: Partial<CustomMorgyData>) => void;
-}> = ({ morgyData, setMorgyData }) => {
+}> = ({ morgyData: _, setMorgyData: __ }) => {
   const [generatedNames, setGeneratedNames] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -214,7 +214,7 @@ const Step1BasicInfo: React.FC<{
           {categories.map((cat) => (
             <button
               key={cat.id}
-              onClick={() => setMorgyData({ ...morgyData, category: cat.id as any })}
+              onClick={() => setMorgyData({ ...morgyData, category: cat.id as unknown })}
               className={`
                 p-4 rounded-lg border-2 text-left transition-all
                 ${morgyData.category === cat.id
@@ -294,7 +294,7 @@ const Step1BasicInfo: React.FC<{
 const Step2Personality: React.FC<{
   morgyData: Partial<CustomMorgyData>;
   setMorgyData: (data: Partial<CustomMorgyData>) => void;
-}> = ({ morgyData, setMorgyData }) => {
+}> = ({ morgyData: _, setMorgyData: __ }) => {
   const updatePersonality = (key: string, value: number) => {
     setMorgyData({
       ...morgyData,
@@ -373,7 +373,7 @@ const Step2Personality: React.FC<{
 const Step3Avatar: React.FC<{
   morgyData: Partial<CustomMorgyData>;
   setMorgyData: (data: Partial<CustomMorgyData>) => void;
-}> = ({ morgyData, setMorgyData }) => {
+}> = ({ morgyData: _, setMorgyData: __ }) => {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const colors = [
@@ -559,7 +559,7 @@ const Step3Avatar: React.FC<{
 const Step4Knowledge: React.FC<{
   morgyData: Partial<CustomMorgyData>;
   setMorgyData: (data: Partial<CustomMorgyData>) => void;
-}> = ({ morgyData: _morgyData, setMorgyData: _setMorgyData }) => {
+}> = ({ morgyData: _, setMorgyData: __ }) => {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-white mb-4">Stuff with Knowledge</h2>
@@ -581,7 +581,7 @@ const Step4Knowledge: React.FC<{
 const Step5Templates: React.FC<{
   morgyData: Partial<CustomMorgyData>;
   setMorgyData: (data: Partial<CustomMorgyData>) => void;
-}> = ({ morgyData: _morgyData, setMorgyData: _setMorgyData }) => {
+}> = ({ morgyData: _, setMorgyData: __ }) => {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-white mb-4">Enable Templates & Workflows</h2>

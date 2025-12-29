@@ -9,8 +9,8 @@ interface Notebook {
   summary: string;
   raw_notebook: string;
   sections: NotebookSection[];
-  mindmap: any;
-  flowchart: any;
+  mindmap: unknown;
+  flowchart: unknown;
   created_at: string;
   updated_at: string;
 }
@@ -61,7 +61,7 @@ export const NotebooksPanel: React.FC<NotebooksPanelProps> = ({
         const data = await response.json();
         setNotebooks(data.notebooks || []);
       }
-    } catch (error) {
+    } catch {
       console.error('Failed to load notebooks:', error);
     } finally {
       setLoading(false);
@@ -77,7 +77,7 @@ export const NotebooksPanel: React.FC<NotebooksPanelProps> = ({
         const data = await response.json();
         setDailyLimit(data);
       }
-    } catch (error) {
+    } catch {
       console.error('Failed to load daily limit:', error);
     }
   };
@@ -91,7 +91,7 @@ export const NotebooksPanel: React.FC<NotebooksPanelProps> = ({
         const data = await response.json();
         setAssets(data.assets || []);
       }
-    } catch (error) {
+    } catch {
       console.error('Failed to load notebook assets:', error);
     }
   };
@@ -128,7 +128,7 @@ export const NotebooksPanel: React.FC<NotebooksPanelProps> = ({
           handleBackToList();
         }
       }
-    } catch (error) {
+    } catch {
       console.error('Failed to delete notebook:', error);
     }
   };

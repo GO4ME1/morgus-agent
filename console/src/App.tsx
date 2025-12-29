@@ -29,8 +29,8 @@ marked.setOptions({
 
 // Custom renderer to open links in new tabs
 const renderer = new marked.Renderer();
-renderer.link = ({ href, title, tokens }: { href: string; title?: string | null | undefined; tokens: any[] }) => {
-  const text = tokens.map((t: any) => t.raw || t.text || '').join('');
+renderer.link = ({ href, title, tokens }: { href: string; title?: string | null | undefined; tokens: unknown[] }) => {
+  const text = tokens.map((t: unknown) => t.raw || t.text || '').join('');
   const titleAttr = title ? ` title="${title}"` : '';
   return `<a href="${href}" target="_blank" rel="noopener noreferrer"${titleAttr}>${text}</a>`;
 };
@@ -118,8 +118,8 @@ function App() {
   const [deepResearchMode, setDeepResearchMode] = useState(false);
   const [currentResearchSessionId, setCurrentResearchSessionId] = useState<string | null>(null);
   const [showResearchPanel, setShowResearchPanel] = useState(false);
-  const [_researchSession, setResearchSession] = useState<ResearchSession | null>(null);
-  const [_researchSteps, setResearchSteps] = useState<ResearchStep[]>([]);
+  const [, setResearchSession] = useState<ResearchSession | null>(null);
+  const [, setResearchSteps] = useState<ResearchStep[]>([]);
   const [mcpClient, setMcpClient] = useState<MCPClient | null>(null);
   const [mcpToolsAvailable, setMcpToolsAvailable] = useState(false);
   const [dontTrainOnMe, setDontTrainOnMe] = useState(() => {
@@ -148,7 +148,7 @@ function App() {
           .update({ dont_train_on_me: value })
           .eq('id', user.id);
         console.log('[App] Saved dont_train_on_me to profile:', value);
-      } catch (error) {
+      } catch {
         console.error('[App] Failed to save dont_train_on_me:', error);
       }
     }
@@ -188,7 +188,7 @@ function App() {
             setMcpToolsAvailable(tools.length > 0);
             console.log(`[MCP] Initialized with ${tools.length} tools available`);
           }
-        } catch (err) {
+        } catch {
           console.error('[MCP] Failed to initialize:', err);
         }
       }
@@ -199,7 +199,7 @@ function App() {
   // Poll audio playing state
   useEffect(() => {
     const interval = setInterval(() => {
-      const playing = (window as any).__isAudioPlaying || false;
+      const playing = (window as unknown).__isAudioPlaying || false;
       setIsAudioPlaying(playing);
     }, 100);
     return () => clearInterval(interval);
@@ -221,7 +221,7 @@ function App() {
         .order('created_at', { ascending: true });
 
       if (!error && data) {
-        const loadedMessages: Message[] = data.map((msg: any) => ({
+        const loadedMessages: Message[] = data.map((msg: unknown) => ({
           id: msg.id,
           role: msg.role,
           content: msg.content,
@@ -240,7 +240,7 @@ function App() {
           setMessages(loadedMessages);
         }
       }
-    } catch (error) {
+    } catch {
       console.error('Failed to load thought messages:', error);
     }
   };
@@ -308,31 +308,31 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
-  // @ts-ignore - Reserved for future use
-  const _saveMessageToThought = async (message: Message) => {
-    if (!currentThoughtId) {
-      alert('Please select a thought first!');
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('thought_messages')
-        .insert({
-          thought_id: currentThoughtId,
-          role: message.role,
-          content: message.content,
-          created_at: new Date().toISOString(),
-        });
-
-      if (error) throw error;
-      
-      alert('✅ Message saved to thought!');
-    } catch (error) {
-      console.error('Failed to save message:', error);
-      alert('❌ Failed to save message');
-    }
-  };
+//   // @ts-expect-error - Reserved for future use
+//   const _saveMessageToThought = async (message: Message) => {
+//     if (!currentThoughtId) {
+//       alert('Please select a thought first!');
+//       return;
+//     }
+// 
+//     try {
+//       const { error } = await supabase
+//         .from('thought_messages')
+//         .insert({
+//           thought_id: currentThoughtId,
+//           role: message.role,
+//           content: message.content,
+//           created_at: new Date().toISOString(),
+//         });
+// 
+//       if (error) throw error;
+//       
+//       alert('✅ Message saved to thought!');
+//     } catch {
+//       console.error('Failed to save message:', error);
+//       alert('❌ Failed to save message');
+//     }
+//   };
 
   const rateMessage = async (messageId: string, rating: 'good' | 'bad' | 'glitch') => {
     try {
@@ -393,7 +393,7 @@ function App() {
       const emoji = rating === 'good' ? '👍' : rating === 'bad' ? '👎' : '🍅';
       const text = rating === 'good' ? 'Thanks! I\'ll remember what worked.' : rating === 'bad' ? 'Got it! I\'ll learn from this.' : 'Glitch reported! Thanks for helping me improve.';
       alert(`${emoji} ${text}`);
-    } catch (error) {
+    } catch {
       console.error('Failed to save rating:', error);
       // Don't show error to user for ratings
     }
@@ -553,7 +553,7 @@ function App() {
       }
 
       loadTasks();
-    } catch (error) {
+    } catch {
       console.error('Error:', error);
       setMessages((prev) =>
         prev.map((msg) =>
@@ -653,7 +653,7 @@ function App() {
         
         setIsLoading(false);
         return;
-      } catch (error) {
+      } catch {
         console.error('Deep research error:', error);
         // Fall back to normal MOE on error
         await handleNormalMOERequest(userInput, filesToUpload, statusMessageId);
@@ -724,7 +724,7 @@ function App() {
   };
 
   // Handle Continue button click
-  const handleContinue = async (_messageId: string) => {
+  const handleContinue = async (_) => {
     if (isLoading) return;
     
     const continueMessage: Message = {
@@ -790,7 +790,7 @@ function App() {
       }
 
       setIsLoading(false);
-    } catch (error) {
+    } catch {
       console.error('Error:', error);
       setMessages((prev) =>
         prev.map((msg) =>
@@ -852,7 +852,7 @@ function App() {
                 setCurrentTaskId(null);
                 await loadTasks(); // Reload to show new conversation
               }
-            } catch (error) {
+            } catch {
               console.error('Failed to create conversation:', error);
             }
           }}>
@@ -884,7 +884,7 @@ function App() {
                   .order('created_at', { ascending: true });
                 
                 if (!error && data) {
-                  const loadedMessages: Message[] = data.map((msg: any) => ({
+                  const loadedMessages: Message[] = data.map((msg: unknown) => ({
                     id: msg.id,
                     role: msg.role,
                     content: msg.content,
@@ -1141,7 +1141,7 @@ function App() {
                                 a.click();
                                 document.body.removeChild(a);
                                 URL.revokeObjectURL(url);
-                              } catch (err) {
+                              } catch {
                                 console.error('Failed to download document:', err);
                                 alert('Failed to decode document. The base64 data may be corrupted.');
                               }
@@ -1426,7 +1426,7 @@ function App() {
           try {
             await signOut();
             console.log('[App] signOut completed');
-          } catch (e) {
+          } catch {
             console.error('[App] signOut error:', e);
           }
           setShowSettings(false);

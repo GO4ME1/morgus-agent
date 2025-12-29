@@ -31,7 +31,7 @@ export const NotebooksPanelSimple: React.FC<NotebooksPanelProps> = ({
     try {
       const notebooks = notebookLMService.getNotebooks();
       setNotebooks(notebooks);
-    } catch (error) {
+    } catch {
       console.error('Failed to load NotebookLM notebooks:', error);
     } finally {
       setLoading(false);

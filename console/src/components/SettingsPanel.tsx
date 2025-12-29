@@ -60,14 +60,6 @@ export function SettingsPanel({ isOpen, onClose, darkMode, onDarkModeChange, don
     }
   };
 
-  // Load MCP servers and skills on mount
-  useEffect(() => {
-    if (isOpen) {
-      loadMCPServers();
-      loadSkills();
-    }
-  }, [isOpen]);
-
   const loadMCPServers = async () => {
     // Load from localStorage for now
     const saved = localStorage.getItem('morgus_mcp_servers');
@@ -112,6 +104,14 @@ export function SettingsPanel({ isOpen, onClose, darkMode, onDarkModeChange, don
       setSkills(defaultSkills);
     }
   };
+
+  // Load MCP servers and skills on mount
+  useEffect(() => {
+    if (isOpen) {
+      loadMCPServers();
+      loadSkills();
+    }
+  }, [isOpen]);
 
   const saveMCPServers = (servers: MCPServer[]) => {
     localStorage.setItem('morgus_mcp_servers', JSON.stringify(servers));

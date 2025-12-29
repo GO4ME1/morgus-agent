@@ -33,9 +33,9 @@ interface ExportConfig {
 }
 
 export const MorgyPathSelector: React.FC<MorgyPathSelectorProps> = ({
-  morgyId: _morgyId,
+  morgyId: 
   morgyName,
-  morgyAvatar: _morgyAvatar,
+  morgyAvatar: 
   onPathSelected,
 }) => {
   const [selectedPaths, setSelectedPaths] = useState({
@@ -254,7 +254,7 @@ export const MorgyPathSelector: React.FC<MorgyPathSelectorProps> = ({
                   </label>
                   <select
                     value={sellConfig.pricingModel}
-                    onChange={(e) => setSellConfig({ ...sellConfig, pricingModel: e.target.value as any })}
+                    onChange={(e) => setSellConfig({ ...sellConfig, pricingModel: e.target.value as unknown })}
                     className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600"
                   >
                     <option value="free">Free (with attribution)</option>
@@ -300,7 +300,7 @@ export const MorgyPathSelector: React.FC<MorgyPathSelectorProps> = ({
                     </label>
                     <select
                       value={sellConfig.visibility}
-                      onChange={(e) => setSellConfig({ ...sellConfig, visibility: e.target.value as any })}
+                      onChange={(e) => setSellConfig({ ...sellConfig, visibility: e.target.value as unknown })}
                       className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600"
                     >
                       <option value="public">Public (anyone can find)</option>

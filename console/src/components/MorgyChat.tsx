@@ -5,7 +5,7 @@ interface Morgy {
   id: string;
   name: string;
   description: string;
-  avatar_config: any;
+  avatar_config: unknown;
   is_starter: boolean;
   category: string;
 }
@@ -61,7 +61,7 @@ export function MorgyChat({ morgyId: initialMorgyId, onMorgyChange }: MorgyChatP
         setSelectedMorgy(bill);
         createConversation(bill.id);
       }
-    } catch (error) {
+    } catch {
       console.error('Failed to load starter Morgys:', error);
     }
   };
@@ -76,7 +76,7 @@ export function MorgyChat({ morgyId: initialMorgyId, onMorgyChange }: MorgyChatP
       const data = await response.json();
       setSelectedMorgy(data);
       createConversation(data.id);
-    } catch (error) {
+    } catch {
       console.error('Failed to load Morgy:', error);
     }
   };
@@ -97,7 +97,7 @@ export function MorgyChat({ morgyId: initialMorgyId, onMorgyChange }: MorgyChatP
       const data = await response.json();
       setConversationId(data.id);
       setMessages([]);
-    } catch (error) {
+    } catch {
       console.error('Failed to create conversation:', error);
     }
   };
@@ -168,7 +168,7 @@ export function MorgyChat({ morgyId: initialMorgyId, onMorgyChange }: MorgyChatP
         created_at: new Date().toISOString()
       };
       setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
+    } catch {
       console.error('Failed to send message:', error);
     } finally {
       setLoading(false);
@@ -203,7 +203,7 @@ export function MorgyChat({ morgyId: initialMorgyId, onMorgyChange }: MorgyChatP
 
       const data = await response.json();
       return data.response;
-    } catch (error) {
+    } catch {
       console.error('AI response error:', error);
       // Fallback to mock responses for demo
       if (morgy.name === 'Bill') {
@@ -217,7 +217,7 @@ export function MorgyChat({ morgyId: initialMorgyId, onMorgyChange }: MorgyChatP
     }
   };
 
-  const getBillResponse = (_message: string): string => {
+  const getBillResponse = (_: string): string => {
     const responses = [
       "OH MAN! This is so exciting! Let me tell you what we're going to do... 🚀",
       "YES! I love this question! Okay, here's my plan (Sally might want to refine it later, but hear me out!)...",
@@ -228,7 +228,7 @@ export function MorgyChat({ morgyId: initialMorgyId, onMorgyChange }: MorgyChatP
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
-  const getSallyResponse = (_message: string): string => {
+  const getSallyResponse = (_: string): string => {
     const responses = [
       "Love your enthusiasm! Let me help you turn that into a practical plan 😊",
       "Great question! Here's what actually works in the real world...",
@@ -239,7 +239,7 @@ export function MorgyChat({ morgyId: initialMorgyId, onMorgyChange }: MorgyChatP
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
-  const getHogsworthResponse = (_message: string): string => {
+  const getHogsworthResponse = (_: string): string => {
     const responses = [
       "Indeed, an excellent inquiry. Let me provide a comprehensive analysis...",
       "According to recent research, the data suggests...",

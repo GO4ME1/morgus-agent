@@ -52,7 +52,7 @@ export default function TaskDetail() {
 
       if (error) throw error;
       setTask(data);
-    } catch (error) {
+    } catch {
       console.error('Error fetching task:', error);
     }
   };
@@ -68,7 +68,7 @@ export default function TaskDetail() {
 
       if (error) throw error;
       setSteps(data || []);
-    } catch (error) {
+    } catch {
       console.error('Error fetching steps:', error);
     }
   };
@@ -83,7 +83,7 @@ export default function TaskDetail() {
 
       if (error) throw error;
       setArtifacts(data || []);
-    } catch (error) {
+    } catch {
       console.error('Error fetching artifacts:', error);
     }
   };

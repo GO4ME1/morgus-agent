@@ -32,7 +32,7 @@ export interface TaskStep {
   phase: string;
   type: string;
   content: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_at: string;
 }
 
@@ -43,6 +43,6 @@ export interface Artifact {
   name: string;
   url?: string;
   path?: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_at: string;
 }

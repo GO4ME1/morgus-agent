@@ -43,7 +43,7 @@ export const MorgyDashboard: React.FC = () => {
       
       const data = await response.json();
       setMorgys(data);
-    } catch (error) {
+    } catch {
       console.error('Failed to load Morgys:', error);
     } finally {
       setLoading(false);
@@ -57,7 +57,7 @@ export const MorgyDashboard: React.FC = () => {
       
       const data = await response.json();
       setStarters(data);
-    } catch (error) {
+    } catch {
       console.error('Failed to load starters:', error);
     }
   };
@@ -79,7 +79,7 @@ export const MorgyDashboard: React.FC = () => {
       if (!response.ok) throw new Error('Failed to delete Morgy');
       
       await loadMorgys();
-    } catch (error) {
+    } catch {
       console.error('Failed to delete Morgy:', error);
       alert('Failed to delete Morgy');
     }

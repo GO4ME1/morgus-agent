@@ -35,7 +35,7 @@ export const ThinkingIndicator: React.FC<ThinkingIndicatorProps> = ({
 }) => {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
-  const startTimeRef = useRef(Date.now());
+  const startTimeRef = useRef<number>(0);
 
   // Update elapsed time every second
   useEffect(() => {

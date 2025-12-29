@@ -100,6 +100,14 @@ export const MorgyAutocomplete: React.FC<MorgyAutocompleteProps> = ({
     }
   }, [inputValue, inputRef, onVisibilityChange]);
 
+  const handleSelect = (morgy: Morgy) => {
+    // Replace the @search with the full handle
+    const atIndex = inputValue.lastIndexOf('@');
+    const newValue = inputValue.slice(0, atIndex) + morgy.handle + ' ';
+    onSelect(newValue);
+    onVisibilityChange(false);
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isVisible) return;
@@ -132,15 +140,7 @@ export const MorgyAutocomplete: React.FC<MorgyAutocompleteProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isVisible, filteredMorgys, selectedIndex, onVisibilityChange]);
-
-  const handleSelect = (morgy: Morgy) => {
-    // Replace the @search with the full handle
-    const atIndex = inputValue.lastIndexOf('@');
-    const newValue = inputValue.slice(0, atIndex) + morgy.handle + ' ';
-    onSelect(newValue);
-    onVisibilityChange(false);
-  };
+  }, [isVisible, filteredMorgys, selectedIndex, onVisibilityChange, handleSelect]);
 
   if (!isVisible || filteredMorgys.length === 0) return null;
 

@@ -260,7 +260,7 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
             </label>
             <select
               value={config.characterType}
-              onChange={(e) => setConfig({ ...config, characterType: e.target.value as any })}
+              onChange={(e) => setConfig({ ...config, characterType: e.target.value as unknown })}
               className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-600"
             >
               <option value="business">💼 Business</option>
@@ -279,7 +279,7 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
               </label>
               <select
                 value={config.glasses}
-                onChange={(e) => setConfig({ ...config, glasses: e.target.value as any })}
+                onChange={(e) => setConfig({ ...config, glasses: e.target.value as unknown })}
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-600"
               >
                 <option value="none">None</option>
@@ -295,7 +295,7 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
               </label>
               <select
                 value={config.headwear}
-                onChange={(e) => setConfig({ ...config, headwear: e.target.value as any })}
+                onChange={(e) => setConfig({ ...config, headwear: e.target.value as unknown })}
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-600"
               >
                 <option value="none">None</option>
@@ -311,7 +311,7 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
               </label>
               <select
                 value={config.clothing}
-                onChange={(e) => setConfig({ ...config, clothing: e.target.value as any })}
+                onChange={(e) => setConfig({ ...config, clothing: e.target.value as unknown })}
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-600"
               >
                 <option value="suit">👔 Suit</option>
@@ -338,7 +338,7 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
               ].map((p) => (
                 <button
                   key={p.value}
-                  onClick={() => setConfig({ ...config, personality: p.value as any })}
+                  onClick={() => setConfig({ ...config, personality: p.value as unknown })}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     config.personality === p.value
                       ? 'border-purple-600 bg-purple-50'
