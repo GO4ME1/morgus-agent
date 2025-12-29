@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; overflow: hidden; }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background-color: #121212;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 0, 255, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(0, 255, 255, 0.1) 0%, transparent 40%);
+            color: #FFFFFF;
+            padding: 60px; /* Keep top padding consistent */
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            margin-bottom: 30px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        
+        h2 {
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FF00FF 0%, #FFFFFF 50%, #00FFFF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 24px;
+            color: #E0E0E0;
+            font-weight: 400;
+        }
+        
+        .main-content {
+            display: flex;
+            gap: 50px;
+            height: 100%;
+        }
+        
+        .left-column {
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .feature-image {
+            width: 100%;
+            height: 450px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.15);
+            position: relative;
+        }
+        
+        .feature-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .overlay-badge {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            border-radius: 8px;
+            border-left: 3px solid #00FF00;
+            color: #00FF00;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .right-column {
+            width: 60%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px; /* Reduced vertical gap to shrink total height */
+        }
+        
+        .strategy-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px; /* Reduced padding to save height without changing fonts */
+            border-radius: 12px;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        
+        .strategy-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .icon-1 { background: rgba(255, 0, 255, 0.1); color: #FF00FF; border: 1px solid #FF00FF; }
+        .icon-2 { background: rgba(0, 255, 255, 0.1); color: #00FFFF; border: 1px solid #00FFFF; }
+        .icon-3 { background: rgba(255, 136, 0, 0.1); color: #FF8800; border: 1px solid #FF8800; }
+        
+        .card-content h3 {
+            font-size: 20px;
+            margin-bottom: 5px;
+            color: #FFFFFF;
+        }
+        
+        .card-content p {
+            font-size: 16px;
+            color: #CCCCCC;
+            line-height: 1.4;
+        }
+        
+        .impact-box {
+            margin-top: 6px; /* Reduced extra margin above impact box */
+            background: linear-gradient(90deg, rgba(0, 255, 0, 0.1), transparent);
+            border-left: 4px solid #00FF00;
+            padding: 16px; /* Reduced padding to lower height */
+            border-radius: 0 12px 12px 0;
+        }
+        
+        .impact-title {
+            color: #00FF00;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        
+        .impact-metrics {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .metric {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .metric-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #FFFFFF;
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: #AAAAAA;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="header">
+            <h2>Strategic Importance</h2>
+            <div class="subtitle">Why This Aesthetic Drives Business Success</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="left-column">
+                <div class="feature-image">
+                    <img src="/home/ubuntu/morgus-agent/slide5_strategic_importance.png" alt="Strategic business growth visualization">
+                    <div class="overlay-badge">Market Leader</div>
+                </div>
+            </div>
+            
+            <div class="right-column">
+                <div class="strategy-card">
+                    <div class="strategy-icon icon-1">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Market Differentiation</h3>
+                        <p>In a sea of minimalist AI tools, Morgus's bold aesthetic creates instant recognition and memorability, setting it apart from competitors.</p>
+                    </div>
+                </div>
+                
+                <div class="strategy-card">
+                    <div class="strategy-icon icon-2">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Emotional Connection</h3>
+                        <p>Vibrant, energetic design appeals to developers who see themselves as innovative, creating a strong brand affinity.</p>
+                    </div>
+                </div>
+                
+                <div class="strategy-card">
+                    <div class="strategy-icon icon-3">
+                        <i class="fas fa-gem"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Premium Positioning</h3>
+                        <p>High-quality visual effects like glassmorphism and glows signal a professional, premium product worth paying for.</p>
+                    </div>
+                </div>
+                
+                <div class="impact-box">
+                    <div class="impact-title">Business Impact</div>
+                    <div class="impact-metrics">
+                        <div class="metric">
+                            <span class="metric-value">3-5x</span>
+                            <span class="metric-label">Brand Recall</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">High</span>
+                            <span class="metric-label">User Engagement</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">Premium</span>
+                            <span class="metric-label">Pricing Power</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

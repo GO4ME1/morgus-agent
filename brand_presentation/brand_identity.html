@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; overflow: hidden; }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background-color: #121212;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 0, 255, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(0, 255, 255, 0.15) 0%, transparent 40%);
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 60px 60px 24px;
+            position: relative;
+        }
+        .content-left { width: 45%; z-index: 2; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #FF00FF;
+            padding: 40px 40px 32px; /* keep top padding for title, trim bottom */
+            border-radius: 16px;
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.2);
+        }
+        h1 {
+            font-size: 64px;
+            font-weight: 800;
+            margin-bottom: 16px; /* slightly reduced to save height without touching top padding */
+            background: linear-gradient(135deg, #FF00FF 0%, #FFFFFF 50%, #00FFFF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.1;
+        }
+        h2 {
+            font-size: 32px;
+            font-weight: 600;
+            color: #00FFFF;
+            margin-bottom: 20px; /* reduced spacing */
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        p { font-size: 20px; line-height: 1.6; color: #E0E0E0; }
+        .image-right { width: 50%; height: 460px; position: relative; z-index: 1; }
+        .image-container {
+            width: 100%; height: 100%; border-radius: 24px; overflow: hidden;
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.2);
+        }
+        img { width: 100%; height: 100%; object-fit: cover; }
+        .decorative-circle { position: absolute; border-radius: 50%; filter: blur(60px); z-index: 0; }
+        .circle-1 { width: 300px; height: 300px; background: rgba(255, 0, 255, 0.2); top: -50px; left: -50px; }
+        .circle-2 { width: 400px; height: 400px; background: rgba(0, 255, 255, 0.15); bottom: -100px; right: -100px; }
+        .tag-container { display: flex; gap: 12px; margin-top: 16px; }
+        .tag {
+            padding: 6px 14px; /* reduced inner padding to trim tag height */
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 20px;
+            font-size: 14px;
+            color: #00FFFF;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="decorative-circle circle-1"></div>
+        <div class="decorative-circle circle-2"></div>
+        <div class="content-left">
+            <div class="glass-card">
+                <h1>Morgus Brand Identity</h1>
+                <h2>Neon Cyberpunk Meets Autonomous AI</h2>
+                <p>A neon cyberpunk identity that signals power, intelligence, and creativity in autonomous AI.</p>
+                <div class="tag-container">
+                    <div class="tag">Power</div>
+                    <div class="tag">Intelligence</div>
+                    <div class="tag">Creativity</div>
+                </div>
+            </div>
+        </div>
+        <div class="image-right">
+            <div class="image-container">
+                <img src="/home/ubuntu/morgus-agent/slide1_brand_identity.png" alt="Futuristic neon cyberpunk workspace">
+            </div>
+        </div>
+    </div>
+</body>
+</html>

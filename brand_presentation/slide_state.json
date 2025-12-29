@@ -1,0 +1,52 @@
+{
+  "project_info": {
+    "title": "Morgus Brand Identity",
+    "created": 1766967887.4045067,
+    "last_updated": 1766968262.250408,
+    "total_slides": 5
+  },
+  "slides": {
+    "brand_identity": "edited",
+    "neon_palette": "edited",
+    "visual_elements": "edited",
+    "ui_components": "edited",
+    "strategic_importance": "edited"
+  },
+  "outline": [
+    {
+      "id": "brand_identity",
+      "title": "Morgus Brand Identity",
+      "summary": "Morgus uses a vibrant neon cyberpunk aesthetic to communicate power, intelligence, and creativity in autonomous AI execution.",
+      "image_plan": "/home/ubuntu/morgus-agent/slide1_brand_identity.png - This image perfectly captures the \"Neon Cyberpunk Meets Autonomous AI\" theme, showing a futuristic workspace with neon accents and holographic AI interfaces.",
+      "slide_template_key": ""
+    },
+    {
+      "id": "neon_palette",
+      "title": "Neon Color Palette",
+      "summary": "Morgus employs a carefully designed neon color system where each color serves a specific functional and emotional purpose.",
+      "image_plan": "/home/ubuntu/morgus-agent/slide2_color_palette.png - This image visually represents the \"Neon Color Palette\" and \"Vibrant Gradients\" with its flowing neon lights and the rainbow gradient effect on the frosted glass, which aligns with the slide's content.",
+      "slide_template_key": ""
+    },
+    {
+      "id": "visual_elements",
+      "title": "Key Visual Elements",
+      "summary": "Morgus combines glassmorphism, glowing borders, and animated effects to create a distinctive, modern interface.",
+      "image_plan": "/home/ubuntu/morgus-agent/slide3_visual_elements.png - This image is the best visual representation of the \"Glassmorphism and Glowing Effects\" key visual elements, showing frosted glass panels with neon borders floating in a cyberpunk setting.",
+      "slide_template_key": ""
+    },
+    {
+      "id": "ui_components",
+      "title": "UI Components",
+      "summary": "The brand identity is systematically applied across all UI components to create a cohesive, recognizable experience.",
+      "image_plan": "/home/ubuntu/morgus-agent/slide4_ui_components.png - This image clearly illustrates the application of the brand identity to \"UI Components,\" showing frosted glass cards, glowing buttons, and a system status indicator, all matching the described aesthetic.",
+      "slide_template_key": ""
+    },
+    {
+      "id": "strategic_importance",
+      "title": "Strategic Importance",
+      "summary": "The neon cyberpunk aesthetic is a strategic differentiator that drives user engagement, brand recognition, and market positioning.",
+      "image_plan": "/home/ubuntu/morgus-agent/slide5_strategic_importance.png - This image connects the aesthetic to \"Strategic Importance\" and business success, showing a person interacting with holographic business metrics (growth, market positioning) in a neon, futuristic setting.",
+      "slide_template_key": ""
+    }
+  ]
+}
