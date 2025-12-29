@@ -877,10 +877,13 @@ See **HANDOFF_TO_PRODUCTION.md** for complete testing plan.
 8. **TOOL_REGISTRY_INTEGRATION.md** - Tool integration
 9. **MORGUS_UNIQUE_TOOLS.md** - 23 unique tools
 
+### Design
+10. **BRAND_AND_UI_GUIDELINES.md** - Brand identity, neon colors, UI components
+
 ### Strategy
-10. **NEXT_PHASE_STRATEGY.md** - Strategic roadmap
-11. **PHASE1_ENTERPRISE_ROADMAP.md** - Enterprise features
-12. **MONETIZATION_COMPLETE.md** - Monetization strategy
+11. **NEXT_PHASE_STRATEGY.md** - Strategic roadmap
+12. **PHASE1_ENTERPRISE_ROADMAP.md** - Enterprise features
+13. **MONETIZATION_COMPLETE.md** - Monetization strategy
 
 ---
 
