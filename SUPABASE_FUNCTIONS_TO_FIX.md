@@ -1,0 +1,49 @@
+# Supabase Functions Needing search_path Fix
+
+Based on the Security Advisor warnings, these 45 functions need search_path set:
+
+1. public.update_morgy_rating
+2. public.increment_server_install_count
+3. public.update_server_review_stats
+4. public.get_failed_webhook_events
+5. public.search_knowledge
+6. public.add_credits
+7. public.update_platform_learnings_updated_at
+8. public.archive_low_performing_learnings
+9. public.update_model_performance_from_reflection
+10. public.get_webhook_health_stats
+11. public.update_conversation_on_message
+12. public.can_use_feature
+13. public.use_credits
+14. public.get_top_platform_learnings
+15. public.get_user_learning_stats
+16. public.update_research_session_progress
+17. public.decrement_server_install_count
+18. public.initialize_user_credits
+19. public.handle_new_user
+20. public.check_credits
+21. public.get_user_plan
+22. public.update_updated_at_column
+23. public.check_rate_limit
+24. public.increment_usage
+25. public.get_usage_stats
+26. public.cleanup_old_usage
+27. public.get_model_stats
+28. public.update_model_stats
+29. public.record_competition_result
+30. public.get_competition_leaderboard
+31. public.update_subscription_status
+32. public.check_subscription_limits
+33. public.process_webhook_event
+34. public.get_active_subscriptions
+35. public.calculate_mrr
+36. public.get_subscription_analytics
+37. public.check_webhook_health
+38. public.retry_failed_webhooks
+39. public.get_monthly_revenue
+40. public.get_churn_rate
+41. public.get_user_growth
+42. public.update_task_status
+43. public.get_task_analytics
+44. public.cleanup_old_tasks
+45. public.get_user_task_stats

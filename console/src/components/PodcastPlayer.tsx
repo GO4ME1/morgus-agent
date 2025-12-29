@@ -4,7 +4,7 @@
  * Displays podcast generation status and plays generated podcasts
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import './PodcastPlayer.css';
 
 export interface PodcastPlayerProps {
@@ -17,9 +17,9 @@ export interface PodcastPlayerProps {
 }
 
 export const PodcastPlayer: React.FC<PodcastPlayerProps> = ({
-  notebookId,
+  notebookId: _notebookId,
   notebookUrl,
-  instructions,
+  instructions: _instructions,
   tips,
   estimatedTime,
   onClose,

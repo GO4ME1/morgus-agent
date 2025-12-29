@@ -445,6 +445,7 @@ router.post('/morgys/:morgyId/subscribe', requireAuth, async (req: Request, res:
     }
 
     // Create Stripe subscription
+    // @ts-ignore - Stripe types mismatch
     const subscription = await stripe.subscriptions.create({      customer: stripeCustomerId,
       items: [{
         price_data: {

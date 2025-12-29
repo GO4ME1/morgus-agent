@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageCircle, AlertCircle, CheckCircle, Clock, Search, Filter, User, Mail, Calendar } from 'lucide-react';
+import { MessageCircle, AlertCircle, CheckCircle, Clock, Search, User, Calendar } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 
 interface Ticket {

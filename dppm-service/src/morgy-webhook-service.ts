@@ -100,19 +100,21 @@ export class MorgyWebhookService {
 
     // Track analytics
     const today = new Date().toISOString().split('T')[0];
-    await supabase
-      .from('morgy_analytics')
-      .upsert({
-        morgy_id: morgyId,
-        date: today,
-        purchases: 1,
-        revenue: creatorRevenue
-      }, {
-        onConflict: 'morgy_id,date',
-        ignoreDuplicates: false
-      })
-      .then(() => {})
-      .catch((err: any) => console.error('Error tracking analytics:', err));
+    try {
+      await supabase
+        .from('morgy_analytics')
+        .upsert({
+          morgy_id: morgyId,
+          date: today,
+          purchases: 1,
+          revenue: creatorRevenue
+        }, {
+          onConflict: 'morgy_id,date',
+          ignoreDuplicates: false
+        });
+    } catch (err: any) {
+      console.error('Error tracking analytics:', err);
+    }
 
     return { success: true };
   }
@@ -163,8 +165,8 @@ export class MorgyWebhookService {
       .from('morgy_purchases')
       .update({
         subscription_status: 'active',
-        subscription_start: new Date(subscription.current_period_start * 1000).toISOString(),
-        subscription_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        subscription_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
+        subscription_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
         stripe_subscription_id: subscription.id
       })
       .eq('id', purchaseId);
@@ -201,8 +203,8 @@ export class MorgyWebhookService {
 
     // Update subscription dates and status
     const updateData: any = {
-      subscription_start: new Date(subscription.current_period_start * 1000).toISOString(),
-      subscription_end: new Date(subscription.current_period_end * 1000).toISOString()
+      subscription_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
+      subscription_end: new Date((subscription as any).current_period_end * 1000).toISOString()
     };
 
     if (subscription.status === 'active') {
@@ -251,17 +253,17 @@ export class MorgyWebhookService {
    * Handle successful invoice payment (subscription renewal)
    */
   private async handleInvoicePaymentSucceeded(invoice: Stripe.Invoice): Promise<{ success: boolean }> {
-    if (!invoice.subscription) {
+    if (!(invoice as any).subscription) {
       return { success: true };
     }
 
-    console.log(`Invoice payment succeeded for subscription: ${invoice.subscription}`);
+    console.log(`Invoice payment succeeded for subscription: ${(invoice as any).subscription}`);
 
     // Get purchase record
     const { data: purchase } = await supabase
       .from('morgy_purchases')
       .select('id, morgy_id, price')
-      .eq('stripe_subscription_id', invoice.subscription)
+      .eq('stripe_subscription_id', (invoice as any).subscription)
       .single();
 
     if (!purchase) {
@@ -286,18 +288,20 @@ export class MorgyWebhookService {
 
     // Track analytics
     const today = new Date().toISOString().split('T')[0];
-    await supabase
-      .from('morgy_analytics')
-      .upsert({
-        morgy_id: purchase.morgy_id,
-        date: today,
-        revenue: creatorRevenue
-      }, {
-        onConflict: 'morgy_id,date',
-        ignoreDuplicates: false
-      })
-      .then(() => {})
-      .catch((err: any) => console.error('Error tracking analytics:', err));
+    try {
+      await supabase
+        .from('morgy_analytics')
+        .upsert({
+          morgy_id: purchase.morgy_id,
+          date: today,
+          revenue: creatorRevenue
+        }, {
+          onConflict: 'morgy_id,date',
+          ignoreDuplicates: false
+        });
+    } catch (err: any) {
+      console.error('Error tracking analytics:', err);
+    }
 
     return { success: true };
   }
@@ -306,11 +310,11 @@ export class MorgyWebhookService {
    * Handle failed invoice payment
    */
   private async handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<{ success: boolean }> {
-    if (!invoice.subscription) {
+    if (!(invoice as any).subscription) {
       return { success: true };
     }
 
-    console.log(`Invoice payment failed for subscription: ${invoice.subscription}`);
+    console.log(`Invoice payment failed for subscription: ${(invoice as any).subscription}`);
 
     // Optionally update subscription status or send notification
     // For now, just log it - Stripe will handle retries

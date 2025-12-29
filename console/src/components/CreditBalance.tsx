@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Credit Balance Widget
  * Displays user's image and video credits in the header

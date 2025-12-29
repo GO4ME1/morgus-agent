@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useNavigate, useParams } from 'react-router-dom';
 
+interface MorgyCreatorProps {
+  onMorgyCreated?: (morgyId: string) => void;
+  onCancel?: () => void;
+}
+
 interface MorgyFormData {
   name: string;
   description: string;
@@ -18,7 +23,7 @@ interface MorgyFormData {
   };
 }
 
-export const MorgyCreator: React.FC = () => {
+export const MorgyCreator: React.FC<MorgyCreatorProps> = ({ onMorgyCreated: _onMorgyCreated, onCancel: _onCancel }) => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditing = !!id;

@@ -3,7 +3,7 @@
  * Shows confirmation before generating videos (which cost credits)
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 
 interface VideoConfirmationDialogProps {

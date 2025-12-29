@@ -308,7 +308,8 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
-  const saveMessageToThought = async (message: Message) => {
+  // @ts-ignore - Reserved for future use
+  const _saveMessageToThought = async (message: Message) => {
     if (!currentThoughtId) {
       alert('Please select a thought first!');
       return;

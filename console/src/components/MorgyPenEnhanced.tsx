@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MorgyDashboard } from './MorgyDashboard';
+// MorgyDashboard import removed - not currently used
 import { MorgyChat } from './MorgyChat';
 import { MorgyCreator } from './MorgyCreator';
 import { MorgyKnowledgeBase } from './MorgyKnowledgeBase';

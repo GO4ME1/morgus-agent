@@ -54,7 +54,7 @@ class NotebookLMService {
 
       // Open NotebookLM to manually add
       const url = `${NOTEBOOKLM_CONFIG.baseUrl}/notebook/${notebookId}`;
-      const message = `Content to add:\n\n${content}\n\nPlease add this to your notebook manually.`;
+      // const _message = `Content to add:\n\n${content}\n\nPlease add this to your notebook manually.`;
       
       // Copy to clipboard
       await navigator.clipboard.writeText(content);
@@ -86,9 +86,6 @@ class NotebookLMService {
       // For now, open NotebookLM and prompt user
       const url = `${NOTEBOOKLM_CONFIG.baseUrl}/notebook/${notebookId}`;
       
-      const message = query 
-        ? `Ask this in your NotebookLM:\n\n${query}`
-        : 'Open your NotebookLM to get insights';
       
       if (query) {
         await navigator.clipboard.writeText(query);
@@ -209,6 +206,21 @@ class NotebookLMService {
       console.error('Failed to create notebook:', error);
       throw error;
     }
+  }
+
+  /**
+   * Get primary notebook ID
+   */
+  getPrimaryNotebookId(): string {
+    const notebooks = this.getNotebooks();
+    return notebooks.length > 0 ? notebooks[0].id : NOTEBOOKLM_CONFIG.defaultNotebookId;
+  }
+
+  /**
+   * Add message to notebook (convenience method)
+   */
+  async addMessageToNotebook(notebookId: string, content: string): Promise<void> {
+    await this.addToNotebook(notebookId, content);
   }
 
   /**

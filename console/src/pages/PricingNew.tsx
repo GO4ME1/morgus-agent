@@ -251,7 +251,7 @@ export function Pricing() {
     }
   };
 
-  const handleBuyPack = async (packId: string, price: number) => {
+  const handleBuyPack = async (packId: string, _price: number) => {
     if (!user) {
       navigate(`/signup?redirect=/pricing`);
       return;

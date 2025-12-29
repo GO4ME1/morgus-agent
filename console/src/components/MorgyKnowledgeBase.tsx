@@ -15,11 +15,11 @@ interface MorgyKnowledge {
 }
 
 interface MorgyKnowledgeBaseProps {
-  morgyId: string;
-  morgyName: string;
+  morgyId?: string;
+  morgyName?: string;
 }
 
-export const MorgyKnowledgeBase: React.FC<MorgyKnowledgeBaseProps> = ({ morgyId, morgyName }) => {
+export const MorgyKnowledgeBase: React.FC<MorgyKnowledgeBaseProps> = ({ morgyId, morgyName = 'Morgy' }) => {
   const [knowledge, setKnowledge] = useState<MorgyKnowledge[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -42,6 +42,7 @@ export const MorgyKnowledgeBase: React.FC<MorgyKnowledgeBaseProps> = ({ morgyId,
   const loadKnowledge = async () => {
     setLoading(true);
     try {
+      if (!morgyId) return;
       const data = await getKnowledge(morgyId);
       setKnowledge(data || []);
     } catch (error) {
@@ -57,6 +58,7 @@ export const MorgyKnowledgeBase: React.FC<MorgyKnowledgeBaseProps> = ({ morgyId,
 
     setUploading(true);
     try {
+      if (!morgyId) return;
       await addTextKnowledge(morgyId, textSource || 'Manual Entry', textContent);
       
       setTextContent('');
@@ -77,6 +79,7 @@ export const MorgyKnowledgeBase: React.FC<MorgyKnowledgeBaseProps> = ({ morgyId,
 
     setUploading(true);
     try {
+      if (!morgyId) return;
       await uploadKnowledge(morgyId, selectedFile);
       
       setSelectedFile(null);
@@ -96,6 +99,7 @@ export const MorgyKnowledgeBase: React.FC<MorgyKnowledgeBaseProps> = ({ morgyId,
 
     setUploading(true);
     try {
+      if (!morgyId) return;
       await scrapeWebsite(morgyId, websiteUrl);
       
       setWebsiteUrl('');

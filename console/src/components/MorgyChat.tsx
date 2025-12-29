@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
 interface Morgy {
@@ -217,7 +217,7 @@ export function MorgyChat({ morgyId: initialMorgyId, onMorgyChange }: MorgyChatP
     }
   };
 
-  const getBillResponse = (message: string): string => {
+  const getBillResponse = (_message: string): string => {
     const responses = [
       "OH MAN! This is so exciting! Let me tell you what we're going to do... 🚀",
       "YES! I love this question! Okay, here's my plan (Sally might want to refine it later, but hear me out!)...",
@@ -228,7 +228,7 @@ export function MorgyChat({ morgyId: initialMorgyId, onMorgyChange }: MorgyChatP
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
-  const getSallyResponse = (message: string): string => {
+  const getSallyResponse = (_message: string): string => {
     const responses = [
       "Love your enthusiasm! Let me help you turn that into a practical plan 😊",
       "Great question! Here's what actually works in the real world...",
@@ -239,7 +239,7 @@ export function MorgyChat({ morgyId: initialMorgyId, onMorgyChange }: MorgyChatP
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
-  const getHogsworthResponse = (message: string): string => {
+  const getHogsworthResponse = (_message: string): string => {
     const responses = [
       "Indeed, an excellent inquiry. Let me provide a comprehensive analysis...",
       "According to recent research, the data suggests...",

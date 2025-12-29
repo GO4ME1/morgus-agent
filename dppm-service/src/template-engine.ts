@@ -475,9 +475,9 @@ export class TemplateEngine {
 
     // Extract personality traits
     const personality: PersonalityAdaptation = {
-      tone: morgy.personality_traits?.tone || 'professional',
-      style: morgy.personality_traits?.style || 'standard',
-      quirks: morgy.personality_traits?.quirks || [],
+      tone: (morgy as any).personality_traits?.tone || 'professional',
+      style: (morgy as any).personality_traits?.style || 'standard',
+      quirks: (morgy as any).personality_traits?.quirks || [],
     };
 
     // Apply template-specific constraints

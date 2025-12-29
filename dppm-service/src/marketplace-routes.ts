@@ -328,12 +328,12 @@ router.get('/listings/:id', async (req: Request, res: Response) => {
     }
 
     // Increment view count (async, don't wait)
-    supabase
-      .from('marketplace_listings')
-      .update({ views: listing.views + 1 })
-      .eq('id', id)
-      .then(() => {})
-      .catch(err => console.error('Error updating view count:', err));
+    Promise.resolve(
+      supabase
+        .from('marketplace_listings')
+        .update({ views: listing.views + 1 })
+        .eq('id', id)
+    ).catch((err: Error) => console.error('Error updating view count:', err));
 
     res.json({
       success: true,

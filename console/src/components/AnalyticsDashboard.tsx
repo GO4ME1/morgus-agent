@@ -39,7 +39,7 @@ export const AnalyticsDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [platformMetrics, setPlatformMetrics] = useState<PlatformMetrics | null>(null);
   const [userAnalytics, setUserAnalytics] = useState<UserAnalytics | null>(null);
-  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics | null>(null);
+  const [performanceMetrics, _setPerformanceMetrics] = useState<PerformanceMetrics | null>(null);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
 
   const isAdmin = profile?.is_admin;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CreditCard, DollarSign, TrendingUp, Calendar, ExternalLink, Check } from 'lucide-react';
+import { CreditCard, DollarSign, TrendingUp, Calendar, Check } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { getBillingInfo, getPricingTiers, createCheckoutSession, createPortalSession } from '../lib/api-client';
 

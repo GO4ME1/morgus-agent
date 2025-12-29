@@ -309,27 +309,27 @@ router.get('/:morgyId', async (req: Request, res: Response) => {
     }
     
     // Increment view count (async, don't wait)
-    supabase
-      .from('morgys')
-      .update({ view_count: morgy.view_count + 1 })
-      .eq('id', morgyId)
-      .then(() => {})
-      .catch((err: any) => console.error('Error incrementing view count:', err));
+    Promise.resolve(
+      supabase
+        .from('morgys')
+        .update({ view_count: morgy.view_count + 1 })
+        .eq('id', morgyId)
+    ).catch((err: any) => console.error('Error incrementing view count:', err));
     
     // Track analytics (async)
     const today = new Date().toISOString().split('T')[0];
-    supabase
-      .from('morgy_analytics')
-      .upsert({
-        morgy_id: morgyId,
-        date: today,
-        views: 1
-      }, {
-        onConflict: 'morgy_id,date',
-        ignoreDuplicates: false
-      })
-      .then(() => {})
-      .catch((err: any) => console.error('Error tracking analytics:', err));
+    Promise.resolve(
+      supabase
+        .from('morgy_analytics')
+        .upsert({
+          morgy_id: morgyId,
+          date: today,
+          views: 1
+        }, {
+          onConflict: 'morgy_id,date',
+          ignoreDuplicates: false
+        })
+    ).catch((err: any) => console.error('Error tracking analytics:', err));
     
     res.json({
       success: true,

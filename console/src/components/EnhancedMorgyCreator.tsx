@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Sparkles, Brain, Palette, Database, Zap, DollarSign, Eye, Save, 
-  Rocket, Settings, Code, MessageSquare, Image, Upload, Check, X,
-  ChevronRight, ChevronLeft, Store, Share2, Download
+  Rocket, MessageSquare, Upload, Check, X,
+  ChevronRight, ChevronLeft, Store
 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 
@@ -76,7 +76,7 @@ export const EnhancedMorgyCreator: React.FC<EnhancedMorgyCreatorProps> = ({
   editMode = false,
   existingMorgy,
 }) => {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [showPreview, setShowPreview] = useState(false);
   const [saving, setSaving] = useState(false);

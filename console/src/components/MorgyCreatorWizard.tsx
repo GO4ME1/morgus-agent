@@ -559,7 +559,7 @@ const Step3Avatar: React.FC<{
 const Step4Knowledge: React.FC<{
   morgyData: Partial<CustomMorgyData>;
   setMorgyData: (data: Partial<CustomMorgyData>) => void;
-}> = ({ morgyData, setMorgyData }) => {
+}> = ({ morgyData: _morgyData, setMorgyData: _setMorgyData }) => {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-white mb-4">Stuff with Knowledge</h2>
@@ -581,7 +581,7 @@ const Step4Knowledge: React.FC<{
 const Step5Templates: React.FC<{
   morgyData: Partial<CustomMorgyData>;
   setMorgyData: (data: Partial<CustomMorgyData>) => void;
-}> = ({ morgyData, setMorgyData }) => {
+}> = ({ morgyData: _morgyData, setMorgyData: _setMorgyData }) => {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-white mb-4">Enable Templates & Workflows</h2>

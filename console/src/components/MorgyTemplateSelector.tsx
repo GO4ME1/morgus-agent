@@ -40,7 +40,7 @@ interface MorgyTemplateSelectorProps {
 }
 
 export const MorgyTemplateSelector: React.FC<MorgyTemplateSelectorProps> = ({
-  morgyId,
+  morgyId: _morgyId,
   existingTemplates = [],
   existingWorkflows = [],
   existingPlatforms = {},

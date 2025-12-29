@@ -575,3 +575,51 @@ export async function getPlatformAnalytics(): Promise<any> {
 
   return response.json();
 }
+
+// ============================================
+// AXIOS-LIKE API CLIENT
+// ============================================
+
+/**
+ * Simple axios-like API client for components that need it
+ */
+export const apiClient = {
+  async get(url: string) {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE}${url}`, { headers });
+    if (!response.ok) throw new Error(`GET ${url} failed`);
+    return { data: await response.json() };
+  },
+  
+  async post(url: string, data?: any) {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE}${url}`, {
+      method: 'POST',
+      headers,
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    if (!response.ok) throw new Error(`POST ${url} failed`);
+    return { data: await response.json() };
+  },
+  
+  async put(url: string, data?: any) {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE}${url}`, {
+      method: 'PUT',
+      headers,
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    if (!response.ok) throw new Error(`PUT ${url} failed`);
+    return { data: await response.json() };
+  },
+  
+  async delete(url: string) {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE}${url}`, {
+      method: 'DELETE',
+      headers,
+    });
+    if (!response.ok) throw new Error(`DELETE ${url} failed`);
+    return { data: await response.json() };
+  },
+};

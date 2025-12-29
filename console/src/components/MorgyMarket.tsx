@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
 interface MorgyListing {
@@ -19,6 +19,10 @@ interface MorgyListing {
   };
 }
 
+interface MorgyMarketProps {
+  onMorgyPurchased?: (id: string) => void;
+}
+
 interface CreatorAnalytics {
   tier: 'bronze' | 'silver' | 'gold' | 'platinum';
   totalSales: number;
@@ -29,7 +33,7 @@ interface CreatorAnalytics {
   activeListing: number;
 }
 
-export function MorgyMarket() {
+export function MorgyMarket({ onMorgyPurchased: _onMorgyPurchased }: MorgyMarketProps) {
   const [listings, setListings] = useState<MorgyListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -113,7 +117,7 @@ export function MorgyMarket() {
     return `$${listing.price}`;
   };
 
-  const renderStars = (rating: number) => {
+  const renderStars = (rating: number, reviewCount: number) => {
     return (
       <div className="flex items-center space-x-1">
         {[1, 2, 3, 4, 5].map((star) => (
@@ -127,7 +131,7 @@ export function MorgyMarket() {
           </svg>
         ))}
         <span className="text-sm text-gray-600 ml-1">
-          {rating.toFixed(1)} ({listing.review_count})
+          {rating.toFixed(1)} ({reviewCount})
         </span>
       </div>
     );
@@ -287,7 +291,7 @@ export function MorgyMarket() {
 
                   {/* Rating */}
                   <div className="mb-4">
-                    {renderStars(listing.average_rating)}
+                    {renderStars(listing.average_rating, listing.review_count)}
                   </div>
 
                   {/* Tags */}

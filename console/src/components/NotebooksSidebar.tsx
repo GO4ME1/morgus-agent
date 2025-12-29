@@ -5,7 +5,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { NOTEBOOKLM_CONFIG, Notebook } from '../config/notebooklm';
+import { NOTEBOOKLM_CONFIG } from '../config/notebooklm';
+import type { Notebook } from '../config/notebooklm';
 import './NotebooksSidebar.css';
 
 interface NotebooksSidebarProps {

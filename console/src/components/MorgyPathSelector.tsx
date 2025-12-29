@@ -33,9 +33,9 @@ interface ExportConfig {
 }
 
 export const MorgyPathSelector: React.FC<MorgyPathSelectorProps> = ({
-  morgyId,
+  morgyId: _morgyId,
   morgyName,
-  morgyAvatar,
+  morgyAvatar: _morgyAvatar,
   onPathSelected,
 }) => {
   const [selectedPaths, setSelectedPaths] = useState({

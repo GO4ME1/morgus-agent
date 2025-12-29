@@ -17,7 +17,7 @@ interface NotebookLMActionsProps {
 
 export const NotebookLMActions: React.FC<NotebookLMActionsProps> = ({
   messageId,
-  messageContent,
+  messageContent: _messageContent,
   currentNotebookId,
   onAddToNotebook,
   onPullFromNotebook

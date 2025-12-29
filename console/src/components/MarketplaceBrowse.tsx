@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Star, ShoppingCart, CheckCircle, DollarSign, Users } from 'lucide-react';
+import { Search, Star, ShoppingCart, CheckCircle, Users } from 'lucide-react';
 import { browseMarketplace } from '../lib/api-client';
-import { useAuth } from '../lib/auth';
+// import { useAuth } from '../lib/auth';
 
 interface MarketplaceListing {
   id: string;

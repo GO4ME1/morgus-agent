@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Key, Copy, Trash2, Plus, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
+import { Key, Copy, Trash2, Plus, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { createApiKey, listApiKeys, revokeApiKey, type ApiKey } from '../lib/api-client';
 
@@ -14,7 +14,7 @@ export const ApiKeyManagement: React.FC = () => {
     expires_in_days: 30,
   });
   const [createdKey, setCreatedKey] = useState<string | null>(null);
-  const [showKey, setShowKey] = useState<{ [key: string]: boolean }>({});
+  const [_showKey, _setShowKey] = useState<{ [key: string]: boolean }>({});
 
   const availableScopes = [
     { id: 'morgys:read', name: 'Read Morgys', description: 'View your Morgys' },
