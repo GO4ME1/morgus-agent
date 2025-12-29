@@ -832,7 +832,28 @@ app.post('/dppm', async (req, res) => {
   const startTime = Date.now();
   const request: DPPMRequest = req.body;
   
+  // Ensure config exists with fallback to environment variables
+  if (!request.config) {
+    request.config = {
+      openrouter_api_key: process.env.OPENROUTER_API_KEY || '',
+      gemini_api_key: process.env.GEMINI_API_KEY || '',
+      openai_api_key: process.env.OPENAI_API_KEY || '',
+      anthropic_api_key: process.env.ANTHROPIC_API_KEY || '',
+      supabase_url: process.env.SUPABASE_URL || '',
+      supabase_key: process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+    };
+  } else {
+    // Fill in any missing keys from environment
+    request.config.openrouter_api_key = request.config.openrouter_api_key || process.env.OPENROUTER_API_KEY || '';
+    request.config.gemini_api_key = request.config.gemini_api_key || process.env.GEMINI_API_KEY || '';
+    request.config.openai_api_key = request.config.openai_api_key || process.env.OPENAI_API_KEY || '';
+    request.config.anthropic_api_key = request.config.anthropic_api_key || process.env.ANTHROPIC_API_KEY || '';
+    request.config.supabase_url = request.config.supabase_url || process.env.SUPABASE_URL || '';
+    request.config.supabase_key = request.config.supabase_key || process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  }
+  
   console.log('[DPPM] Starting deep thinking for:', request.message.substring(0, 100));
+  console.log('[DPPM] Config keys present:', Object.keys(request.config).filter(k => request.config[k as keyof typeof request.config]));
   
   try {
     // Detect output type to determine processing path
