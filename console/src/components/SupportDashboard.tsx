@@ -20,7 +20,7 @@ interface AuditLog {
   id: string;
   userId: string;
   action: string;
-  details: any;
+  details: Record<string, unknown>;
   ipAddress: string;
   userAgent: string;
   createdAt: string;
@@ -421,7 +421,7 @@ export const SupportDashboard: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-400 mb-2">Priority</label>
                     <select
                       value={newTicket.priority}
-                      onChange={(e) => setNewTicket({ ...newTicket, priority: e.target.value as any })}
+                      onChange={(e) => setNewTicket({ ...newTicket, priority: e.target.value as Ticket['priority'] })}
                       className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-purple-500 focus:outline-none"
                     >
                       <option value="low">Low</option>
@@ -502,7 +502,7 @@ export const SupportDashboard: React.FC = () => {
                       <label className="block text-sm font-medium text-gray-400 mb-2">Status</label>
                       <select
                         value={selectedTicket.status}
-                        onChange={(e) => handleUpdateTicket(selectedTicket.id, { status: e.target.value as any })}
+                        onChange={(e) => handleUpdateTicket(selectedTicket.id, { status: e.target.value as Ticket['status'] })}
                         className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-purple-500 focus:outline-none"
                       >
                         <option value="open">Open</option>
@@ -516,7 +516,7 @@ export const SupportDashboard: React.FC = () => {
                       <label className="block text-sm font-medium text-gray-400 mb-2">Priority</label>
                       <select
                         value={selectedTicket.priority}
-                        onChange={(e) => handleUpdateTicket(selectedTicket.id, { priority: e.target.value as any })}
+                        onChange={(e) => handleUpdateTicket(selectedTicket.id, { priority: e.target.value as Ticket['priority'] })}
                         className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-purple-500 focus:outline-none"
                       >
                         <option value="low">Low</option>

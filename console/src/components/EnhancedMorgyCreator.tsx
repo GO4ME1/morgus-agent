@@ -337,7 +337,7 @@ const Step1BasicInfo: React.FC<{
   morgyData: Partial<EnhancedMorgyData>;
   updateMorgyData: (updates: Partial<EnhancedMorgyData>) => void;
 }> = ({ morgyData, updateMorgyData }) => {
-  const categories = [
+  const categories: { id: EnhancedMorgyData['category']; name: string; icon: string; desc: string }[] = [
     { id: 'business', name: 'Business', icon: '💼', desc: 'Marketing, sales, strategy' },
     { id: 'social', name: 'Social Media', icon: '📱', desc: 'Content, engagement, growth' },
     { id: 'research', name: 'Research', icon: '🔬', desc: 'Analysis, reports, insights' },
@@ -389,7 +389,7 @@ const Step1BasicInfo: React.FC<{
           {categories.map((cat) => (
             <button
               key={cat.id}
-              onClick={() => updateMorgyData({ category: cat.id as any })}
+              onClick={() => updateMorgyData({ category: cat.id })}
               className={`
                 p-4 rounded-lg border-2 text-left transition-all
                 ${morgyData.category === cat.id
@@ -476,7 +476,7 @@ const Step2AIConfig: React.FC<{
 
   const updateAIConfig = (updates: Partial<EnhancedMorgyData['aiConfig']>) => {
     updateMorgyData({
-      aiConfig: { ...morgyData.aiConfig, ...updates } as any,
+      aiConfig: { ...morgyData.aiConfig, ...updates } as EnhancedMorgyData['aiConfig'],
     });
   };
 
@@ -578,11 +578,11 @@ const Step3Personality: React.FC<{
 }> = ({ morgyData, updateMorgyData }) => {
   const updatePersonality = (updates: Partial<EnhancedMorgyData['personality']>) => {
     updateMorgyData({
-      personality: { ...morgyData.personality, ...updates } as any,
+      personality: { ...morgyData.personality, ...updates } as EnhancedMorgyData['personality'],
     });
   };
 
-  const tones = [
+  const tones: { id: EnhancedMorgyData['personality']['tone']; name: string; desc: string }[] = [
     { id: 'professional', name: 'Professional', desc: 'Business-like and formal' },
     { id: 'casual', name: 'Casual', desc: 'Relaxed and conversational' },
     { id: 'friendly', name: 'Friendly', desc: 'Warm and approachable' },
@@ -606,7 +606,7 @@ const Step3Personality: React.FC<{
           {tones.map((tone) => (
             <button
               key={tone.id}
-              onClick={() => updatePersonality({ tone: tone.id as any })}
+              onClick={() => updatePersonality({ tone: tone.id })}
               className={`
                 p-4 rounded-lg border-2 text-left transition-all
                 ${morgyData.personality?.tone === tone.id
@@ -631,7 +631,7 @@ const Step3Personality: React.FC<{
           {['concise', 'balanced', 'detailed'].map((level) => (
             <button
               key={level}
-              onClick={() => updatePersonality({ verbosity: level as any })}
+              onClick={() => updatePersonality({ verbosity: level as EnhancedMorgyData['personality']['verbosity'] })}
               className={`
                 p-4 rounded-lg border-2 text-center transition-all
                 ${morgyData.personality?.verbosity === level
@@ -655,7 +655,7 @@ const Step3Personality: React.FC<{
           {['none', 'minimal', 'moderate', 'frequent'].map((level) => (
             <button
               key={level}
-              onClick={() => updatePersonality({ emojiUsage: level as any })}
+              onClick={() => updatePersonality({ emojiUsage: level as EnhancedMorgyData['personality']['emojiUsage'] })}
               className={`
                 p-4 rounded-lg border-2 text-center transition-all
                 ${morgyData.personality?.emojiUsage === level
@@ -693,7 +693,7 @@ const Step4Appearance: React.FC<{
 }> = ({ morgyData, updateMorgyData }) => {
   const updateAppearance = (updates: Partial<EnhancedMorgyData['appearance']>) => {
     updateMorgyData({
-      appearance: { ...morgyData.appearance, ...updates } as any,
+      appearance: { ...morgyData.appearance, ...updates } as EnhancedMorgyData['appearance'],
     });
   };
 
@@ -783,7 +783,7 @@ const Step5Capabilities: React.FC<{
 }> = ({ morgyData, updateMorgyData }) => {
   const updateCapabilities = (updates: Partial<EnhancedMorgyData['capabilities']>) => {
     updateMorgyData({
-      capabilities: { ...morgyData.capabilities, ...updates } as any,
+      capabilities: { ...morgyData.capabilities, ...updates } as EnhancedMorgyData['capabilities'],
     });
   };
 
@@ -850,7 +850,7 @@ const Step6Knowledge: React.FC<{
 }> = ({ morgyData, updateMorgyData }) => {
   const updateKnowledgeBase = (updates: Partial<EnhancedMorgyData['knowledgeBase']>) => {
     updateMorgyData({
-      knowledgeBase: { ...morgyData.knowledgeBase, ...updates } as any,
+      knowledgeBase: { ...morgyData.knowledgeBase, ...updates } as EnhancedMorgyData['knowledgeBase'],
     });
   };
 
@@ -945,7 +945,7 @@ const Step7Marketplace: React.FC<{
 }> = ({ morgyData, updateMorgyData }) => {
   const updateMarketplace = (updates: Partial<EnhancedMorgyData['marketplace']>) => {
     updateMorgyData({
-      marketplace: { ...morgyData.marketplace, ...updates } as any,
+      marketplace: { ...morgyData.marketplace, ...updates } as EnhancedMorgyData['marketplace'],
     });
   };
 
@@ -989,7 +989,7 @@ const Step7Marketplace: React.FC<{
               {['free', 'paid', 'subscription'].map((type) => (
                 <button
                   key={type}
-                  onClick={() => updateMarketplace({ licenseType: type as any })}
+                  onClick={() => updateMarketplace({ licenseType: type as EnhancedMorgyData['marketplace']['licenseType'] })}
                   className={`
                     p-4 rounded-lg border-2 text-center transition-all
                     ${morgyData.marketplace?.licenseType === type

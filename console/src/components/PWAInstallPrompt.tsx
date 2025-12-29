@@ -1,3 +1,10 @@
+// Extend window interface for IE detection
+declare global {
+  interface Window {
+    MSStream?: unknown;
+  }
+}
+
 import { useState, useEffect } from 'react';
 import './PWAInstallPrompt.css';
 
@@ -20,7 +27,7 @@ export function PWAInstallPrompt() {
     }
 
     // Check for iOS
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     setIsIOS(isIOSDevice);
 
     // Check if user dismissed the prompt before
