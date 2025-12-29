@@ -137,7 +137,7 @@ export function LearningInsights({ userId }: LearningInsightsProps) {
       } else {
         setStats(null);
       }
-    } catch {
+    } catch (err) {
       console.error('Failed to load learning data:', err);
       setError('Failed to load learning insights');
     } finally {

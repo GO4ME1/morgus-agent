@@ -84,7 +84,7 @@ export function Admin() {
       }
       setUsers(userData || []);
 
-    } catch {
+    } catch (err) {
       console.error('Failed to fetch admin data:', err);
       setError('Failed to load admin data. Please check your permissions.');
     } finally {
@@ -140,7 +140,7 @@ export function Admin() {
       } else {
         fetchData();
       }
-    } catch {
+    } catch (err) {
       console.error('Failed to toggle promo:', err);
     }
   };
@@ -159,7 +159,7 @@ export function Admin() {
       } else {
         fetchData();
       }
-    } catch {
+    } catch (err) {
       console.error('Failed to delete promo:', err);
     }
   };
@@ -194,7 +194,7 @@ export function Admin() {
         fetchData();
         alert(`Granted ${count} day pass(es)!`);
       }
-    } catch {
+    } catch (err) {
       console.error('Failed to grant day pass:', err);
     }
   };
@@ -213,7 +213,7 @@ export function Admin() {
       } else {
         fetchData();
       }
-    } catch {
+    } catch (err) {
       console.error('Failed to toggle admin:', err);
     }
   };

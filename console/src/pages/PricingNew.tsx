@@ -245,13 +245,13 @@ export function Pricing() {
 
       // Redirect to Stripe checkout
       window.location.href = data.url;
-    } catch (err: unknown) {
-      setError(err.message || 'Failed to start checkout');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start checkout');
       setLoading(null);
     }
   };
 
-  const handleBuyPack = async (packId: string, _: number) => {
+  const handleBuyPack = async (packId: string, _price: number) => {
     if (!user) {
       navigate(`/signup?redirect=/pricing`);
       return;
@@ -281,8 +281,8 @@ export function Pricing() {
 
       // Redirect to Stripe checkout
       window.location.href = data.url;
-    } catch (err: unknown) {
-      setError(err.message || 'Failed to start checkout');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start checkout');
       setLoading(null);
     }
   };

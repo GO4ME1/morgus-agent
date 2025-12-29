@@ -17,7 +17,7 @@ interface NotebookLMActionsProps {
 
 export const NotebookLMActions: React.FC<NotebookLMActionsProps> = ({
   messageId,
-  messageContent: 
+  messageContent: _messageContent,
   currentNotebookId,
   onAddToNotebook,
   onPullFromNotebook
@@ -44,7 +44,7 @@ export const NotebookLMActions: React.FC<NotebookLMActionsProps> = ({
         btn.classList.add('success');
         setTimeout(() => btn.classList.remove('success'), 2000);
       }
-    } catch {
+    } catch (error) {
       console.error('Failed to add to notebook:', error);
       alert('Failed to add to notebook');
     } finally {
@@ -65,7 +65,7 @@ export const NotebookLMActions: React.FC<NotebookLMActionsProps> = ({
       
       // The response will be inserted into chat by the parent component
       console.log('Pulled from notebook:', response);
-    } catch {
+    } catch (error) {
       console.error('Failed to pull from notebook:', error);
       alert('Failed to pull from notebook');
     } finally {
@@ -162,7 +162,7 @@ export const NotebookLMInputActions: React.FC<{
     try {
       setPulling(true);
       await onPullFromNotebook(currentNotebookId);
-    } catch {
+    } catch (error) {
       console.error('Failed to pull from notebook:', error);
       alert('Failed to pull from notebook');
     } finally {

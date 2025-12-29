@@ -139,7 +139,7 @@ function App() {
                     ));
                   }
                 }
-              } catch {
+              } catch (e) {
                 console.error('Error parsing SSE data:', e);
               }
             }
@@ -148,11 +148,11 @@ function App() {
       }
 
       loadTasks();
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error:', error);
       setMessages((prev) => prev.map(msg => 
         msg.id === statusMessageId 
-          ? { ...msg, content: `❌ Error: ${error.message}`, isStreaming: false }
+          ? { ...msg, content: `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`, isStreaming: false }
           : msg
       ));
     } finally {

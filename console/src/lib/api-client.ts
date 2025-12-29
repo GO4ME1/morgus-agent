@@ -38,12 +38,6 @@ export interface KnowledgeItem {
   created_at: string;
 }
 
-export interface KnowledgeTestResult {
-  chunk: string;
-  score: number;
-  source: string;
-}
-
 export async function uploadKnowledge(morgyId: string, file: File): Promise<KnowledgeItem> {
   const formData = new FormData();
   formData.append('file', file);
@@ -129,7 +123,7 @@ export async function deleteKnowledge(knowledgeId: string): Promise<void> {
   }
 }
 
-export async function testKnowledge(morgyId: string, query: string): Promise<KnowledgeTestResult[]> {
+export async function testKnowledge(morgyId: string, query: string): Promise<unknown[]> {
   const headers = await getAuthHeaders();
 
   const response = await fetch(`${API_BASE}/api/knowledge/test`, {
@@ -164,20 +158,6 @@ export interface MarketplaceListing {
   };
 }
 
-export interface MarketplaceFilters {
-  category?: string;
-  priceMin?: number;
-  priceMax?: number;
-  sortBy?: string;
-  search?: string;
-}
-
-export interface PurchaseResult {
-  success: boolean;
-  purchaseId: string;
-  morgyId: string;
-}
-
 export async function createListing(morgyId: string, listing: Partial<MarketplaceListing>): Promise<MarketplaceListing> {
   const headers = await getAuthHeaders();
 
@@ -194,8 +174,8 @@ export async function createListing(morgyId: string, listing: Partial<Marketplac
   return response.json();
 }
 
-export async function browseMarketplace(filters?: MarketplaceFilters): Promise<MarketplaceListing[]> {
-  const params = new URLSearchParams(filters as Record<string, string>);
+export async function browseMarketplace(filters?: Record<string, string>): Promise<unknown[]> {
+  const params = new URLSearchParams(filters);
 
   const response = await fetch(`${API_BASE}/api/marketplace/browse?${params}`);
 
@@ -206,7 +186,7 @@ export async function browseMarketplace(filters?: MarketplaceFilters): Promise<M
   return response.json();
 }
 
-export async function purchaseMorgy(listingId: string): Promise<PurchaseResult> {
+export async function purchaseMorgy(listingId: string): Promise<unknown> {
   const headers = await getAuthHeaders();
 
   const response = await fetch(`${API_BASE}/api/marketplace/purchase`, {
@@ -236,14 +216,7 @@ export async function getMyListings(): Promise<MarketplaceListing[]> {
   return response.json();
 }
 
-export interface CreatorAnalytics {
-  totalSales: number;
-  totalRevenue: number;
-  topMorgys: Array<{ id: string; name: string; sales: number }>;
-  recentSales: Array<{ date: string; amount: number }>;
-}
-
-export async function getCreatorAnalytics(): Promise<CreatorAnalytics> {
+export async function getCreatorAnalytics(): Promise<unknown> {
   const headers = await getAuthHeaders();
 
   const response = await fetch(`${API_BASE}/api/marketplace/analytics`, {
@@ -274,12 +247,6 @@ export interface MCPExportPackage {
   packageJson: string;
   serverCode: string;
   shareUrl?: string;
-}
-
-export interface MCPTestResult {
-  success: boolean;
-  message: string;
-  tools: string[];
 }
 
 export async function exportToMCP(morgyId: string, options: MCPExportOptions): Promise<MCPExportPackage> {
@@ -317,7 +284,7 @@ export async function getMCPConfig(morgyId: string, options: MCPExportOptions): 
   return response.text();
 }
 
-export async function testMCP(morgyId: string): Promise<MCPTestResult> {
+export async function testMCP(morgyId: string): Promise<unknown> {
   const headers = await getAuthHeaders();
 
   const response = await fetch(`${API_BASE}/api/mcp/test`, {
@@ -337,13 +304,6 @@ export async function testMCP(morgyId: string): Promise<MCPTestResult> {
 // MORGY API (Extended)
 // ============================================
 
-export interface AvatarConfig {
-  style: string;
-  backgroundColor: string;
-  accessory?: string;
-  expression?: string;
-}
-
 export interface MorgyConfig {
   name: string;
   description: string;
@@ -356,19 +316,12 @@ export interface MorgyConfig {
     emoji: number;
     systemPrompt?: string;
   };
-  avatarConfig?: AvatarConfig;
+  avatarConfig?: Record<string, unknown>;
   templates?: string[];
   workflows?: string[];
 }
 
-export interface Morgy extends MorgyConfig {
-  id: string;
-  user_id: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export async function createMorgy(config: MorgyConfig): Promise<Morgy> {
+export async function createMorgy(config: MorgyConfig): Promise<unknown> {
   const headers = await getAuthHeaders();
 
   const response = await fetch(`${API_BASE}/api/morgys`, {
@@ -384,7 +337,7 @@ export async function createMorgy(config: MorgyConfig): Promise<Morgy> {
   return response.json();
 }
 
-export async function updateMorgy(morgyId: string, updates: Partial<MorgyConfig>): Promise<Morgy> {
+export async function updateMorgy(morgyId: string, updates: Partial<MorgyConfig>): Promise<unknown> {
   const headers = await getAuthHeaders();
 
   const response = await fetch(`${API_BASE}/api/morgys/${morgyId}`, {
@@ -400,7 +353,7 @@ export async function updateMorgy(morgyId: string, updates: Partial<MorgyConfig>
   return response.json();
 }
 
-export async function getMorgy(morgyId: string): Promise<Morgy> {
+export async function getMorgy(morgyId: string): Promise<unknown> {
   const headers = await getAuthHeaders();
 
   const response = await fetch(`${API_BASE}/api/morgys/${morgyId}`, {
@@ -414,7 +367,7 @@ export async function getMorgy(morgyId: string): Promise<Morgy> {
   return response.json();
 }
 
-export async function getMyMorgys(): Promise<Morgy[]> {
+export async function getMyMorgys(): Promise<unknown[]> {
   const headers = await getAuthHeaders();
 
   const response = await fetch(`${API_BASE}/api/morgys`, {
@@ -536,14 +489,6 @@ export interface BillingInfo {
   };
 }
 
-export interface PricingTier {
-  id: string;
-  name: string;
-  price: number;
-  credits: number;
-  features: string[];
-}
-
 export async function getBillingInfo(): Promise<BillingInfo> {
   const headers = await getAuthHeaders();
 
@@ -558,7 +503,7 @@ export async function getBillingInfo(): Promise<BillingInfo> {
   return response.json();
 }
 
-export async function getPricingTiers(): Promise<PricingTier[]> {
+export async function getPricingTiers(): Promise<unknown[]> {
   const response = await fetch(`${API_BASE}/api/billing/pricing`);
 
   if (!response.ok) {
@@ -603,21 +548,7 @@ export async function createPortalSession(): Promise<{ url: string }> {
 // ANALYTICS API
 // ============================================
 
-export interface UserAnalytics {
-  totalTasks: number;
-  completedTasks: number;
-  creditsUsed: number;
-  topTools: Array<{ name: string; count: number }>;
-}
-
-export interface PlatformAnalytics {
-  totalUsers: number;
-  activeUsers: number;
-  totalTasks: number;
-  revenue: number;
-}
-
-export async function getUserAnalytics(userId: string): Promise<UserAnalytics> {
+export async function getUserAnalytics(userId: string): Promise<unknown> {
   const headers = await getAuthHeaders();
 
   const response = await fetch(`${API_BASE}/api/analytics/user/${userId}`, {
@@ -631,7 +562,7 @@ export async function getUserAnalytics(userId: string): Promise<UserAnalytics> {
   return response.json();
 }
 
-export async function getPlatformAnalytics(): Promise<PlatformAnalytics> {
+export async function getPlatformAnalytics(): Promise<unknown> {
   const headers = await getAuthHeaders();
 
   const response = await fetch(`${API_BASE}/api/analytics/platform`, {
@@ -649,22 +580,18 @@ export async function getPlatformAnalytics(): Promise<PlatformAnalytics> {
 // AXIOS-LIKE API CLIENT
 // ============================================
 
-interface ApiResponse<T> {
-  data: T;
-}
-
 /**
  * Simple axios-like API client for components that need it
  */
 export const apiClient = {
-  async get<T = unknown>(url: string): Promise<ApiResponse<T>> {
+  async get(url: string) {
     const headers = await getAuthHeaders();
     const response = await fetch(`${API_BASE}${url}`, { headers });
     if (!response.ok) throw new Error(`GET ${url} failed`);
     return { data: await response.json() };
   },
   
-  async post<T = unknown>(url: string, data?: unknown): Promise<ApiResponse<T>> {
+  async post(url: string, data?: Record<string, unknown>) {
     const headers = await getAuthHeaders();
     const response = await fetch(`${API_BASE}${url}`, {
       method: 'POST',
@@ -675,7 +602,7 @@ export const apiClient = {
     return { data: await response.json() };
   },
   
-  async put<T = unknown>(url: string, data?: unknown): Promise<ApiResponse<T>> {
+  async put(url: string, data?: Record<string, unknown>) {
     const headers = await getAuthHeaders();
     const response = await fetch(`${API_BASE}${url}`, {
       method: 'PUT',
@@ -686,7 +613,7 @@ export const apiClient = {
     return { data: await response.json() };
   },
   
-  async delete<T = unknown>(url: string): Promise<ApiResponse<T>> {
+  async delete(url: string) {
     const headers = await getAuthHeaders();
     const response = await fetch(`${API_BASE}${url}`, {
       method: 'DELETE',

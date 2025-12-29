@@ -33,7 +33,7 @@ export default function Dashboard() {
 
       if (error) throw error;
       setTasks(data || []);
-    } catch {
+    } catch (error) {
       console.error('Error fetching tasks:', error);
     } finally {
       setLoading(false);

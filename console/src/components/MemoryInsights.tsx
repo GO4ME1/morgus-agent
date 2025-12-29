@@ -15,7 +15,7 @@ interface Learning {
 
 export const MemoryInsights: React.FC<{ morgyId?: string }> = ({ morgyId }) => {
   const [learnings, setLearnings] = useState<Learning[]>([]);
-  const [stats, setStats] = useState<unknown>(null);
+  const [stats, setStats] = useState<{ approved_learnings?: number; total_applications?: number; pending_learnings?: number; avg_feedback_score?: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -40,7 +40,7 @@ export const MemoryInsights: React.FC<{ morgyId?: string }> = ({ morgyId }) => {
         const res = await apiClient.get('/api/memory/platform/top?limit=20');
         setLearnings(res.data.learnings || []);
       }
-    } catch {
+    } catch (error) {
       console.error('Error loading learnings:', error);
     } finally {
       setLoading(false);
@@ -53,7 +53,7 @@ export const MemoryInsights: React.FC<{ morgyId?: string }> = ({ morgyId }) => {
     try {
       const res = await apiClient.get(`/api/memory/morgy/${morgyId}/stats`);
       setStats(res.data);
-    } catch {
+    } catch (error) {
       console.error('Error loading Morgy stats:', error);
     }
   };
@@ -81,7 +81,7 @@ export const MemoryInsights: React.FC<{ morgyId?: string }> = ({ morgyId }) => {
         });
         setLearnings(res.data.learnings || []);
       }
-    } catch {
+    } catch (error) {
       console.error('Error searching learnings:', error);
     } finally {
       setLoading(false);

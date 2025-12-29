@@ -1,21 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import './VoiceInput.css';
 
-// Web Speech API types
-interface SpeechRecognitionEvent extends Event {
+// Type declarations for Web Speech API (not fully typed in TypeScript)
+interface SpeechRecognitionEvent {
   results: SpeechRecognitionResultList;
-  resultIndex: number;
 }
 
-interface SpeechRecognitionErrorEvent extends Event {
-  error: string;
-  message: string;
+interface SpeechRecognitionResultList {
+  length: number;
+  [index: number]: SpeechRecognitionResult;
 }
 
 interface SpeechRecognitionResult {
   isFinal: boolean;
-  0: SpeechRecognitionAlternative;
-  length: number;
+  [index: number]: SpeechRecognitionAlternative;
 }
 
 interface SpeechRecognitionAlternative {
@@ -23,36 +21,29 @@ interface SpeechRecognitionAlternative {
   confidence: number;
 }
 
-interface SpeechRecognitionResultList {
-  length: number;
-  item(index: number): SpeechRecognitionResult;
-  [index: number]: SpeechRecognitionResult;
+interface SpeechRecognitionErrorEvent {
+  error: string;
 }
 
-interface SpeechRecognitionInstance extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start(): void;
-  stop(): void;
-  abort(): void;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
-  onend: (() => void) | null;
-}
-
-interface SpeechRecognitionConstructor {
-  new (): SpeechRecognitionInstance;
-}
-
-// Extend Window interface for Web Speech API
+// Extend window for audio state tracking
 declare global {
   interface Window {
-    SpeechRecognition?: SpeechRecognitionConstructor;
-    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+    SpeechRecognition?: new () => SpeechRecognition;
+    webkitSpeechRecognition?: new () => SpeechRecognition;
     __currentAudio?: HTMLAudioElement | null;
     __isAudioPlaying?: boolean;
   }
+}
+
+interface SpeechRecognition {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
 }
 
 interface VoiceInputProps {
@@ -63,33 +54,34 @@ interface VoiceInputProps {
 
 export function VoiceInput({ onTranscript, isListening, onListeningChange }: VoiceInputProps) {
   const [isSupported, setIsSupported] = useState(false);
-  const [recognition, setRecognition] = useState<SpeechRecognitionInstance | null>(null);
+  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
 
   useEffect(() => {
     // Check if Web Speech API is supported
-    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
     
-    if (SpeechRecognitionAPI) {
+    if (SpeechRecognitionCtor) {
       setIsSupported(true);
       
-      const recognitionInstance = new SpeechRecognitionAPI();
+      const recognitionInstance = new SpeechRecognitionCtor();
       recognitionInstance.continuous = false;
       recognitionInstance.interimResults = true;
       recognitionInstance.lang = 'en-US';
 
       recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
-        const results = event.results;
-        const transcriptParts: string[] = [];
-        
-        for (let i = 0; i < results.length; i++) {
-          transcriptParts.push(results[i][0].transcript);
+        const results: SpeechRecognitionResult[] = [];
+        for (let i = 0; i < event.results.length; i++) {
+          results.push(event.results[i]);
         }
-        
-        const transcript = transcriptParts.join('');
+        const transcript = results
+          .map((result: SpeechRecognitionResult) => result[0])
+          .map((alt: SpeechRecognitionAlternative) => alt.transcript)
+          .join('');
+
         onTranscript(transcript);
 
         // If final result, stop listening
-        if (results[results.length - 1].isFinal) {
+        if (event.results[event.results.length - 1].isFinal) {
           onListeningChange(false);
         }
       };
@@ -105,9 +97,9 @@ export function VoiceInput({ onTranscript, isListening, onListeningChange }: Voi
 
       setRecognition(recognitionInstance);
     }
-  }, [onTranscript, onListeningChange]);
+  }, []);
 
-  const toggleListening = useCallback(() => {
+  const toggleListening = () => {
     if (!recognition) return;
 
     if (isListening) {
@@ -117,7 +109,7 @@ export function VoiceInput({ onTranscript, isListening, onListeningChange }: Voi
       recognition.start();
       onListeningChange(true);
     }
-  }, [recognition, isListening, onListeningChange]);
+  };
 
   if (!isSupported) {
     return null; // Don't show button if not supported
@@ -140,7 +132,7 @@ let isCurrentlySpeaking = false;
 let currentSpeakingText = '';
 
 // Text-to-Speech function using ElevenLabs API
-export async function speakText(text: string): Promise<void> {
+export async function speakText(text: string) {
   // Create a hash of the text to track if we've already spoken it
   const textHash = text.substring(0, 100); // Use first 100 chars as identifier
   
@@ -241,8 +233,9 @@ export async function speakText(text: string): Promise<void> {
       isCurrentlySpeaking = false;
       currentSpeakingText = '';
     };
-  } catch {
+  } catch (error) {
     console.error('[TTS] ElevenLabs TTS failed:', error);
+    console.error('[TTS] Error details:', JSON.stringify(error, null, 2));
     // Don't fallback to browser TTS - just log the error
     console.log('[TTS] Skipping TTS due to error (no fallback to browser TTS)');
     isCurrentlySpeaking = false;
@@ -255,7 +248,7 @@ export function getVoices(): SpeechSynthesisVoice[] {
   return [];
 }
 
-export function stopSpeaking(): void {
+export function stopSpeaking() {
   // Clear spoken messages when manually stopping
   spokenMessages.clear();
   

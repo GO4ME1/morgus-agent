@@ -15,6 +15,12 @@ export interface NotebookLMMessage {
   sourceType?: 'text' | 'url' | 'pdf';
 }
 
+export interface NotebookLMResponse {
+  success: boolean;
+  data?: unknown;
+  error?: string;
+}
+
 export interface NotebookSource {
   id: string;
   type: 'text' | 'url' | 'pdf';
@@ -29,12 +35,6 @@ export interface Notebook {
   sourceCount: number;
   type: 'personal' | 'shared' | 'public';
   createdAt: Date;
-}
-
-export interface NotebookLMResponse {
-  success: boolean;
-  data?: NotebookSource;
-  error?: string;
 }
 
 class NotebookLMService {
@@ -53,7 +53,7 @@ class NotebookLMService {
       // For now, store locally and open NotebookLM in new tab
       // Later: Use API when available
       
-      const source: NotebookSource = {
+      const source = {
         id: `source-${Date.now()}`,
         type: 'text' as const,
         title: title || 'Chat Message',
@@ -64,12 +64,13 @@ class NotebookLMService {
       // Store in localStorage
       const key = `notebook_${notebookId}_sources`;
       const stored = localStorage.getItem(key);
-      const sources: NotebookSource[] = stored ? JSON.parse(stored) : [];
+      const sources = stored ? JSON.parse(stored) : [];
       sources.push(source);
       localStorage.setItem(key, JSON.stringify(sources));
 
       // Open NotebookLM to manually add
       const url = `${NOTEBOOKLM_CONFIG.baseUrl}/notebook/${notebookId}`;
+      // const _message = `Content to add:\n\n${content}\n\nPlease add this to your notebook manually.`;
       
       // Copy to clipboard
       await navigator.clipboard.writeText(content);
@@ -84,12 +85,11 @@ class NotebookLMService {
         success: true,
         data: source
       };
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
+    } catch (error) {
       console.error('Failed to add to notebook:', error);
       return {
         success: false,
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
@@ -111,8 +111,7 @@ class NotebookLMService {
       window.open(url, '_blank');
       
       return 'NotebookLM opened. Please ask your question there and copy the response back to Morgus.';
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
+    } catch (error) {
       console.error('Failed to get insights:', error);
       throw error;
     }
@@ -142,8 +141,8 @@ class NotebookLMService {
 
       // Fallback: Open NotebookLM
       return await this.getInsights(notebookId, message);
-    } catch (err) {
-      console.error('Chat failed, falling back to manual:', err);
+    } catch (error) {
+      console.error('Chat failed, falling back to manual:', error);
       return await this.getInsights(notebookId, message);
     }
   }
@@ -156,8 +155,8 @@ class NotebookLMService {
       const key = `notebook_${notebookId}_sources`;
       const stored = localStorage.getItem(key);
       return stored ? JSON.parse(stored) : [];
-    } catch (err) {
-      console.error('Failed to get sources:', err);
+    } catch (error) {
+      console.error('Failed to get sources:', error);
       return [];
     }
   }
@@ -177,11 +176,11 @@ class NotebookLMService {
     try {
       const key = 'notebooklm_notebooks';
       const stored = localStorage.getItem(key);
-      const notebooks: Notebook[] = stored ? JSON.parse(stored) : [];
+      const notebooks = stored ? JSON.parse(stored) : [];
       
       // Add default notebook if none exist
       if (notebooks.length === 0) {
-        const defaultNotebook: Notebook = {
+        const defaultNotebook = {
           id: NOTEBOOKLM_CONFIG.defaultNotebookId,
           name: 'Morgus Conversations',
           sourceCount: 0,
@@ -193,8 +192,8 @@ class NotebookLMService {
       }
       
       return notebooks;
-    } catch (err) {
-      console.error('Failed to get notebooks:', err);
+    } catch (error) {
+      console.error('Failed to get notebooks:', error);
       return [];
     }
   }
@@ -204,7 +203,7 @@ class NotebookLMService {
    */
   createNotebook(name: string, type: 'personal' | 'shared' | 'public' = 'personal'): Notebook {
     try {
-      const notebook: Notebook = {
+      const notebook = {
         id: `notebook-${Date.now()}`,
         name,
         sourceCount: 0,
@@ -214,14 +213,14 @@ class NotebookLMService {
       
       const key = 'notebooklm_notebooks';
       const stored = localStorage.getItem(key);
-      const notebooks: Notebook[] = stored ? JSON.parse(stored) : [];
+      const notebooks = stored ? JSON.parse(stored) : [];
       notebooks.push(notebook);
       localStorage.setItem(key, JSON.stringify(notebooks));
       
       return notebook;
-    } catch (err) {
-      console.error('Failed to create notebook:', err);
-      throw err;
+    } catch (error) {
+      console.error('Failed to create notebook:', error);
+      throw error;
     }
   }
 
@@ -255,7 +254,7 @@ class NotebookLMService {
       }
       
       return false;
-    } catch {
+    } catch (_error) {
       return false;
     }
   }

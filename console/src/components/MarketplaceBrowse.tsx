@@ -69,15 +69,15 @@ export const MarketplaceBrowse: React.FC = () => {
   const loadListings = async () => {
     setLoading(true);
     try {
-      const filterParams: unknown = {};
+      const filterParams: Record<string, string> = {};
       if (filters.category !== 'all') filterParams.category = filters.category;
       if (filters.pricingModel !== 'all') filterParams.licenseType = filters.pricingModel;
       if (filters.search) filterParams.search = filters.search;
       filterParams.sortBy = filters.sortBy;
 
       const data = await browseMarketplace(filterParams);
-      setListings(data || []);
-    } catch {
+      setListings((data as MarketplaceListing[]) || []);
+    } catch (error) {
       console.error('Failed to load listings:', error);
       setListings([]);
     } finally {
@@ -104,7 +104,7 @@ export const MarketplaceBrowse: React.FC = () => {
         alert('Morgy added to your collection!');
         setSelectedListing(null);
       }
-    } catch {
+    } catch (error) {
       console.error('Purchase failed:', error);
       alert('Purchase failed. Please try again.');
     }
@@ -173,7 +173,7 @@ export const MarketplaceBrowse: React.FC = () => {
             <div>
               <select
                 value={filters.sortBy}
-                onChange={(e) => setFilters({ ...filters, sortBy: e.target.value as unknown })}
+                onChange={(e) => setFilters({ ...filters, sortBy: e.target.value as 'popular' | 'recent' | 'rating' | 'price' })}
                 className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-purple-500 focus:outline-none"
               >
                 {sortOptions.map((opt) => (

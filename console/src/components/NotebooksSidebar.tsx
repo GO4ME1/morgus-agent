@@ -35,7 +35,7 @@ export const NotebooksSidebar: React.FC<NotebooksSidebarProps> = ({
       const stored = localStorage.getItem('morgus_notebooks');
       if (stored) {
         const parsed = JSON.parse(stored);
-        setNotebooks(parsed.map((n: unknown) => ({
+        setNotebooks(parsed.map((n: { id: string; name: string; sourceCount: number; createdAt: string; updatedAt: string }) => ({
           ...n,
           createdAt: new Date(n.createdAt),
           updatedAt: new Date(n.updatedAt)
@@ -53,7 +53,7 @@ export const NotebooksSidebar: React.FC<NotebooksSidebarProps> = ({
         setNotebooks([defaultNotebook]);
         localStorage.setItem('morgus_notebooks', JSON.stringify([defaultNotebook]));
       }
-    } catch {
+    } catch (error) {
       console.error('Failed to load notebooks:', error);
     } finally {
       setLoading(false);

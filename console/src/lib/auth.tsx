@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setProfile(data);
-    } catch {
+    } catch (error) {
       console.error('Error fetching profile:', error);
     }
   };
@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           setLoading(false);
         }
-      } catch {
+      } catch (error) {
         console.error('Error initializing auth:', error);
         if (mounted) {
           setLoading(false);

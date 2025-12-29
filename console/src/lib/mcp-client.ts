@@ -58,7 +58,7 @@ class MCPClientImpl implements MCPClient {
       this.tools = data.tools || [];
       
       console.log(`[MCP] Loaded ${this.tools.length} tools from MCP servers`);
-    } catch {
+    } catch (error) {
       console.error('[MCP] Failed to initialize:', error);
       // Don't throw - gracefully degrade if MCP servers aren't available
       this.tools = [];
@@ -124,7 +124,7 @@ class MCPClientImpl implements MCPClient {
           toolName,
           arguments: args,
         });
-      } catch {
+      } catch (error) {
         console.error('[MCP] Failed to parse JSON tool call:', error);
       }
     }
@@ -160,7 +160,7 @@ class MCPClientImpl implements MCPClient {
         result: result.result,
         content: result.content,
       };
-    } catch {
+    } catch (error) {
       console.error('[MCP] Tool execution failed:', error);
       return {
         success: false,

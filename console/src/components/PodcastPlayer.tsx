@@ -17,9 +17,9 @@ export interface PodcastPlayerProps {
 }
 
 export const PodcastPlayer: React.FC<PodcastPlayerProps> = ({
-  notebookId: 
+  notebookId: _notebookId,
   notebookUrl,
-  instructions: 
+  instructions: _instructions,
   tips,
   estimatedTime,
   onClose,

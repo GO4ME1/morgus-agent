@@ -45,7 +45,7 @@ export const MorgyKnowledgeBase: React.FC<MorgyKnowledgeBaseProps> = ({ morgyId,
       if (!morgyId) return;
       const data = await getKnowledge(morgyId);
       setKnowledge(data || []);
-    } catch {
+    } catch (error) {
       console.error('Failed to load knowledge:', error);
     } finally {
       setLoading(false);
@@ -65,7 +65,7 @@ export const MorgyKnowledgeBase: React.FC<MorgyKnowledgeBaseProps> = ({ morgyId,
       setTextSource('');
       await loadKnowledge();
       setActiveTab('list');
-    } catch {
+    } catch (error) {
       console.error('Failed to add knowledge:', error);
       alert('Failed to add knowledge');
     } finally {
@@ -85,7 +85,7 @@ export const MorgyKnowledgeBase: React.FC<MorgyKnowledgeBaseProps> = ({ morgyId,
       setSelectedFile(null);
       await loadKnowledge();
       setActiveTab('list');
-    } catch {
+    } catch (error) {
       console.error('Failed to upload file:', error);
       alert('Failed to upload file');
     } finally {
@@ -105,7 +105,7 @@ export const MorgyKnowledgeBase: React.FC<MorgyKnowledgeBaseProps> = ({ morgyId,
       setWebsiteUrl('');
       await loadKnowledge();
       setActiveTab('list');
-    } catch {
+    } catch (error) {
       console.error('Failed to scrape website:', error);
       alert('Failed to scrape website');
     } finally {
@@ -120,7 +120,7 @@ export const MorgyKnowledgeBase: React.FC<MorgyKnowledgeBaseProps> = ({ morgyId,
       await deleteKnowledge(knowledgeId);
       
       await loadKnowledge();
-    } catch {
+    } catch (error) {
       console.error('Failed to delete knowledge:', error);
       alert('Failed to delete knowledge');
     }

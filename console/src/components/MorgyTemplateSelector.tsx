@@ -5,7 +5,7 @@ interface Template {
   id: string;
   name: string;
   description: string;
-  icon: unknown;
+  icon: React.ComponentType<{ className?: string }>;
   category: string;
   platforms: string[];
 }
@@ -40,7 +40,7 @@ interface MorgyTemplateSelectorProps {
 }
 
 export const MorgyTemplateSelector: React.FC<MorgyTemplateSelectorProps> = ({
-  morgyId: 
+  morgyId: _morgyId,
   existingTemplates = [],
   existingWorkflows = [],
   existingPlatforms = {},
@@ -250,7 +250,7 @@ export const MorgyTemplateSelector: React.FC<MorgyTemplateSelectorProps> = ({
         ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as unknown)}
+            onClick={() => setActiveTab(tab.id as 'templates' | 'workflows' | 'platforms')}
             className={`
               flex items-center gap-2 px-4 py-2 border-b-2 transition-colors
               ${activeTab === tab.id

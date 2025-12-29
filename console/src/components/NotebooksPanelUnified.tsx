@@ -10,8 +10,8 @@ interface MorgusNotebook {
   summary: string;
   raw_notebook: string;
   sections: NotebookSection[];
-  mindmap: unknown;
-  flowchart: unknown;
+  mindmap: Record<string, unknown> | null;
+  flowchart: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }
@@ -78,7 +78,7 @@ export const NotebooksPanelUnified: React.FC<NotebooksPanelProps> = ({
         const data = await response.json();
         setMorgusNotebooks(data.notebooks || []);
       }
-    } catch {
+    } catch (error) {
       console.error('Failed to load Morgus notebooks:', error);
     } finally {
       setLoading(false);
@@ -94,7 +94,7 @@ export const NotebooksPanelUnified: React.FC<NotebooksPanelProps> = ({
         const data = await response.json();
         setDailyLimit(data);
       }
-    } catch {
+    } catch (error) {
       console.error('Failed to load daily limit:', error);
     }
   };
@@ -108,7 +108,7 @@ export const NotebooksPanelUnified: React.FC<NotebooksPanelProps> = ({
         const data = await response.json();
         setAssets(data.assets || []);
       }
-    } catch {
+    } catch (error) {
       console.error('Failed to load notebook assets:', error);
     }
   };
@@ -145,7 +145,7 @@ export const NotebooksPanelUnified: React.FC<NotebooksPanelProps> = ({
           handleBackToMorgusList();
         }
       }
-    } catch {
+    } catch (error) {
       console.error('Failed to delete notebook:', error);
     }
   };
@@ -155,7 +155,7 @@ export const NotebooksPanelUnified: React.FC<NotebooksPanelProps> = ({
     try {
       const notebooks = notebookLMService.getNotebooks();
       setNotebooklmNotebooks(notebooks);
-    } catch {
+    } catch (error) {
       console.error('Failed to load NotebookLM notebooks:', error);
     }
   };

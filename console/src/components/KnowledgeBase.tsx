@@ -47,7 +47,7 @@ export function KnowledgeBase({ isOpen, onClose }: KnowledgeBaseProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ document_id: documentId }),
       });
-    } catch {
+    } catch (err) {
       console.log('Worker trigger failed, will process on schedule:', err);
     }
   };
@@ -72,7 +72,7 @@ export function KnowledgeBase({ isOpen, onClose }: KnowledgeBaseProps) {
 
       if (error) throw error;
       setDocuments(data || []);
-    } catch {
+    } catch (err) {
       console.error('Error loading documents:', err);
       setError('Failed to load documents');
     } finally {
@@ -145,7 +145,7 @@ export function KnowledgeBase({ isOpen, onClose }: KnowledgeBaseProps) {
 
       loadDocuments();
       setActiveTab('documents');
-    } catch {
+    } catch (err) {
       console.error('Error uploading files:', err);
       setError('Failed to upload files. Please try again.');
     } finally {
@@ -182,7 +182,7 @@ export function KnowledgeBase({ isOpen, onClose }: KnowledgeBaseProps) {
       setUrlInput('');
       loadDocuments();
       setActiveTab('documents');
-    } catch {
+    } catch (err) {
       console.error('Error adding URL:', err);
       setError('Failed to add URL. Please try again.');
     } finally {
@@ -222,7 +222,7 @@ export function KnowledgeBase({ isOpen, onClose }: KnowledgeBaseProps) {
       setTextTitle('');
       loadDocuments();
       setActiveTab('documents');
-    } catch {
+    } catch (err) {
       console.error('Error adding text:', err);
       setError('Failed to add text. Please try again.');
     } finally {
@@ -251,7 +251,7 @@ export function KnowledgeBase({ isOpen, onClose }: KnowledgeBaseProps) {
 
       setSuccess('Document deleted successfully');
       loadDocuments();
-    } catch {
+    } catch (err) {
       console.error('Error deleting document:', err);
       setError('Failed to delete document');
     }

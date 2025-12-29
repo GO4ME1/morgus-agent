@@ -21,7 +21,7 @@ export function BrowserView({ liveViewUrl, sessionId }: BrowserViewProps) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ sessionId })
         });
-      } catch {
+      } catch (error) {
         console.error('Failed to close session:', error);
       }
     }

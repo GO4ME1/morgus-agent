@@ -20,7 +20,7 @@ export function PWAInstallPrompt() {
     }
 
     // Check for iOS
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as unknown).MSStream;
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(isIOSDevice);
 
     // Check if user dismissed the prompt before
@@ -73,7 +73,7 @@ export function PWAInstallPrompt() {
         console.log('[PWA] User dismissed install prompt');
         handleDismiss();
       }
-    } catch {
+    } catch (error) {
       console.error('[PWA] Install error:', error);
     }
     

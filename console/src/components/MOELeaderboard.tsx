@@ -29,7 +29,7 @@ export function MOELeaderboard() {
         const data = await response.json();
         setStats(data.stats || []);
       }
-    } catch {
+    } catch (error) {
       console.error('Failed to load leaderboard:', error);
     } finally {
       setLoading(false);

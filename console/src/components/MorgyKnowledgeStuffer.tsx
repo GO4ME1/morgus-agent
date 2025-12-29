@@ -27,7 +27,7 @@ export const MorgyKnowledgeStuffer: React.FC<MorgyKnowledgeStufferProps> = ({
   const [activeTab, setActiveTab] = useState<'upload' | 'website' | 'text' | 'datasource'>('upload');
   const [isUploading, setIsUploading] = useState(false);
   const [testQuery, setTestQuery] = useState('');
-  const [testResults, setTestResults] = useState<unknown[]>([]);
+  const [testResults, setTestResults] = useState<{ score: number; source: string; content: string }[]>([]);
 
   // File Upload
   const handleFileUpload = useCallback(async (files: FileList) => {
@@ -57,7 +57,7 @@ export const MorgyKnowledgeStuffer: React.FC<MorgyKnowledgeStufferProps> = ({
         };
 
         setKnowledge((prev) => [...prev, newItem]);
-      } catch {
+      } catch (error) {
         console.error('Upload failed:', error);
       }
     }
@@ -96,7 +96,7 @@ export const MorgyKnowledgeStuffer: React.FC<MorgyKnowledgeStufferProps> = ({
 
       setKnowledge((prev) => [...prev, newItem]);
       setWebsiteUrl('');
-    } catch {
+    } catch (error) {
       console.error('Scrape failed:', error);
     } finally {
       setIsScraping(false);
@@ -137,7 +137,7 @@ export const MorgyKnowledgeStuffer: React.FC<MorgyKnowledgeStufferProps> = ({
       setKnowledge((prev) => [...prev, newItem]);
       setTextTitle('');
       setTextContent('');
-    } catch {
+    } catch (error) {
       console.error('Save failed:', error);
     } finally {
       setIsSavingText(false);
@@ -155,7 +155,7 @@ export const MorgyKnowledgeStuffer: React.FC<MorgyKnowledgeStufferProps> = ({
 
       setKnowledge((prev) => prev.filter((item) => item.id !== id));
       onKnowledgeUpdate(knowledge.filter((item) => item.id !== id));
-    } catch {
+    } catch (error) {
       console.error('Delete failed:', error);
     }
   };
@@ -173,7 +173,7 @@ export const MorgyKnowledgeStuffer: React.FC<MorgyKnowledgeStufferProps> = ({
 
       const results = await response.json();
       setTestResults(results);
-    } catch {
+    } catch (error) {
       console.error('Test failed:', error);
     }
   };
@@ -197,7 +197,7 @@ export const MorgyKnowledgeStuffer: React.FC<MorgyKnowledgeStufferProps> = ({
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as unknown)}
+              onClick={() => setActiveTab(tab.id as 'upload' | 'website' | 'text' | 'datasource')}
               className={`
                 flex items-center gap-2 px-4 py-2 border-b-2 transition-colors
                 ${activeTab === tab.id

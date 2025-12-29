@@ -34,9 +34,9 @@ export default function NewTask() {
 
       // Redirect to task detail page
       navigate(`/task/${data.id}`);
-    } catch (err: unknown) {
+    } catch (err) {
       console.error('Error creating task:', err);
-      setError(err.message || 'Failed to create task');
+      setError(err instanceof Error ? err.message : 'Failed to create task');
     } finally {
       setSubmitting(false);
     }

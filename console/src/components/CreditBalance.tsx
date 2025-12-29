@@ -3,7 +3,7 @@
  * Displays user's image and video credits in the header
  */
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../lib/auth';
 
 interface CreditBalance {
@@ -53,9 +53,9 @@ export function CreditBalance() {
       const data = await response.json();
       setBalance(data.balance);
       setError(null);
-    } catch (err: unknown) {
+    } catch (err) {
       console.error('[Credits] Error fetching balance:', err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }

@@ -32,9 +32,9 @@ export function MorgyStatsDashboard() {
       setLoading(true);
       setError(null);
       const data = await getCreatorAnalytics();
-      setStats(data);
+      setStats(data as CreatorStats);
     } catch (err: unknown) {
-      setError(err.message || 'Failed to load stats');
+      setError(err instanceof Error ? err.message : 'Failed to load stats');
       // Set default stats for new creators
       setStats({
         totalListings: 0,
