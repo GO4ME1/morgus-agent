@@ -52,7 +52,7 @@ What makes Morgus unique:
    - API access
 
 **In short:**
-- **Core:** Autonomous agent that gets shit done
+- **Core:** Autonomous agent that executes complex tasks end-to-end
 - **Extension:** Customize with Morgys and knowledge
 - **Scale:** Marketplace and enterprise features
 
