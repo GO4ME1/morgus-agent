@@ -2567,3 +2567,43 @@ button {
 .sidebar-toggle.morgy-pen-toggle:hover {
   box-shadow: 0 6px 25px rgba(255, 0, 255, 0.6), 0 0 40px rgba(0, 255, 255, 0.4);
 }
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  /* Larger submit button on mobile */
+  .send-button,
+  button[class*="send"],
+  .input-actions button:last-child {
+    width: 60px !important;
+    height: 60px !important;
+    min-width: 60px !important;
+    min-height: 60px !important;
+    font-size: 28px !important;
+    padding: 0 !important;
+  }
+
+  /* Hide MOE leaderboard on mobile welcome screen */
+  .mobile-moe-leaderboard {
+    display: none !important;
+  }
+
+  /* Safe area for mobile bottom navigation */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Adjust main content area for bottom nav */
+  .app-content-with-bottom-nav {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Mobile Bottom Navigation */
+.mobile-bottom-nav {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.mobile-bottom-nav button:active {
+  transform: scale(0.95);
+}

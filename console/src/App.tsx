@@ -14,6 +14,9 @@ import MorgyPen from './components/MorgyPen';
 import { MorgyAutocomplete } from './components/MorgyAutocomplete';
 import { DeepResearchPanel } from './components/DeepResearchPanel';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
+import { MobileBottomNav } from './components/MobileBottomNav';
+import { MobileWelcomeScreen } from './components/MobileWelcomeScreen';
+import { MOEModal } from './components/MOEModal';
 import { runDeepResearch } from './lib/research-orchestrator';
 import type { ResearchSession, ResearchStep } from './lib/research-orchestrator';
 import { notebookLMService } from './services/notebooklm';
@@ -126,6 +129,11 @@ function App() {
     const saved = localStorage.getItem('morgus_dont_train');
     return saved === 'true';
   });
+  const [showMobileWelcome, setShowMobileWelcome] = useState(() => {
+    // Show welcome screen on mobile if no messages yet
+    return window.innerWidth <= 768 && messages.length === 1;
+  });
+  const [showMOEModal, setShowMOEModal] = useState(false);
 
   // Sync dontTrainOnMe with profile from Supabase
   useEffect(() => {
@@ -961,6 +969,14 @@ function App() {
             >
               🎧
             </button>
+            <button 
+              onClick={() => setShowMOEModal(true)}
+              title="Model Rankings"
+              className="mobile-moe-mini"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px' }}
+            >
+              🏆
+            </button>
           </div>
           
           <MOELeaderboard />
@@ -1442,6 +1458,52 @@ function App() {
 
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
+
+      {/* Mobile Welcome Screen */}
+      {showMobileWelcome && (
+        <MobileWelcomeScreen
+          userName={profile?.display_name || profile?.email?.split('@')[0]}
+          onNewChat={() => setShowMobileWelcome(false)}
+          onBrowseMorgys={() => {
+            setShowMobileWelcome(false);
+            navigate('/morgys');
+          }}
+          onViewHistory={() => {
+            setShowMobileWelcome(false);
+            navigate('/chats');
+          }}
+        />
+      )}
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav
+        onChatClick={() => {
+          setShowMobileWelcome(false);
+          navigate('/');
+        }}
+        onMorgysClick={() => {
+          setShowMobileWelcome(false);
+          navigate('/morgys');
+        }}
+        onChatsClick={() => {
+          setShowMobileWelcome(false);
+          navigate('/chats');
+        }}
+        onNotesClick={() => {
+          setShowMobileWelcome(false);
+          navigate('/notes');
+        }}
+        onProfileClick={() => {
+          setShowMobileWelcome(false);
+          navigate('/profile');
+        }}
+      />
+
+      {/* MOE Modal */}
+      <MOEModal
+        isOpen={showMOEModal}
+        onClose={() => setShowMOEModal(false)}
+      />
     </div>
   );
 }

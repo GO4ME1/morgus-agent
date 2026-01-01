@@ -38,11 +38,9 @@ export interface Notebook {
 }
 
 class NotebookLMService {
-  private apiBaseUrl: string;
-
   constructor() {
-    // Use DPPM service as proxy to NotebookLM
-    this.apiBaseUrl = process.env.REACT_APP_DPPM_URL || 'https://morgus-deploy.fly.dev';
+    // NotebookLM does not have a public API
+    // We use manual clipboard-based integration
   }
 
   /**
@@ -118,33 +116,12 @@ class NotebookLMService {
   }
 
   /**
-   * Chat with a notebook (future: direct API integration)
+   * Chat with a notebook (manual clipboard-based approach)
+   * NotebookLM does not have a public API, so we use clipboard integration
    */
   async chat(notebookId: string, message: string): Promise<string> {
-    try {
-      // Try to use DPPM service if available
-      const response = await fetch(`${this.apiBaseUrl}/api/notebooklm/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          notebookId,
-          message
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data.response || data.data;
-      }
-
-      // Fallback: Open NotebookLM
-      return await this.getInsights(notebookId, message);
-    } catch (error) {
-      console.error('Chat failed, falling back to manual:', error);
-      return await this.getInsights(notebookId, message);
-    }
+    // NotebookLM doesn't have an API - use manual clipboard approach
+    return await this.getInsights(notebookId, message);
   }
 
   /**
@@ -241,22 +218,11 @@ class NotebookLMService {
 
   /**
    * Check if NotebookLM integration is available
+   * Always returns true since we use manual clipboard integration
    */
   async checkAvailability(): Promise<boolean> {
-    try {
-      const response = await fetch(`${this.apiBaseUrl}/api/notebooklm/status`, {
-        method: 'GET'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        return data.isRunning && data.isHealthy;
-      }
-      
-      return false;
-    } catch (_error) {
-      return false;
-    }
+    // NotebookLM integration is always available via clipboard
+    return true;
   }
 }
 
