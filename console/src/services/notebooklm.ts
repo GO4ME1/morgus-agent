@@ -116,12 +116,49 @@ class NotebookLMService {
   }
 
   /**
-   * Chat with a notebook (manual clipboard-based approach)
-   * NotebookLM does not have a public API, so we use clipboard integration
+   * Chat with a notebook
+   * Tries backend API first, falls back to manual clipboard if unavailable
    */
   async chat(notebookId: string, message: string): Promise<string> {
-    // NotebookLM doesn't have an API - use manual clipboard approach
-    return await this.getInsights(notebookId, message);
+    // Try backend API first
+    try {
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://morgus-deploy.fly.dev';
+      const response = await fetch(`${apiBaseUrl}/api/notebooklm/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.getAuthToken()}`
+        },
+        body: JSON.stringify({ message, notebookId })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.response || 'No response from NotebookLM';
+    } catch (error) {
+      console.warn('NotebookLM API unavailable, falling back to manual clipboard:', error);
+      return await this.getInsights(notebookId, message);
+    }
+  }
+
+  /**
+   * Get auth token from localStorage
+   */
+  private getAuthToken(): string {
+    // Get auth token from localStorage
+    const authData = localStorage.getItem('supabase.auth.token');
+    if (authData) {
+      try {
+        const parsed = JSON.parse(authData);
+        return parsed.access_token || parsed.currentSession?.access_token || '';
+      } catch {
+        return authData;
+      }
+    }
+    return '';
   }
 
   /**
@@ -218,11 +255,23 @@ class NotebookLMService {
 
   /**
    * Check if NotebookLM integration is available
-   * Always returns true since we use manual clipboard integration
+   * Checks backend API first, falls back to clipboard
    */
   async checkAvailability(): Promise<boolean> {
-    // NotebookLM integration is always available via clipboard
-    return true;
+    try {
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://morgus-deploy.fly.dev';
+      const response = await fetch(`${apiBaseUrl}/api/notebooklm/status`, {
+        headers: {
+          'Authorization': `Bearer ${this.getAuthToken()}`
+        }
+      });
+      const data = await response.json();
+      return data.running && data.ready;
+    } catch (error) {
+      // API not available, but manual clipboard still works
+      console.log('NotebookLM backend unavailable, using manual mode');
+      return true;
+    }
   }
 }
 

@@ -58,6 +58,8 @@ import mcpExportRoutes from './mcp-export-routes';
 import apiKeyRoutes from './api-key-routes';
 import knowledgeBaseRoutes from './knowledge-base-routes';
 import memoryRoutes from './routes/memory-routes';
+import notebooklmRoutes from './notebooklm-routes';
+import { startNotebookLM } from './notebooklm-service';
 import { securityHeaders, corsMiddleware, sanitizeInput, requestId, requestLogger, errorHandler, notFoundHandler, healthCheck } from './middleware/security';
 import { rateLimitMiddleware, strictRateLimitMiddleware } from './middleware/rate-limiting';
 import { usageTrackingMiddleware, quotaCheckMiddleware } from './middleware/usage-tracking';
@@ -1599,6 +1601,7 @@ app.use('/api/mcp', requireAuth, usageTrackingMiddleware, quotaCheckMiddleware, 
 app.use('/api/knowledge', requireAuth, usageTrackingMiddleware, quotaCheckMiddleware, knowledgeRoutes);
 app.use('/api/knowledge-base', requireAuth, usageTrackingMiddleware, quotaCheckMiddleware, knowledgeBaseRoutes);
 app.use('/api/memory', requireAuth, usageTrackingMiddleware, memoryRoutes);
+app.use('/api/notebooklm', requireAuth, usageTrackingMiddleware, notebooklmRoutes);
 app.use('/api/billing', requireAuth, billingRoutes);
 app.use('/api/analytics', requireAuth, analyticsRoutes);
 app.use('/api/support', requireAuth, supportRoutes);
@@ -1620,7 +1623,23 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🧠 Morgus DPPM Service (Optimized) running on port ${PORT}`);
   console.log(`Config: ${MAX_SUBTASKS} subtasks max, ${MODEL_TIMEOUT}ms timeout, ${MAJORITY_THRESHOLD} model majority`);
+  
+  // Auto-start NotebookLM MCP server if configured
+  if (process.env.NOTEBOOKLM_ENABLED === 'true') {
+    try {
+      console.log('🔄 Starting NotebookLM MCP server...');
+      await startNotebookLM({
+        notebookId: process.env.NOTEBOOKLM_NOTEBOOK_ID,
+        pythonEnvPath: process.env.NOTEBOOKLM_PYTHON_ENV || '/app/notebooklm-env',
+        profileDir: process.env.NOTEBOOKLM_PROFILE_DIR || './chrome_profile_notebooklm'
+      });
+      console.log('✅ NotebookLM MCP server started successfully');
+    } catch (error) {
+      console.error('❌ Failed to start NotebookLM MCP server:', error);
+      console.log('💡 NotebookLM features will be unavailable');
+    }
+  }
 });

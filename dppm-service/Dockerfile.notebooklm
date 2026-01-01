@@ -1,0 +1,75 @@
+# Dockerfile with NotebookLM MCP Support
+# This Dockerfile includes Python 3.11, Chrome, and notebooklm-mcp
+
+# Build stage
+FROM node:20-slim AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install ALL dependencies (needed for build)
+RUN npm install
+
+# Copy tsconfig.json first
+COPY tsconfig.json ./
+
+# Copy source code
+COPY src ./src
+
+# Build TypeScript to JavaScript (ignore errors)
+RUN npx tsc || true
+
+# Production stage with Python and Chrome
+FROM node:20-slim
+
+WORKDIR /app
+
+# Install system dependencies for Python, Chrome, and Selenium
+RUN apt-get update && apt-get install -y \
+    python3.11 \
+    python3.11-venv \
+    python3-pip \
+    chromium \
+    chromium-driver \
+    wget \
+    gnupg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create Python virtual environment for NotebookLM MCP
+RUN python3.11 -m venv /app/notebooklm-env
+
+# Install notebooklm-mcp in the virtual environment
+RUN /app/notebooklm-env/bin/pip install --no-cache-dir \
+    notebooklm-mcp==2.0.11 \
+    selenium==4.39.0 \
+    cffi
+
+# Copy package files
+COPY package*.json ./
+
+# Install only production dependencies
+RUN npm install --only=production
+
+# Copy compiled JavaScript from builder
+COPY --from=builder /app/dist ./dist
+
+# Copy NotebookLM configuration
+COPY notebooklm-config.json ./
+
+# Create directory for Chrome profile (will be mounted as volume)
+RUN mkdir -p /app/chrome_profile_notebooklm
+
+# Expose port
+EXPOSE 8080
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV NOTEBOOKLM_PYTHON_ENV=/app/notebooklm-env
+ENV NOTEBOOKLM_PROFILE_DIR=/app/chrome_profile_notebooklm
+ENV CHROME_BIN=/usr/bin/chromium
+ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
+
+# Start the compiled application
+CMD ["node", "dist/index.js"]
