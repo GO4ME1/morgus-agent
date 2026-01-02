@@ -24,6 +24,9 @@ export const NotebooksPanelSimple: React.FC<NotebooksPanelProps> = ({
   useEffect(() => {
     if (userId) {
       loadNotebooks();
+    } else {
+      // No user logged in, stop loading and show empty state
+      setLoading(false);
     }
   }, [userId]);
 
@@ -53,6 +56,19 @@ export const NotebooksPanelSimple: React.FC<NotebooksPanelProps> = ({
 
   if (loading) {
     return <div className="notebooks-panel">Loading...</div>;
+  }
+
+  if (!userId) {
+    return (
+      <div className="notebooks-panel">
+        <div className="notebooks-header">
+          <h3>💭 NotebookLM</h3>
+        </div>
+        <div className="notebooks-empty">
+          <p>Log in to access your notebooks</p>
+        </div>
+      </div>
+    );
   }
 
   return (
