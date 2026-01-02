@@ -122,9 +122,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error as Error | null };
   };
 
-  const signUp = async (email: string, password: string, _displayName?: string, _referralCode?: string) => {
-    const { error } = await supabase.auth.signUp({ email, password });
-    // TODO: Handle displayName and referralCode in profile creation
+  const signUp = async (email: string, password: string, displayName?: string, referralCode?: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: displayName || '',
+          referral_code: referralCode || ''
+        }
+      }
+    });
     return { error: error as Error | null };
   };
 
