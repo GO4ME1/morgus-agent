@@ -33,6 +33,9 @@ export function Account() {
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoMessage, setPromoMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [billingLoading, setBillingLoading] = useState(false);
+  const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -164,6 +167,50 @@ export function Account() {
     navigate('/');
   };
 
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    // Validation
+    if (!passwordData.current || !passwordData.new || !passwordData.confirm) {
+      setPasswordMessage({ type: 'error', text: 'Please fill in all fields' });
+      return;
+    }
+
+    if (passwordData.new.length < 8) {
+      setPasswordMessage({ type: 'error', text: 'New password must be at least 8 characters' });
+      return;
+    }
+
+    if (passwordData.new !== passwordData.confirm) {
+      setPasswordMessage({ type: 'error', text: 'New passwords do not match' });
+      return;
+    }
+
+    setPasswordLoading(true);
+    setPasswordMessage(null);
+
+    try {
+      const { supabase } = await import('../lib/supabase');
+      
+      // Update password
+      const { error } = await supabase.auth.updateUser({
+        password: passwordData.new
+      });
+
+      if (error) {
+        setPasswordMessage({ type: 'error', text: error.message });
+      } else {
+        setPasswordMessage({ type: 'success', text: 'Password changed successfully!' });
+        setPasswordData({ current: '', new: '', confirm: '' });
+      }
+    } catch (_error) {
+      setPasswordMessage({ type: 'error', text: 'Failed to change password' });
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   if (!user || !profile) {
     return <div className="account-loading">Loading...</div>;
   }
@@ -239,6 +286,42 @@ export function Account() {
             </button>
           )}
           <p className="wallet-hint">Earn day passes by referring friends or redeeming promo codes!</p>
+        </div>
+
+        {/* Password Change Section */}
+        <div className="account-card">
+          <h2>Change Password</h2>
+          <form onSubmit={handleChangePassword} className="promo-form">
+            <input
+              type="password"
+              value={passwordData.current}
+              onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })}
+              placeholder="Current password"
+              autoComplete="current-password"
+            />
+            <input
+              type="password"
+              value={passwordData.new}
+              onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })}
+              placeholder="New password (min 8 characters)"
+              autoComplete="new-password"
+            />
+            <input
+              type="password"
+              value={passwordData.confirm}
+              onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })}
+              placeholder="Confirm new password"
+              autoComplete="new-password"
+            />
+            <button type="submit" disabled={passwordLoading}>
+              {passwordLoading ? 'Changing...' : 'Change Password'}
+            </button>
+          </form>
+          {passwordMessage && (
+            <div className={`promo-message ${passwordMessage.type}`}>
+              {passwordMessage.text}
+            </div>
+          )}
         </div>
 
         {/* Promo Code Section */}
