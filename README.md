@@ -4,7 +4,7 @@
 
 ## Live Deployment
 
-- **Frontend**: https://325a65ac.morgus-console.pages.dev/
+- **Frontend**: https://5b58b33e.morgus-console-dyo.pages.dev/ (Latest: Jan 2, 2026)
 - **Backend**: https://morgus-deploy.fly.dev/
 - **Database**: Supabase PostgreSQL with pgvector
 
@@ -181,8 +181,8 @@ Proprietary - All rights reserved
 
 ---
 
-**Version**: 2.7.0-capability-upgrade
-**Last Updated**: December 28, 2025
+**Version**: 2.7.1-bugfix-release
+**Last Updated**: January 2, 2026
 **Status**: 🟢 100% Feature Parity with Manus + 23 Unique Tools
 
 ## 🎉 NEW: Capability Upgrade (v2.7.0)
