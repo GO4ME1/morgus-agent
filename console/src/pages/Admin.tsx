@@ -37,6 +37,17 @@ export function Admin() {
   const [users, setUsers] = useState<User[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [profileLoadTimeout, setProfileLoadTimeout] = useState(false);
+
+  // Add timeout for profile loading
+  useEffect(() => {
+    if (!authLoading && user && !profile) {
+      const timer = setTimeout(() => {
+        setProfileLoadTimeout(true);
+      }, 5000); // 5 second timeout
+      return () => clearTimeout(timer);
+    }
+  }, [authLoading, user, profile]);
 
   // New promo form state
   const [newPromo, setNewPromo] = useState({
@@ -247,6 +258,24 @@ export function Admin() {
 
   // Still loading profile
   if (!profile) {
+    if (profileLoadTimeout) {
+      // Profile failed to load, try to fetch admin status directly
+      return (
+        <div className="admin-container">
+          <div className="admin-access-denied">
+            <h2>⚠️ Profile Load Error</h2>
+            <p>Unable to load your profile. This might be a temporary issue.</p>
+            <p className="admin-email">Logged in as: {user?.email}</p>
+            <button onClick={() => window.location.reload()} className="admin-login-btn">
+              Retry
+            </button>
+            <Link to="/" className="admin-login-btn">
+              Back to Morgus
+            </Link>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="admin-container">
         <div className="admin-loading">

@@ -55,8 +55,7 @@ RUN npm install --only=production
 # Copy compiled JavaScript from builder
 COPY --from=builder /app/dist ./dist
 
-# Copy NotebookLM configuration
-COPY notebooklm-config.json ./
+# NotebookLM configuration will be set via environment variables
 
 # Create directory for Chrome profile (will be mounted as volume)
 RUN mkdir -p /app/chrome_profile_notebooklm
