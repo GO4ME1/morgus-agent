@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import './MorgyPen.css';
+import AddMorgyFormFixed from './AddMorgyFormFixed';
+import MCPExportModal from './MCPExportModal';
+import { useAuth } from '../lib/auth';
 
 interface Morgy {
   id: string;
@@ -82,9 +85,11 @@ const MorgyPen: React.FC<MorgyPenProps> = ({
   onMentionMorgy,
   onClose
 }) => {
-  const [morgys] = useState<Morgy[]>(DEFAULT_MORGYS);
+  const { user } = useAuth();
+  const [morgys, setMorgys] = useState<Morgy[]>(DEFAULT_MORGYS);
   const [showAddModal, setShowAddModal] = useState(false);
   const [hoveredMorgy, setHoveredMorgy] = useState<string | null>(null);
+  const [exportingMorgy, setExportingMorgy] = useState<Morgy | null>(null);
 
   if (!isVisible) return null;
 
@@ -202,13 +207,32 @@ const MorgyPen: React.FC<MorgyPenProps> = ({
                 >
                   <span>{isActive ? '✓' : '⚡'}</span>
                 </button>
+                <button 
+                  className="morgy-action-btn export" 
+                  title="Export as MCP Server"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExportingMorgy(morgy);
+                  }}
+                >
+                  <span>📦</span>
+                </button>
               </div>
             </div>
           );
         })}
 
         {/* Add Morgy Card */}
-        <div className="morgy-card add-morgy-card" onClick={() => setShowAddModal(true)}>
+        <div 
+          className="morgy-card add-morgy-card" 
+          onClick={() => {
+            if (!user) {
+              alert('🔒 Please sign in to create custom Morgys!\n\nFree users can use the default Morgys, but creating custom AI agents requires an account.');
+              return;
+            }
+            setShowAddModal(true);
+          }}
+        >
           <div className="add-morgy-content">
             <span className="add-morgy-icon">+</span>
             <span className="add-morgy-text">Add Morgy</span>
@@ -222,20 +246,43 @@ const MorgyPen: React.FC<MorgyPenProps> = ({
         <span className="sounder-count">{activeMorgys.length} active</span>
       </div>
 
-      {/* Add Modal */}
-      {showAddModal && (
-        <div className="morgy-modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="morgy-modal" onClick={(e) => e.stopPropagation()}>
-            <h3>🐷 Create Custom Morgy</h3>
-            <p>Design your own specialized Morgy agent!</p>
-            <div className="modal-coming-soon">
-              <span className="sparkle">✨</span>
-              Coming Soon
-              <span className="sparkle">✨</span>
-            </div>
-            <button onClick={() => setShowAddModal(false)}>Close</button>
-          </div>
-        </div>
+      {/* Add Morgy Form */}
+      <AddMorgyFormFixed
+        isVisible={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onMorgyCreated={(newMorgy) => {
+          // Convert backend format to frontend format
+          const morgyForDisplay: Morgy = {
+            id: newMorgy.id,
+            name: newMorgy.name.split(' ')[0], // First word as short name
+            title: newMorgy.category.charAt(0).toUpperCase() + newMorgy.category.slice(1),
+            fullName: newMorgy.name,
+            handle: `@${newMorgy.name.toLowerCase().replace(/\s+/g, '')}`,
+            level: 1,
+            xp: 0,
+            maxXp: 100,
+            color: newMorgy.appearance.color,
+            borderColor: newMorgy.appearance.color,
+            image: newMorgy.appearance.avatar,
+            specialty: newMorgy.personality.responseStyle || newMorgy.description,
+            tools: []
+          };
+          setMorgys(prev => [...prev, morgyForDisplay]);
+          setShowAddModal(false);
+        }}
+      />
+
+      {/* MCP Export Modal */}
+      {exportingMorgy && (
+        <MCPExportModal
+          isVisible={true}
+          onClose={() => setExportingMorgy(null)}
+          morgy={{
+            id: exportingMorgy.id,
+            name: exportingMorgy.fullName,
+            avatar: exportingMorgy.image
+          }}
+        />
       )}
     </div>
   );

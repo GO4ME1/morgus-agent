@@ -1,0 +1,248 @@
+.mcp-export-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.mcp-export-modal {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid #00ffff;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
+  animation: slideUp 0.3s ease-out;
+}
+
+.mcp-export-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 24px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mcp-export-close:hover {
+  background: rgba(255, 0, 0, 0.2);
+  border-color: #ff0066;
+  transform: rotate(90deg);
+}
+
+.mcp-export-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.mcp-export-icon {
+  font-size: 48px;
+}
+
+.mcp-export-header h2 {
+  color: #00ffff;
+  font-size: 24px;
+  margin: 0;
+}
+
+.mcp-export-description {
+  color: #aaa;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.mcp-export-options {
+  margin-bottom: 24px;
+}
+
+.mcp-export-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.mcp-export-checkbox:hover {
+  background: rgba(0, 255, 255, 0.05);
+}
+
+.mcp-export-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.mcp-export-checkbox span {
+  color: #fff;
+  font-size: 14px;
+}
+
+.mcp-export-error {
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid #ff0066;
+  border-radius: 8px;
+  padding: 12px;
+  color: #ff6b6b;
+  margin-bottom: 16px;
+}
+
+.mcp-export-result {
+  margin-top: 24px;
+}
+
+.mcp-export-result h3 {
+  color: #00ff88;
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+
+.mcp-export-config {
+  background: #0a0a1e;
+  border: 1px solid #00ffff;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.mcp-export-config pre {
+  color: #00ffff;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.mcp-export-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.mcp-export-btn {
+  flex: 1;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mcp-export-btn.primary {
+  background: linear-gradient(135deg, #00ffff 0%, #00ff88 100%);
+  color: #1a1a2e;
+}
+
+.mcp-export-btn.primary:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+}
+
+.mcp-export-btn.secondary {
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid #00ffff;
+  color: #00ffff;
+}
+
+.mcp-export-btn.secondary:hover {
+  background: rgba(0, 255, 255, 0.2);
+}
+
+.mcp-export-btn.large {
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+}
+
+.mcp-export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mcp-export-instructions {
+  background: rgba(0, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.mcp-export-instructions h4 {
+  color: #00ffff;
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.mcp-export-instructions ol {
+  color: #ccc;
+  font-size: 14px;
+  line-height: 1.8;
+  padding-left: 20px;
+  margin-bottom: 12px;
+}
+
+.mcp-export-instructions code {
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: #00ffff;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+
+.mcp-export-instructions a {
+  color: #00ffff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.mcp-export-instructions a:hover {
+  text-decoration: underline;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
