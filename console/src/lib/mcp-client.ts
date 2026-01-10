@@ -36,7 +36,8 @@ class MCPClientImpl implements MCPClient {
   constructor(userId: string, accessToken: string, serverUrl?: string) {
     this.userId = userId;
     this.accessToken = accessToken;
-    this.serverUrl = serverUrl || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    // Use production URL by default, fallback to localhost for development
+    this.serverUrl = serverUrl || 'https://morgus-deploy.fly.dev';
   }
 
   async initialize(): Promise<void> {
@@ -47,19 +48,22 @@ class MCPClientImpl implements MCPClient {
       const response = await fetch(`${this.serverUrl}/api/mcp/tools`, {
         headers: {
           'Authorization': `Bearer ${this.accessToken}`,
+          'x-user-id': this.userId,
         },
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch MCP tools: ${response.statusText}`);
+        console.warn(`[MCP] Failed to fetch tools: ${response.status} ${response.statusText}`);
+        this.tools = [];
+        return;
       }
 
       const data = await response.json();
       this.tools = data.tools || [];
       
-      console.log(`[MCP] Loaded ${this.tools.length} tools from MCP servers`);
+      console.log(`[MCP] Initialized with ${this.tools.length} tools available`);
     } catch (error) {
-      console.error('[MCP] Failed to initialize:', error);
+      console.warn('[MCP] Failed to initialize, continuing without MCP tools:', error);
       // Don't throw - gracefully degrade if MCP servers aren't available
       this.tools = [];
     }
