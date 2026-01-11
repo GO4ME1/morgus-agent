@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './AddMorgyForm.css';
 import { useAuth } from '../lib/auth';
+import { supabase } from '../lib/supabase';
 
 
 interface AddMorgyFormProps {
@@ -15,6 +16,16 @@ interface KnowledgeItem {
   content?: string;
   url?: string;
   file?: File;
+}
+
+interface MCPServer {
+  id: string;
+  name: string;
+  display_name: string;
+  description: string;
+  category: string;
+  icon_url?: string;
+  is_active: boolean;
 }
 
 // Random Name Generators
@@ -41,6 +52,11 @@ const AddMorgyFormFixed: React.FC<AddMorgyFormProps> = ({ isVisible, onClose, on
   const [newUrl, setNewUrl] = useState('');
   const [newText, setNewText] = useState('');
   const [newTextTitle, setNewTextTitle] = useState('');
+  
+  // MCP Tools
+  const [mcpServers, setMcpServers] = useState<MCPServer[]>([]);
+  const [selectedMcpServers, setSelectedMcpServers] = useState<string[]>([]);
+  const [mcpLoading, setMcpLoading] = useState(true);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -119,6 +135,44 @@ const AddMorgyFormFixed: React.FC<AddMorgyFormProps> = ({ isVisible, onClose, on
       verbosity: randomVerbosity,
       emojiUsage: randomEmoji
     }));
+  };
+
+  // Load MCP servers from Supabase
+  useEffect(() => {
+    const loadMCPServers = async () => {
+      try {
+        setMcpLoading(true);
+        const { data, error } = await supabase
+          .from('mcp_servers')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_name');
+
+        if (error) {
+          console.error('Failed to load MCP servers:', error);
+          setMcpServers([]);
+        } else {
+          setMcpServers(data || []);
+        }
+      } catch (err) {
+        console.error('Error loading MCP servers:', err);
+        setMcpServers([]);
+      } finally {
+        setMcpLoading(false);
+      }
+    };
+
+    if (isVisible) {
+      loadMCPServers();
+    }
+  }, [isVisible]);
+
+  const toggleMcpServer = (serverId: string) => {
+    setSelectedMcpServers(prev => 
+      prev.includes(serverId)
+        ? prev.filter(id => id !== serverId)
+        : [...prev, serverId]
+    );
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -224,7 +278,7 @@ const AddMorgyFormFixed: React.FC<AddMorgyFormProps> = ({ isVisible, onClose, on
           fileProcessing: formData.fileProcessing,
           imageGeneration: formData.imageGeneration,
           voiceInteraction: false,
-          mcpTools: [] // Empty for now, will add MCP later
+          mcpTools: selectedMcpServers
         },
         knowledgeBase: {
           documents: knowledgeItems.filter(k => k.type === 'file').map(k => ({ title: k.title, size: k.file?.size })),
@@ -304,7 +358,7 @@ const AddMorgyFormFixed: React.FC<AddMorgyFormProps> = ({ isVisible, onClose, on
 
   if (!isVisible) return null;
 
-  const totalSteps = 4; // Removed MCP step for now
+  const totalSteps = 5; // Added MCP Tools step
 
   return (
     <div className="add-morgy-overlay">
@@ -321,7 +375,7 @@ const AddMorgyFormFixed: React.FC<AddMorgyFormProps> = ({ isVisible, onClose, on
 
         {/* Step Indicator */}
         <div className="step-indicator">
-          {[1, 2, 3, 4].map((s) => (
+          {[1, 2, 3, 4, 5].map((s) => (
             <div key={s} className={`step ${s === step ? 'active' : ''} ${s < step ? 'completed' : ''}`}>
               <div className="step-number">{s}</div>
               <div className="step-label">
@@ -329,6 +383,7 @@ const AddMorgyFormFixed: React.FC<AddMorgyFormProps> = ({ isVisible, onClose, on
                 {s === 2 && 'Appearance'}
                 {s === 3 && 'Capabilities'}
                 {s === 4 && 'Knowledge'}
+                {s === 5 && 'MCP Tools'}
               </div>
             </div>
           ))}
@@ -639,6 +694,59 @@ const AddMorgyFormFixed: React.FC<AddMorgyFormProps> = ({ isVisible, onClose, on
                 <div className="empty-state">
                   <p>No knowledge added yet. Add files, URLs, or text to give your Morgy specialized expertise!</p>
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 5: MCP Tools */}
+          {step === 5 && (
+            <div className="form-step">
+              <p className="step-description">
+                Choose MCP (Model Context Protocol) tools to enhance your Morgy's capabilities. These tools allow your Morgy to interact with external services.
+              </p>
+
+              {mcpLoading ? (
+                <div className="mcp-loading">
+                  <div className="loading-spinner"></div>
+                  <p>Loading MCP servers...</p>
+                </div>
+              ) : mcpServers.length === 0 ? (
+                <div className="empty-state">
+                  <p>No MCP servers available. MCP tools will be added soon!</p>
+                </div>
+              ) : (
+                <>
+                  <div className="mcp-servers-grid">
+                    {mcpServers.map((server) => (
+                      <div
+                        key={server.id}
+                        className={`mcp-server-card ${selectedMcpServers.includes(server.id) ? 'selected' : ''}`}
+                        onClick={() => toggleMcpServer(server.id)}
+                      >
+                        <div className="mcp-header">
+                          {server.icon_url ? (
+                            <img src={server.icon_url} alt={server.display_name} className="mcp-icon" />
+                          ) : (
+                            <div className="mcp-icon-placeholder">🔧</div>
+                          )}
+                          <h4 className="mcp-name">{server.display_name}</h4>
+                        </div>
+                        <p className="mcp-desc">{server.description}</p>
+                        <span className="mcp-category">{server.category}</span>
+                        {selectedMcpServers.includes(server.id) && (
+                          <div className="mcp-selected-badge">✓</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mcp-selection-info">
+                    {selectedMcpServers.length > 0 ? (
+                      <p>✓ {selectedMcpServers.length} MCP server{selectedMcpServers.length !== 1 ? 's' : ''} selected</p>
+                    ) : (
+                      <p>Select MCP servers to add external capabilities (optional)</p>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           )}
